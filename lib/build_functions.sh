@@ -352,7 +352,8 @@ function unpack_tar_and_enter {
 
     { echo $file | egrep -q '.tgz$|.gz$'; } && gz="z"
     echo tar ${gz}vxf $file
-    subdir=`tar ${gz}vxf $file | grep / 2> /dev/null | sed -e 's/\/.*$//' 2> /dev/null | head -1` || {
+    subdir=`tar ${gz}tf $file | grep / 2> /dev/null | sed -e 's/\/.*$//' 2> /dev/null | head -1`
+    tar ${gz}xf $file || {
         echo "Failed to untar $file"
         return 2
     }
