@@ -127,7 +127,7 @@ class BuildDistrib(eupsDistrib.DefaultDistrib):
         self.buildDir = self.getOption('buildDir', "_build_")
         self.setupfile = self.getOption('setupsFile', "eupssetups.sh")
 
-    @staticmethod
+    # @staticmethod   # requires python 2.4
     def parseDistID(distID):
         """Return a valid package location if and only we recognize the 
         given distribution identifier
@@ -140,6 +140,8 @@ class BuildDistrib(eupsDistrib.DefaultDistrib):
             return distID[len(prefix):]
 
         return None
+
+    parseDistID = staticmethod(parseDistID)  # should work as of python 2.2
 
     def installPackage(self, location, product, version, productRoot, 
                        installDir=None, setups=None):

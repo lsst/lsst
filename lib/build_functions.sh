@@ -261,7 +261,7 @@ function rm {
         return 1
     fi
 
-    echo $rmcmd ${args[*]}
+    # echo $rmcmd ${args[*]}
     $rmcmd ${args[*]}
 }
 
