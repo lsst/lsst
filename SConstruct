@@ -21,7 +21,7 @@ opts.AddOptions(('pkgsurl', 'the base url for the software server',
                 ('lsst_home', 'the root directory for the LSST software stack',
                  lssthome))
 
-env = scons.makeEnv("lsst", r"$HeadURL:svn$", options=opts)
+env = scons.makeEnv("lsst", r"$HeadURL$", options=opts)
 
 env.Command('bin', '', [Mkdir('bin')])
 env.Command('etc', '', [Mkdir('etc')])
