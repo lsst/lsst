@@ -106,10 +106,27 @@ eups distrib install -v -r $EUPS_PKGROOT/bootstrap lssteups || {
 setup lssteups
 
 # install the essential stuff
-# eups distrib install build
-eups distrib install python
+eups distrib install lsst
+
+echo 
+echo "Foundation packages is now installed (the lsstpkg command is available)"
+echo 
 
 while [ $# -gt 0 ]; do
     eups distrib install "$1"
     shift
 done
+
+echo "Installation complete"
+echo "Now type "
+echo 
+echo "  cd $LSST_HOME"
+echo "  source loadLSST.sh"
+echo 
+echo "or"
+echo 
+echo "  cd $LSST_HOME"
+echo "  source loadLSST.csh" 
+echo 
+echo "to load version management with EUPS"
+echo 
