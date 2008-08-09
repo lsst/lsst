@@ -1,0 +1,1550 @@
+<html> <head>
+    <title>Getting Started with LSST Development</title>
+    <style type="text/css">
+      p.code   {background-color: #eeeeee; font-family: monospace;
+                white-space: pre; border-color: #880000;
+                border-width: thin; border-style: solid; 
+                padding-left: 1em; padding-top: 1ex; padding-bottom: 1ex; }
+      .note    {background-color: #eeeeee; 
+                border-color: black; border-width: thin; border-style: solid; 
+                padding-left: 1em; padding-top: 1ex; padding-bottom: 1ex; }
+    </style>
+</head>
+
+<body>
+<h1>Getting Started with LSST Development <br>
+<font size="+0">Ray Plante, NCSA</font><br>
+<font font-weight="400" size="-1">
+<!-- hhmts start -->
+Last modified: Thu Mar 29 10:26:59 2007
+<!-- hhmts end --></font></h1>
+
+<p>
+Whether you are a developer, a tester, a system maintainers, or just
+curious about the LSST code, you will eventually find yourself in need
+of installing all or part of the LSST Software Stack.  This section
+describes how to install the software stack and development
+environment.  It is mainly intended for the LSST developer; however,
+this document will be helpful to administrators that just wish to
+install a stable release.
+</p>
+
+<p>
+Further detailed information on the build system can be found in the
+document the "LSST Build and Test Systems".
+</p>
+
+<h3>Contents</h3>
+
+<dl>
+  <dt> <a href="#overview">1. Overview</a> </dt>
+  <dt> <a href="#lsst_home">2. Building your LSST_HOME: the Standard LSST Software Stack</a>
+  <dd> <dl>
+         <dt> <a href="#lh_recipe">2.1.  Step-by-step Instructions</a> </dt>
+         <dt> <a href="#lh_results">2.2.  What You've Created</a>      </dt>
+         <dt> <a href="#lh_prob">2.3.  If Something Goes Wrong</a>  </dt>
+       </dl> </dd>
+  <dt> <a href="#sandbox">3.  Creating a Development Sandbox</a>       </dt>
+  <dt> <a href="#rcfile">4.  Updating Your Shell RC File</a>           </dt>
+  <dt> <a href="#testdata">5.  Downloading test data</a>               </dt>
+  <dt> <a href="#srcco">6.  Checking out LSST source code</a>          </dt>
+  <dd> <dl>
+         <dt> <a href="#svnlsst">6.1. Using Subversion for LSST
+              Development</a>                                          </dt> 
+         <dt> <a href="#svnsurvival">6.2. An SVN Survival Guide</a>    </dt> 
+       </dl> </dd>
+  <dt> <a href="#work">7.  Working with LSST packages</a>              </dt>
+  <dd> <dl>
+         <dt> <a href="#eups">7.1. An Introduction to EUPS</a>         </dt>
+         <dt> <a href="#build">7.2. Building and Installing an LSST
+              Package</a>                                              </dt> 
+         <dt> <a href="#newpkg">7.3. Creating a New LSST Package</a>   </dt>
+         <dt> <a href="#release">7.4. Creating a Package Release</a>   </dt>
+       </dl> </dd>
+  <dt> <a href="#resources">8.  Additional Resources</a> </dt>
+  <dd> <dl>
+         <dt> <a href="#trac">8.1  Issue Tracking with Trac</a> </dt>
+         <dt> <a href="#continuum">8.2  Build Testing with
+              Continuum</a> </dt>
+       </dl> </dd>
+</dl>
+
+<a name="overview">
+<h2>1. Overview</h2></a>
+
+<p>
+In general, the development environment is made up of three areas.
+The first is a complete installation of the standard software stack,
+which we refer to as <strong><code>LSST_HOME</code></strong>.  This
+includes both third-party packages and packages developed by the LSST
+team.  This stack may contain multiple versions of the various
+packages, and our tools allow you to switch between them as necessary.
+The second area is the developer's sandbox or
+<strong><code>LSST_DEVEL</code></strong>.  This is where you install
+and test your own private versions of LSST software.  This area looks
+just like the LSST_HOME area, except that it normally will only
+include versions of software that you are actually developing.  The
+third area is your copy of the software source tree, checked out of
+the code repository.
+</p>
+
+<p>
+In brief, to create a complete LSST development environment, you will..
+</p>
+
+<ol>
+  <li> Use the LSST distribution tools to download and install the
+        software stack (<a href="#lsst_home">Section 2</a>), </li>
+  <li> Create a software installation sandbox
+       (<a href="#sandbox">Section 3</a>), </li>
+  <li> Use the tools to download selected test data
+       (<a href="#testdata">Section 5</a>), and </li>
+  <li> Check out source code from the code repository
+       (<a href="#srcco">Section 6</a>) </li>
+</ol>
+
+<p>
+Once you have an <strong><code>LSST_HOME</code></strong> area
+installed (or have one that was installed by someone else made
+available to you), you will probably find it convenient to
+add some lines to your shell "rc" file (Section 4).  You will also
+need to become familiar with the developers' build process; an
+introduction to this covered in section 7.
+</p>
+
+<p>
+Before you get started however, you may need to arrange for some login
+accounts.  You can get that process started now; then, while you are
+waiting for the accounts to be set up, you can get started on the
+software download process.  Now consider these questions:
+</p>
+
+<dl>
+  <dt> <a name="docusharelogin"><em>Are you reading this document from
+       the LSST Docushare site or from
+       <a href="http://dev.ncsa.uiuc.edu/pkgs/GettingStarted.html">
+       http://dev.ncsa.uiuc.edu</a>?</em></a> </dt>
+  <dd> If not, then you should be sure to consult the latest version at
+       <a href="http://dev.ncsa.uiuc.edu/pkgs/GettingStarted.html">
+       http://dev.ncsa.uiuc.edu/pkgs/GettingStarted.html</a>.  This is
+       the second major revision of this document and contains
+       important changes from the previous version.  If you are
+       actively involved with the project, you might also consider
+       getting a login for the
+       <a href="http://www.lsstcorp.org/">www.lsstcorp.org document
+       archive</a>; contact Iain Goodenow (igoodenow at lsst.org) for
+       this.  </dd>
+  <dt> <a name="svnlogin"><em>Will you be checking out code from the
+       code repository?</em></a>  </dt> 
+  <dd> If so, then you will need a login to
+       <code>svn.lsstcorp.org</code>.  Contact Ray Plante (rplante at
+       ncsa.uiuc.edu) for this.  </dd>
+  <dt> <a name="traclogin"><em>Will you be submitting bug
+       reports?</em></a> </dt> 
+  <dd> If so, then you will need a login for the
+       <a href="http://dev.lsstcorp.org/trac/">Trac issue tracking
+       site</a>.  For this, please contact Ray Plante (rplante at
+       ncsa.uiuc.edu).
+</dl>
+
+<a name="lsst_home">
+<h2>2. Building your LSST_HOME: the Standard LSST Software Stack</h2></a>
+
+<p>
+In this section, we will download and install the standard software
+stack, or LSST_HOME.  You will typically treat this as a read-only
+area, updating it only when new releases are announced.  
+</p>
+
+<p>
+It may be the case that you are developing on a shared system where
+the software stack has already been installed for you.  If so, you can
+skip this section. 
+</p>
+
+<p>
+In this section, you will make your first encounter with our primary
+product for managing LSST software: EUPS.  EUPS is to select and keep
+track of the different versions of our software packages and how they
+depend on other packages.  It includes the ability to download the
+packages from the <a href="http://dev.lsstcorp.org/pkgs">LSST
+development server, <strong><code>dev.lsstcorp.org</code></strong></a>
+and install them on your machine.  EUPS uses another product
+underneath to handle this called
+<a href="http://physics.bu.edu/~youssef/pacman/">Pacman</a>. 
+<!-- Details on how these tools work together are described further in 
+the "LSST Build and Operation Systems" manual. -->
+</p>
+
+<a name="lh_recipe">
+<h3>2.1.  Step-by-step Instructions</h3></a>
+
+<p>
+To create your <strong><code>LSST_HOME</code></strong> area, follow
+this recipe:
+</p>
+
+<ol>
+  <li> <strong><a name="lh_recipe0">Unset your previous LSST
+       environment. </a></strong>
+
+       <p>
+       If you have already once installed the software stack, you
+       should be sure unset your environment variables for that
+       stack.  To do this, you can type (after the <code></code>
+       prompt) one of the following:
+       </p>
+       
+<p class="code">% unsetenv LSST_HOME EUPS_PATH   # for tcsh users
+% unset LSST_HOME EUPS_PATH      # for bash users</p></li>
+       
+  <li> <strong><a name="lh_recipe1">Create the root directory for the LSST
+       installation. </a> </strong>
+
+       <p>
+       The home of the LSST installation is your choice.  (Just don't
+       use the same location as a previous LSST installation unless
+       you move it out of the way first.)  For the convenience of
+       typing, you can set the LSST_HOME environment variable now:
+       </p>
+
+<p class="code">% setenv LSST_HOME /the/LSST/installation/root   # for tcsh users
+% export LSST_HOME=/the/LSST/installation/root   # for bash users</p>
+
+       <p>
+       Now create and change into this directory:
+       </p>
+
+       <p class="code">% mkdir -p $LSST_HOME; cd $LSST_HOME</p>
+       </li>
+
+  <li> <a name="lh_recipe2"><strong>Download and execute the
+       installation setup script.</strong></a>
+
+<p class="code">% curl -o newinstall.sh http://dev.lsstcorp.org/pkgs/newinstall.sh
+% sh newinstall.sh</p>
+
+       <p>
+       This script will create some directories that will contain installed
+       software and then install EUPS and Pacman tools.  When it is
+       complete, you should see something like this:
+       </p>
+
+<p class="code">% ls
+eups   loadLSST.csh  newinstall.sh  pacman          ups_db
+Linux  loadLSST.sh   o..pacman..o   trusted.caches</p>
+       
+       <p>
+       This includes:
+       <ul>
+         <li> <strong><code>Linux</code></strong> or
+              <strong><code>Darwin</code></strong>: a directory 
+              that represents your platform flavor.  This "flavor directory"
+              will be your <strong><code>LSST_PKGS</code></strong> directory
+              (more on this below).  </li>
+         <li> <strong><code>eups</code></strong> and
+              <strong><code>pacman</code></strong>: the EUPS and 
+              Pacman tool installations.  </li>
+         <li> <strong><code>ups_db</code></strong>,
+              <strong><code>o..pacman..o</code></strong>, and 
+              <strong><code>trusted.caches</code></strong>:  data
+              directories and files that these tools use to keep track
+              of the software. </li>
+         <li> <strong><code>loadLSST.csh</code></strong> and
+              <strong><code>loadLSST.sh</code></strong>: 
+              the environment initialization scripts.  </li>
+         <li> <strong><code>newinstall.sh</code></strong>:  the script
+              you just ran. </li>
+       </ul>
+       </p> </li>
+
+  <li> <a name="lh_recipe3"><strong>Load the initial LSST
+       environment:</strong></a>
+
+       <p class="code">% source loadLSST.csh    # for tcsh users
+% source loadLSST.sh     # for bash users</p>
+       
+  <li> <a name="lh_recipe4"><strong>Begin the download and
+       installation of the standard packages.</strong></a>
+
+       <p>
+       For this we will use a special EUPS command and pass it the
+       name of the package we want to install.  This will
+       automatically install that package along with all the packages
+       it depends on.  To ease the installation of a working system, a
+       few "uber" packages have been defined as short-cuts for
+       installing large portions of the standard software stack.
+       Available uber packages include:</p>
+
+       <dl>
+         <dt> <code>LSSTPipe</code> </dt>
+         <dd> For pipeline application developers that includes
+              everything you need to develop and test pipelines in a
+              development environment.  </dd>
+         <dt> <code>LSSTfull</code> </dt>
+         <dd> For administrators that wish to install a fully
+              operational LSST DM site. <em>(not yet implemented)</em></dd>
+         <dt> <code>External</code> </dt>
+         <dd> Installs only the current third-party packages. </dd>
+         <dt> <code>LSSTFastDemo</code> </dt>
+         <dd> Installs two versions of the Termcap library allowing
+              one to test the installation and version management with
+              EUPS.  </dd>
+       </dl>
+
+       <p>
+       The usual choice is <code>LSSTPipe</code>.  Installing this
+       package takes between 30 and 60 minutes normally, as most of
+       the packages are built from source.  To initiate:
+       </p>
+
+       <p class="code">% eups distrib --install --current LSSTPipe</p>
+
+       <p>or, for short:</p>
+       
+       <p class="code">% eups distrib -i -C LSSTPipe</p>
+
+       <p>
+       The <strong>--current</strong> (or <code>-C</code>) option
+       tells EUPS the new packages being installed should be
+       considered the current default version.  This makes selecting
+       packages easier.  (See <a href="#eups">section 7.1</a> for more
+       on using EUPS.) 
+       </p>
+
+       <p>
+       As each package is downloaded and installed, you will see
+       messages showing the progress that look something like this:
+       </p>
+
+       <p class="code">Package [Python-2.5] found in [LSST]...
+Using TERMCAP_DIR=/home/poplar/rplante/wrk/LSST/stack/Linux/external/termcap/1.3.1
+Using READLINE_DIR=/home/poplar/rplante/wrk/LSST/stack/Linux/external/readline/5.2
+Using TCLTK_DIR=/home/poplar/rplante/wrk/LSST/stack/Linux/external/tcltk/8.5a4
+downloading and extracting python-2.5...
+Downloading [Python-2.5.tgz] from [http://www.python.org/ftp/python/2.5]...
+Untarring [Python-2.5.tgz]...
+configuring python-2.5...
+Downloading [lsst-tkinter-python-Setup] from [http://dev.lsstcorp.org/pkgs/ext/python/2.5]...
+running make
+running make install
+Downloading [python.table] from [http://dev.lsstcorp.org/pkgs/ext/python/2.5]...
+
+Python-2.5 installation complete
+</p>
+       
+</ol>
+
+<a name="lh_results">
+<h3>2.2.  What You've Created</h3></a>
+
+If the above installation process completes successfully, then you
+should notice the following:
+
+<ul>
+  <li> The LSST software stack appears completely underneath your
+       chosen <strong><code>LSST_HOME</code></strong> directory.
+       </li>
+
+  <li> Your <strong><code>LSST_HOME</code></strong> directory contains
+       a single platform "flavor" directory, usually either
+       <strong><code>Linux</code></strong> or
+       <strong><code>Darwin</code></strong>.  An environment variable
+       called <strong><code>LSST_PKGS</code></strong> 
+       should currently be set to this directory:
+
+       <p class="code">% echo $LSST_PKGS
+/the/LSST/installation/root/Linux</p>
+
+       <p>
+       If you want to include software stacks for multiple platforms
+       on the same machine, then the
+       <strong><code>LSST_HOME</code></strong> directory would contain
+       one directory for each platform.
+       </p></li>
+
+  <li> The <strong><code>$LSST_PKGS</code></strong> directory includes
+       an <strong><code>external</code></strong> subdirectory which
+       contains all of the 3rd party software.  </li>
+
+  <li> If you installed <strong><code>LSSTPipe</code></strong>, then
+       the current directory will include these packages:  <code>fw,
+       dps, dbingest, consumer</code> and <code>support</code>.  </li>
+
+  <li> Each package (be it an LSST package or 3rd party) has its own
+       named directory which contains one or more subdirectories named
+       after the package version:
+
+       <p class="code">% ls $LSST_PKGS/external/python
+2.5</p>
+
+       <p>
+       If multiple versions are installed, there will be one version
+       subdirectory for each.
+       </p>
+</ul>
+
+<a name="lh_prob">
+<h3>2.3.  If Something Goes Wrong</h3></a>
+
+<p>
+The <code>eups distrib</code> command calls on the Pacman tool to
+download, build, and install a released version of a package.  If
+pacman encounters an error, it will print out the messages produced by
+the last command it called and then exit.  The output may look
+something like this:
+</p>
+
+<p class="code">...
+Package [/the/LSST/installation/root/Linux:LSST:Python-2.5] not [installed]:
+    ...
+</p>
+
+<p>
+At this point, install process for the entire stack halts, and
+<code>eups</code> exits.  If eups fails before pacman can run
+(e.g. because the network connection fails), then eups will typically
+print a python stack trace and exit.  
+</p>
+
+<p>
+Consider <code>eups distrib</code> failures as falling into two
+categories of possible causes:
+<ul>
+  <li> environmental problems on your machine or in the network, such as 
+       <ul>
+         <li> no space left on disk, </li>
+         <li> problems connecting to
+              <strong><code>dev.lsstcorp.org</code></strong>, </li>
+         <li> the LSST development environment improperly set
+              (e.g. because <code>loadLSST.(c)sh</code> has not been
+              sourced). </li>
+       </ul> </li>
+  <li> problems with the configuration of the
+       <strong><code>dev.lsstcorp.org</code></strong> server
+       <ul>
+         <li> most typically, a particular pacman script contains a
+              bug or needs further modification to support your
+              platform.  
+       </ul>
+</ul></p>
+
+<p>
+For problems in latter category, please issue a bug report via the
+Trac system, or (if you are not yet familiar with Trac), report the
+problem to Ray Plante (rplante at ncsa.uiuc.edu).  Include in your
+report the output from the <code>eups distrib</code> command.  
+</p>
+
+<p>
+Once the problem has been corrected, you restart the installation
+process where you left off without having to reinstall packages which were
+previously installed correctly.  Before you rerun <code>eups
+distrib</code>, it is usually necessary to first remove the package
+that failed.  This is done with a pacman command.  For example, if
+<code>eups distrib</code> failed while installing Python version
+2.4.2, then you should type:
+</p>
+
+<p class="code">% cd $LSST_PKGS
+% pacman -remove LSST:Python-2.4.2
+</p>
+
+<p>
+Note that you must be in your <strong><code>$LSST_PKGS</code></strong>
+directory before you can execute the pacman command.
+</p>
+
+<blockquote class="note">
+<strong>Note:</strong><br />
+If the install process proceeded far enough to install the
+<strong><code>build</code></strong> package, then you can use the
+simpler tool:
+<pre>   % lsstpkg remove python 2.5  </pre>
+You can restart the installation with a similar command:
+<pre>   % lsstpkg fetch LSSTPipe  </pre>
+</blockquote>
+
+<p>
+You can now restart <code>eups distrib</code>:
+</p>
+
+<p class="code">% eups distrib -i -C LSSTPipe
+Installing 0.1 of LSSTPipe
+Product termcap (version 1.3.1, flavor Linux) is already declared
+Product tcltk (version 8.5a4, flavor Linux) is already declared
+Product readline (version 5.2, flavor Linux) is already declared
+Package [python-2.5] found in [LSST]...
+...
+</p>
+
+<a name="sandbox">
+<h2>3.  Creating a Development Sandbox</h2></a>
+
+<p>
+If you prefer that <strong><code>LSST_HOME</code></strong> be read-only,
+then you will want a <strong><code>LSST_DEVEL</code></strong>
+directory where you can install new, developmental, or experimental
+versions of packages.  If your <strong><code>LSST_HOME</code></strong>
+is on your personal machine which you do not share with other users,
+you may wish to not bother with a
+<strong><code>LSST_DEVEL</code></strong> directory.  
+</p>
+
+<p>
+The <strong><code>LSST_DEVEL</code></strong> tree has exactly the same
+structure as <strong><code>LSST_HOME</code></strong>.  The main
+difference is that <strong><code>LSST_DEVEL</code></strong> is not
+expected to have all of the packages installed but rather only the
+ones that might override what is in
+<strong><code>LSST_HOME</code></strong>.  
+</p>
+
+<p>
+The <strong><code>build</code></strong> package includes a tool,
+<code>mksandbox</code>, to help setup your own
+<strong><code>LSST_DEVEL</code></strong> area.  To create the
+directory, follow this recipe:
+</p>
+
+<p class="code">% setup build
+% cd $HOME/lsstsandbox   # choose your desired location
+% mksandbox
+% ls
+Linux ups_db</p>
+
+Done.
+
+<a name="rcfile">
+<h2>4.  Updating Your Shell RC File</h2></a>
+
+<p>
+If you are going to do regular development, then you will probably
+find it convenient to update your shell "rc"
+file--e.g. <code>.cshrc</code> or <code>.bashrc</code>--to automate
+the setting up of the LSST environment.  This update is optional,
+however; see the discussion below for details.  
+</p>
+
+Here's a sample of what you might put in your .cshrc (or .tcshrc) file
+if you use <code>csh</code> (or <code>tcsh</code>) as your default
+shell:
+
+<p class="code"># Load the LSST environment
+#
+# set useful environment variables.  None of these are required, but they 
+# are helpful.  
+#
+setenv LSST_HOME /the/installation/root4/LSST
+setenv LSST_DEVEL /my/LSST/sandbox
+setenv LSST_SVN svn+ssh://svn.lsstcorp.org
+
+#
+# the setlsst command loads the environment on demand
+#
+alias setlsst source $LSST_HOME/loadLSST.csh
+
+# 
+# uncomment this line to load the LSST environment automatically when
+# the shell starts
+#
+# setlsst</p>
+
+Alternatively, if you use <code>bash</code>:
+
+<p class="code"># Load the LSST environment
+#
+# set useful environment variables.  None of these are required, but they 
+# are helpful.  
+#
+export LSST_HOME=/the/installation/root4/LSST
+export LSST_DEVEL=/my/LSST/sandbox/$EUPS_FLAVOR 
+export LSST_SVN=svn+ssh://svn.lsstcorp.org
+
+#
+# the setlsst command loads the environment on demand
+#
+alias setlsst="source $LSST_HOME/loadLSST.sh"
+
+# 
+# uncomment this line to load the LSST environment automatically when
+# the shell starts
+#
+# setlsst</p>
+
+Note these comments:
+<ul>
+  <li> As the comments mention, you do not have to define the
+       environment variables; they are merely a convenience.  The
+       important part of loading the environment is sourcing the
+       <code>loadLSST.csh</code> (or <code>loadLSST.sh</code>) file.
+       Any needed environment variables (namely,
+       <code>$LSST_HOME</code> and <code>$EUPS_PATH</code>) are set to
+       defaults.  
+       </li>
+
+  <li> If you chose not to create a sandbox, do not define
+       <code>LSST_DEVEL</code>>.  New packages will automatically be
+       installed into <code>$LSST_HOME</code> instead.  </li>
+
+  <li> If you uncomment the last line, the LSST environment will be
+       loaded by default with the start of each new shell.  Doing this
+       automatically or manually is a matter of your preference.
+       </li>
+
+  <li> These lines are just suggestions; you are welcome to specialize
+       them to your taste.  For instance, you may add EUPS
+       <code>setup</code> commands to select certain packages by
+       default (see <a href="#eups">section 7.1</a> for details).
+       </li>
+
+  <li> If you have other EUPS-managed directories besides
+       <strong><code>$LSST_HOME</code></strong> and
+       <strong><code>$LSST_DEVEL</code></strong>, then you should also
+       explicitly set the <strong><code>EUPS_PATH</code></strong>
+       variable, e.g.
+
+       <p class="code">% setenv EUPS_PATH ${$LSST_DEVEL}:${$LSST_HOME}:/other/eups/directory   # tcsh
+       
+% export EUPS_PATH=${$LSST_DEVEL}:${$LSST_HOME}:/other/eups/directory   # bash</p>
+</ul>
+
+
+<a name="testdata">
+<h2>5.  Downloading Test Data</h2></a>
+
+<blockquote class="note">
+<strong>Note:</strong><br />
+This capability is not yet available.
+</blockquote>
+
+<a name="srcco">
+<h2>6.  Checking Out LSST Source Code</h2></a>
+
+<p>
+We use <a href="http://www.subversion.org/">Subversion (svn)</a> as our 
+version control system, and our repository is located at
+<strong><code>svn.lsstcorp.org</code></strong>.  We restrict access to
+the svn tree using SSH.  Thus, in order to check out code, you will need a
+login to our svn server.  If you haven't requested a login already, consult
+<a href="#svnlogin">these instructions</a> for more information.
+</p>
+
+<p>
+Once you have a login, you should test to make sure it works by
+logging into <strong><code>svn.lsstcorp.org</code></strong> with ssh.
+Next, you will probably want to set up some ssh keys so that you can
+log in without typing your password.  This is not require; however, if
+you don't set this up, svn will repeatedly and inconveniently ask you
+to type in your password which can be painful.  For detailed
+instructions on this, consult <a href="">"Setting up SSH for
+Subversion" (Document-1808)</a> in the Docushare repository.  
+</p>
+
+<a name="svnlsst">
+<h3>6.1  Using Subversion for LSST Development</h3></a>
+
+<a name="svninstall">
+<h4>6.1.1  Installing Subversion</h4></a>
+
+<p>
+The client program you will use is called <code>svn</code>, so if you
+do not have this program on your system, you will need to install it.  The
+Subversion source code is available from
+<a href="http://subversion.tigris.org/">http://subversion.tigris.org/</a>
+and builds quite readily under Linux.  This site also provides
+pointers to binary distributions as well.  
+</p>
+
+<a name="svnrun">
+<h4>6.1.2  Running the SVN Client</h4></a>
+
+<p>
+If you are already familiar with using the Subversion client,
+<code>svn</code>, then skip to <a href="#svnstruct">the next section,
+"Repository Organization"</a>.  Note that section 6.2 provides a
+<a href="#svnsurvival">survival guide to SVN.</a> 
+</p>
+
+<p>
+Access to the LSST subversion repository is through use of ssh.  The general
+syntax to access the LSST repository is:
+</p>
+
+<p class="code">% svn <i>command</i> svn+ssh://svn.lsstcorp.org/<i>path/to/code</i></p>
+
+<p>
+For those familiar with CVS, there is no mechanism for setting the
+default root directory of the repository in subversion, but you can
+set an environment variable so you needn't type the string all the
+time (as suggested in <a href="#rcfile">section 4</a>), e.g.
+</p>
+
+<p class="code">% setenv LSST_SVN svn+ssh://svn.lsstcorp.org   # or for bash: export LSST_SVN=svn+ssh://svn.lsstcorp.org
+% svn <i>command</i> $LSST_SVN/<i>path/to/code</i></p>
+
+<p>
+The svn+ssh prefix tells subversion to use the ssh protocol to connect
+and once connected, run the subversion server to access the repository. 
+</p>
+
+<p>
+We can now try a simple command to list the top level directories in
+the repository
+</p>
+
+<p class="code">% svn list $LSST_SVN
+DC2/
+GilTest/
+branches/
+tags/
+trunk/
+</p>
+
+<a name="svnstruct">
+<h4>6.1.2  Repository Organization</h4></a>
+
+<p>
+The software being developed for DC2 can all be found under a
+top-level directory called <code>DC2</code>.  Under that are each of
+the various LSST packages:</p>
+
+<p class="code">% svn list $LSST_SVN/DC2
+SConsUtils/
+alert/
+associate/
+calibrate/
+classify/
+community/
+das/
+dbingest/
+deepdet/
+deploy/
+dps/
+editors/
+fw/
+imageproc/
+movingobj/
+support/
+</p>
+
+<blockquote class="note">
+<strong>Remember:</strong><br />
+<code>$LSST_SVN</code> is an environment variable we set to be
+<code>svn+ssh://svn.lsstcorp.org</code>.  
+</blockquote>
+
+<p>
+You may check out the entire DC2 tree; however, it is recommended that
+you really only check out the packages you plan to work on. 
+</p>
+
+<p>
+Under each package, you will notice three subdirectories which keep
+different versions of the package: 
+</p>
+
+<p class="code">% svn list $LSST_SVN/DC2/fw
+branches/
+tags/
+trunk/
+</p>
+
+<p>
+These sub-trees play the following roles:
+</p>
+
+<dl>
+  <dt> <code>trunk</code> </dt>
+  <dd> Contains the main line of development.  This is the version
+       most developers work with. </dd>
+
+  <dt> <code>branches</code> </dt>
+  <dd> Contains experimental versions of the package.  Sometimes a
+       developer would like to test out a complex idea on a package
+       without affecting the main-line development.  In this case, she
+       makes a copy of the package into a subdirectory of
+       <code>branches</code> and checks in modifications there.
+       Later, if the developer wants to bring the new ideas into the
+       main-line, there is a merging process.  (See "LSST Build and
+       Test Systems" for details.) </dd>
+
+  <dt> <code>tags</code> </dt>
+  <dd> Contains released version of the package.  When a development
+       milestone is reached, the developer creates a versioned release
+       of the package by copying the trunk into a subdirectory of
+       <code>tags</code> named after the version--e.g.,
+       <code>tags/1.0</code>.  (See <a href="#release">section 7.4,
+       "Creating a Package Release"</a> for details.)</dd>
+
+  <dt> <code>tickets</code>
+  <dd> Contains versions where bugs and enhancements are being
+       addressed.  When someone issues a bug report or an enhancement
+       request, a "ticket" is generated in the
+       <a href="http://dev.lsstcorp.org/trac/">bug tracking system</a>, 
+       represented by a ticket number.  When a developer addresses the 
+       issue, she makes a copy of the package in a subdirectory named 
+       after the ticket number.  After the code has passed review, the 
+       changes are merged into the trunk.
+
+       <blockquote class="note">
+       <strong>Note:</strong><br />
+       Eventually, all normal development will take place under a
+       tickets directory.  This will ensure that the trunk always
+       contains working, reviewed code.
+       </blockquote>
+</dl>
+
+
+<a name="svncopkg">
+<h4>6.1.3  Checking Out a Package</h4></a>
+
+<p>
+As a start, we will establish our SVN development tree and can check
+out the framework package, <strong><code>fw</code></strong>, into it.
+Let's call this tree <code>DC2</code>:
+</p>
+
+<p class="code">% mkdir DC2; cd DC2</p>
+
+<p>
+Now to check out the framework package:
+</p>
+
+<p class="code">% svn co $LSST_SVN/DC2/fw/trunk fw</p>
+
+<blockquote class="note">
+<strong>Note:</strong><br />
+You may be prompted multiple times for your ssh password.
+This can be avoided by either using ssh-agent to manage your ssh
+session or by installing an ssh public key into the
+.ssh/authorized_users file in your home directory on the
+svn.lsstcorp.org server.  See <a href="">"Setting up SSH for
+Subversion" (Document-1808)</a> for details.
+</blockquote>
+
+<p>
+This checks out the main trunk of the <strong><code>fw</code></strong>
+package into a new directory called fw:
+</p>
+
+<p class="code">% ls fw
+build  configure  configure.ac  Makefile  python  ups
+</p>
+
+<p>
+You are now ready to hack!  Proceed to <a href="#work">section 7,
+"Working with LSST packages"</a> to learn more about building an LSST
+package.  
+</p>
+
+<a name="svnsurvival">
+<h3>6.2  An SVN Survival Guide</h3></a>
+
+<a name="svnhelp">
+<h4>6.2.1.  Helpful Documentation</h4></a>
+
+<p>
+The Subversion command-line client svn interface is modeled after CVS. See
+also svn help for more commands and options, as well as the on-line book at
+<a href="http://svnbook.red-bean.com/nightly/en/svn-book.html">http://svnbook.red-bean.com/nightly/en/svn-book.html</a> 
+Section 3 ("Guided Tour") which is especially useful for getting started.  
+</p>
+
+<a name="svndcvs">
+<h4>2.2.  Differences with CVS</h4></a>
+
+<p>
+If you are familiar with CVS, you should note these behavioral
+differences:
+</p>
+
+<ul>
+  <li> There is no equivalent to environment variable, <code>CVSROOT</code>.
+  <li> With Subversion, revision numbers are assigned globally, not on a  
+         per-file basis.  Everytime a commit is done, the revision of the 
+         entire repository increments.                                    
+  <li> A commit command is guaranteed atomic, regardless of the number    
+         of files being committed; if anything goes wrong, none of the    
+         files will be committed.                                         
+  <li> When update conflicts are detected, additional local versions are  
+         created to help you sort out the conflict (see below).
+</ul>
+
+<a name="svnusage">
+<h4>2.3.  Common Usage</h4></a>
+
+<p>
+In the examples given below, it is assumed that the SVN environment
+variable has been set to svn+ssh://svn.lsstcorp.org/ as
+suggested above.  
+</p>
+
+<ol>
+  <li> Checkout files
+
+       <p class="code">svn checkout <i>URL PATH</i></p>
+
+       <p>
+       This downloads the part of the repository pointed to by <i>URL</i>
+       into the local directory given by <i>PATH.</i>
+       </p>
+
+       <p>
+       <strong>Example:</strong> Check out a package for normal
+       development and put it into a local directory.  Note
+       that the trunk represents the leading edge of main development,
+       excluding special branches or tagged sets.
+       </p>
+
+       <p class="code">% svn checkout $SVN/DC2/fw/trunk fw</p>
+
+       <p>
+       Example:  Check out a particular release of a package
+       </p>
+
+       <p class="code">% svn checkout $SVN/DC2/fw/tags/0.2 fw-0.2</p>
+       </li>
+
+  <li> Adding and removing files or directories
+
+       <p class="code">svn add <i>PATH</i>
+svn delete <i>PATH</i>
+svn commit -m "<i>LOG-MESSAGE</i>" <i>[</i>--recursive<i>] PATH ...</i>  </p>
+
+       <p>
+       The first two commands above update your local copy of the code tree,
+       while the third line commits the local changes to the repository.  
+       </p>
+
+       <p>
+       <strong>Example:</strong> add a new source file and delete an
+       old one. 
+       </p>
+
+       <p class="code">% svn add foo.py
+% svn delete bar.py
+% svn commit -m "preferring foo.py over bar.py" foo.py bar.py</p>
+
+       <p>
+       Here's another way to do the commit that catches all pending
+       changes under a directory:
+       </p>
+
+       <p class="code">% svn commit -m "preferring foo.py over bar.py" --recursive .</p>
+
+       <p>
+       An easy way to add an entire package tree to the repository is with
+       the import command:
+       </p>
+
+       <p class="code">svn import <i>PATH URL</i></p>
+
+       <p>
+       This recursively imports a copy of <i>PATH</i> to repository.
+       </p>
+
+       <p>
+       <strong>Example:</strong>  add in a new package, code and all:
+       </p>
+
+       <p class="code">% svn import mypkg $SVN/DC2/mypkg/trunk</p>
+       </li>
+
+  <li> Updating existing files
+
+       <p class="code">svn update <i>[PATH ...]</i>
+...
+svn commit -m "<i>UPDATE-MESSAGE</i>" <i>[PATH ...]</i></p>
+
+       <p>
+       The update command downloads any changes to the files or
+       directories pointed to by PATH since the last time you checked out
+       or updated them.  The behavior is much like in CVS.  
+       </p>    
+
+       <p>
+       <strong>Example:</strong>  update and commit some files
+       </p>
+
+       <p class="code">% svn update foo.c bar.c choo.c
+U  foo.c
+G  bar.c
+C  choo.c</p>
+
+       <p>
+       In this example, an updated version of <code>foo.c</code> was
+       downloaded.  <code>bar.c</code> was also updated; however,
+       <code>svn</code> noticed that your local version included
+       uncommitted changes that you made, and these changes were
+       merged into the updated version.  With <code>choo.c</code>, the
+       merge was not successful, and special tags were inserted that
+       mark where you need to resolve conflicts between your local
+       changes and the changes downloaded from the repository.  
+       </p>
+
+       <p>
+       The difference in behavior from CVS is that in the case of a
+       conflict, svn may create additional versions of the file to help
+       with resolving the conflicts:
+       </p>
+       
+       <table border="0" cellpadding="0" cellspacing="0">
+         <tr><td valign="middle"><code>choo.c</code></td>
+             <td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+             <td valign="middle">the updated version with conflicts tagged</td></tr>
+         <tr><td valign="middle"><code>choo.c.mine</code></td>
+             <td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+             <td valign="middle">your pre-updated version</td></tr>
+         <tr><td valign="middle"><code>choo.c.r1</code></td>
+             <td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+             <td valign="middle">the committed version prior to your updates</td></tr>
+         <tr><td valign="middle"><code>choo.c.r2</code></td>
+             <td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+             <td valign="middle">the committed version to be merged with your
+                 version</td></tr>
+       </table>
+
+       <p>
+       After resolving conflicts and making new changes, you can
+       commit:  
+       </p>
+
+       <p class="code">% svn commit -m "bug fix: memory leak" foo.c bar.c choo.c</p>
+
+       <p>
+       If svn detects that someone else has checked in any changes since
+       you did your update, the entire commit for all three files will
+       fail (unlike with CVS).  In this case, you should run the update
+       command again on those files and then resolve any conflicts before trying
+       another commit.  
+       </p>
+       </li>
+
+  <li> Checking the status of directory and files
+
+       <p>It's often useful to peruse the differences between your local
+       files and those in the repository without actually doing an
+       update.  These command are useful for doing this.  
+       </p>
+
+       <dl>
+         <dt> <code>svn status <i>[PATH ...]</i></code> </dt>
+         <dd> lists all files that are not in sync with repository and tags
+              its state (e.g. needs updating, in conflict, etc.).
+              </dd>
+
+         <dt> <code>svn diff <i>[PATH ...]</i></code> </dt>
+         <dd> shows differences between your local version and the version
+              in the repository.</dd>
+
+         <dt> <code>svn revert <i>[</i>--recursive<i>] [PATH ...]</i></code>
+              </dt>
+         <dd> undo any uncommitted changes, adds, deletes, copies, and
+              moves of the listed files or directories.  </dd>
+       </dl>
+
+       <p>
+       For more information on these commands see the
+       <a href="http://svnbook.red-bean.com/nightly/en/svn-book.html">
+       SVN book</a>, Section 3 (Guided Tour/Examine Your Changes) and
+       Section 9 (Subversion Complete Reference).
+       </p>
+       </li>
+</ol>
+
+<a name="work">
+<h2>7.  Working With LSST Packages</h2></a>
+
+<a name="eups">
+<h3>7.1  An Introduction to EUPS</h3></a>
+
+<p>
+EUPS is a tool that allows us to have installed multiple versions of
+our packages on the same machine and provides us with the ability to
+easily switch between them.  It does this by manipulating key
+environment variables, including <code>PATH</code>,
+<code>PYTHONPATH</code>, and <code>LD_LIBRARY_PATH</code>, so that our
+applications always finds the correct, desired version.  It keeps
+track of dependencies between packages as well, so that when a
+particular version of a package is selected, all of the correct
+versions of the dependent packages are chosen as well.  
+</p>
+
+<p>
+This section provides you with a quick introduction to the EUPS tools
+and we use them in LSST development.  For detailed information, you
+can consult the
+<a href="http://lsstdev.ncsa.uiuc.edu:8100/trac/wiki/EupsManual">EUPS
+Manual</a>.  Note also that all the EUPS commands accept a
+<code>--help</code> option:
+</p>
+
+<p class="code">% eups distrib --help
+Distribute eups products with their dependencies 
+
+Usage:
+   eups_distrib [options] [product [version]]
+Options:
+   -b, --prefer-flavor   Prefer distributions that are flavor-specific
+   -C, --current         Create a list of current versions which -x can use
+   -c, --create          Create a package for distribution
+   -F, --force           Force requested behaviour (e.g. redeclare a product)
+   -f, --flavor    arg   Use this flavor. Default: $EUPS_FLAVOR or `eups_flavor`
+   -h, --help            Print this help message
+   -i, --install         Extract and install the specified package (identical to --extract
+   -j, --nodepend        Just setup product, but not its dependencies
+   -n, --noaction        Don't actually do anything
+   -p, --pacman    arg   Use this pacman cache to install packages
+   -r, --root      arg   Location of manifests and tarballs (may be a URL)
+   -t, --prefer-tag arg  Prefer distributions that are tagged with the given tagname
+   -V, --version         Print eups version number and exit
+   -v, --verbose         Be chattier (repeat for even more chat)
+   -x, --extract         Extract and install the specified package
+   -Z, --database  arg   Use this products path. Default: \$EUPS_PATH
+                         Alias: --with-eups
+   -z, --select-db arg   Select the product paths which contain this directory. Default: all</p>
+
+<a name="eupsfind">
+<h4>7.1.1  How EUPS Finds Packages</h4></a>
+
+<p>
+The most important environment variable used by EUPS is
+<code>EUPS_PATH</code>.  This variable contains a colon-separated list
+of directories where it will look for information about installed packages.
+In particular, each directory should contain a EUPS database,
+represented by a subdirectory called <code>ups_db</code>.  (Typically, a
+<code>EUPS_PATH</code> directory also contains the actual packages
+registered in the database, but it doesn't have to.)   When you select
+a package with the EUPS command, <code>setup</code>
+(<a href="#eupssetup">section 7.1.3</a>), the EUPS_PATH directory
+databases are searched in order and the first one matching the request
+is selected.  
+</p>
+
+<p>
+The <code>EUPS_PATH</code> also plays an important role when
+registering new packages with EUPS using <code>eups declare</code>
+(<a href="#eupsdeclare">section 7.1.4</a>) and installing packages
+with <code>eups distrib</code> (<a href="#lh_recipe">section
+2.1</a>).  In both cases, only the first directory is used by default;
+the others are ignored.  That is, <code>eups declare</code> will
+register any new packages into the database belonging to the first 
+<code>EUPS_PATH</code> directory, and <code>eups distrib</code> will
+install new packages below the first <code>EUPS_PATH</code>
+directory. 
+</p>
+
+<p>
+In <a href="#rcfile">section 4</a>, we recommended that you set the
+value <code>EUPS_PATH</code> variable to
+<code>${LSST_DEVEL}:${LSST_HOME}</code>.  
+</p>
+
+<p>
+The <code>EUPS_FLAVOR</code> directory contains the name of your
+platform (currently, either "Linux" or "Darwin").  EUPS uses the value
+of this variable to select only packages that have be registered as
+supporting your platform.  If it is not set, EUPS attempts to
+auto-detect your platform.  
+</p>
+
+<p>
+Finally, the <code>EUPS_PKGROOT</code> is used only by <code>eups
+distrib</code> to provide a default base URL from which packages can
+be downloaded and installed.  You do not have to explicitly set this
+as it is done automatically when you load the LSST environment.  
+</p>
+
+<p class="code">% echo $EUPS_PKGROOT 
+http://dev.lsstcorp.org/pkgs</p>
+
+<a name="eupslist">
+<h4>7.1.2  Seeing What's Available</h4></a>
+
+<p>
+The <code>eups list</code> command is useful for seeing what versions
+of packages are available.  For example,  
+</p>
+
+<p class="code">% eups list
+lam                    7.1.2                     Current
+netlogger              3.3.11                    Current
+numarray               1.5.1                     Current
+numeric                24.2                      Current
+pyfits                 1.0.1                     Current
+python                 2.4.2                     Current
+ro                     2006-07-11                Current
+sextractor             2.4.4                     Current
+tcltk                  8.5a4                     Current 
+termcap                1.3.1                     Current 
+wcstools               3.6.2                     Current
+wcslib                 4.2                       Current
+autoconf               2.60                      Current
+cfitsio                3006                      Current
+dbingest               0.2                       Current
+doxygen                1.4.7                     Current
+dps                    0.2                       Current 
+fftw                   3.1.2                     Current
+fw                     0.2                       Current 
+gsl                    1.8                       Current
+support                0.2                       Current
+swig                   1.3.29                    Current</p>
+
+<p>
+The "<code>Current</code>" label in the third column indicates that
+that particular version of a package has been flagged as the current
+default version.  If you do not specify a version to the
+<a href="#eupsselect"><code>setup</code> command</a>, then this
+flagged version will be selected.  If the third column also includes a
+"<code>Setup</code>" label, then that particular version has already
+been selected with the <a href="#eupsselect"><code>setup</code>
+command</a>.  
+</p>
+
+<blockquote class="note">
+<strong>Note:</strong><br />
+If your package listing does not include any "<code>Current</code>"
+label, then you probably did not use the <code>--current</code> option
+when you installed with <code>eups distrib</code>.  You can update
+your EUPS installation to the project's latest notion of what's
+current using a custom script; see <a href="#setallcurr">section
+7.1.4.1</a> for details.  
+</blockquote>
+
+<p>
+You can restrict the listing output to a specific package by providing
+the package's name to <code>eups list</code>.  Add a version string,
+and the listing will be restricted to that version.  
+</p>
+
+<p class="code">% eups list fw
+   0.2                   Current
+% eups list fw 0.2
+   0.2                   Current</p>
+
+<p>
+Add a <code>-v</code> (or <code>--verbose</code>), and the directory
+where the package is installed is shown as well.  
+</p>
+
+<p class="code">% eups list fw -v
+   0.2          /the/LSST/installation/root/Linux  /the/LSST/installation/root/Linux/fw/0.2            Current </p>
+
+<p>
+The first path is the <code>EUPS_PATH</code> directory where the
+package was found, and the second path is the directory where that
+particular version of the package is installed.  
+</p>
+
+<a name="eupsselect">
+<h4>7.1.3  Selecting a Package</h4></a>
+
+<p>
+The <code>setup</code> command is used to select a particular version
+of a package for use.  
+</p>
+
+<p class="code">% select fw         # selects the version flagged as "Current"
+% select fw 0.2                     # selects version 0.2 </p>
+
+When you select a package with <code>setup</code>, it also implicitly
+selects the other packages the requested package depends on.  To see
+exactly which packages those are, add a <code>-v</code> (or
+<code>--verbose</code>):
+
+<p class="code">% setup fw -v
+Setting up:     fw                   Flavor: Linux      Version: 0.2
+Setting up:      numarray            Flavor: Linux      Version: 1.5.1
+Setting up:       python             Flavor: Linux      Version: 2.5
+Setting up:        tcltk             Flavor: Linux      Version: 8.5a4
+Setting up:        termcap           Flavor: Linux      Version: 1.3.1</p>
+
+<p>
+The indentation of the package names indicates the hierarchy of
+dependencies.  In this case, the <code>fw</code> package version 0.2
+requires <code>numarray</code> version 1.5.1, which in turn requires
+<code>python</code> 2.4.2.
+</p>
+
+<p>
+When you select a package with <code>setup</code>, environment
+variables are updated.  First, an environment variable of the form
+<code><i>PRODUCT</i>_DIR</code> is set to the directory where the
+selected product is installed.
+</p>
+
+<p class="code">% echo $FW_DIR
+/the/LSST/installation/root/Linux/fw/0.2</p>
+
+Then, depending on what the package provides, other environment
+variables like <code>PATH</code>, <code>PYTHONPATH</code>, and
+<code>LD_LIBRARY_PATH</code> are altered.  For example,
+<code>fw</code> provides a python module, so <code>setup</code> adds
+its python directory to <code>PYTHONPATH</code>:
+
+<p class="code">% echo $PYTHONPATH | sed -e 's/\n/:/g'
+/the/LSST/installation/root/Linux/external/numarray/1.5.1
+/the/LSST/installation/root/Linux/fw/0.2
+% which python
+/the/LSST/installation/root/Linux/external/python/2.5/bin/python</p>
+
+<p>
+<code>setup</code> also made sure we used the right version of
+Python by updating <code>PATH</code>.  Note that if a different
+version of a package had been previously declared, mention of the
+previous version are <em>removed</em> from the environment variables
+before the new version is added.  
+</p>
+
+You may un-select a package with the <code>unsetup</code> command.
+
+<p class="code">% unsetup fw</p>
+
+<p>
+Obviously, you do not need to provide the version number when
+un-selecting a package. Note that this also un-selects the other
+packages it relies on.  If you still need any of those dependent
+packages, you will need to run <code>setup</code> again for those
+specific packages.  
+</p>
+
+<a name="eupsdeclare">
+<h4>7.1.4  Registering a New Package</h4></a>
+
+<p>
+When you installed packages with <code>eups distrib</code>
+(<a href="#lh_recipe">section 2.1</a>), the <code>eups declare</code>
+command was run for you.  This registered each downloaded package into
+an EUPS database.  On occasion however, you will have to run
+<code>eups declare</code> by hand.  For example, you may want to
+register a private version of package that you built from the SVN code
+tree.  An invocation usually takes the following form:
+</p>
+
+<p class="code">eups declare <i>package_name version_name</i> -r <i>path/to/package</i></p>
+
+<p>
+For example,
+</p>
+
+<p class="code">eups declare fw svn -r /path/to/private/fw</p>
+
+<p>
+Note that the <i>version_name</i> can be any arbitrary string; it
+simply needs to be distinct from other the other registered versions
+of the package.  The <code>-r</code> tells EUPS what the root
+directory for the package is (and thus what it should set, in this
+case, the <code>FW_DIR</code> variable to).  
+</p>
+
+<p>
+In order to declare a package in this way, its root directory must
+contain a <code>ups</code> subdirectory that contains a file of the
+form <code><i>product</i>.table</code>.  This table file contains an
+enumeration of the other packages that this package requires as well
+as how the environment variables should be updated when the package is
+selected.  In the absence of a <code>ups</code> subdirectory, you can
+specify a specific table file with the <code>--table</code> (or
+<code>-t</code>) option. 
+</p>
+
+<p>
+If you want to declare a package as "Current", regardless of whether
+it was already registered or not, add the <code>--current</code>
+option to the command line:
+</p>
+
+<p class="code">% eups declare --current fw svn -r /path/to/private/fw</p>
+
+<p>
+You can also un-declare a package:
+</p>
+
+<p class="code">% eups undeclare fw svn</p>
+
+<p>
+Obviously, you do not need to mention the root directory. 
+</p>
+
+<a name="setallcurr">
+<h4>7.1.4.1  Setting All Current LSST packages</h4></a>
+
+<p>
+You may wish to flag all of your packages according to what the LSST
+project considers the official current versions.  This may because you
+didn't use the <code>--current</code> flag when you ran <code>eups
+distrib</code> or you have since made your own choices for what you
+would like to be considered current.  A special tool,
+<code>setallcurrent.sh</code>, is available to switch to the official
+notion of what is "Current".  
+</p>
+
+<p>
+To run, type:
+</p>
+
+<p class="code">% cd $LSST_HOME
+% curl -o setallcurrent.sh  http://dev.lsstcorp.org/pkgs/setallcurrent.sh
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   297  100   297    0     0    842      0 --:--:-- --:--:-- --:--:--     0
+% sh ./setallcurrent.sh</p>
+
+<p>
+This command sets the current versions by reading a file called
+<a href="http://dev.lsstcorp.org/pkgs/current.list">current.list</a>.
+<code>setallcurrent.sh</code> will run <code>eups declare
+--current</code> for each package listed there that you have
+installed.  Previous "current" declarations for those packages are
+overridden.  
+</p>
+
+<a name="build">
+<h3>7.2  Building and Installing an LSST Package</h3></a>
+
+<i>editing in progress</i>
+
+<p>
+<strong><code>SCons</code></strong> is the tool we use to build the
+LSST packages.  To build a package, you first need to be sure you have
+the LSST environment loaded.  If you haven't already, load it now:
+</p>
+
+<p class="code">% source $LSST_HOME/loadLSST.csh  # or, 'source $LSST_HOME/loadLSST.sh' for bash</p>
+
+Next, you need to have the <strong><code>build</code></strong> package
+loaded:  
+
+<p class="code">% setup build</p>
+
+<blockquote class="note">
+<strong>How do I know if the LSST environment is loaded?</strong><br
+/> One sign that you have already sourced the loadLSST script is that
+the <strong><code>EUPS_DIR</code></strong> environment variable should
+now be set, and you should be able to run EUPS commands (like
+<strong><code>eups</code></strong>).  If you have already run
+<strong><code>setup build</code></strong>, then you can use the EUPS
+list command to see which version:
+<pre>    % eups list build
+       1.0      Current Setup</pre>
+The <code>Setup</code> label says that the build package version 1.0
+is loaded and ready for use. 
+</blockquote>
+
+<p>
+Running the <strong><code>setup build</code></strong> command will
+automatically load SCons into your environment.
+</p>
+
+<p>
+At this point, you should, if you haven't already, check out (using
+<strong><code>svn</code></strong>) the LSST package you want to build;
+see <a href="#snvlsst">section 6.1</a> for details.  Once you have
+done this, change into the directory where you have checked out the
+package.  
+</p>
+
+<p>
+We now need to load into our environment all of the other packages
+that this package depends on.  We do this by passing the its so-called
+<strong>EUPS table file</strong> to the
+<strong><code>setup</code></strong> command.  So, if we are building
+the <strong><code>fw</code></strong> package, the command will look
+like this:
+</p>
+
+<p class="code">% setup -M ups/fw.table</p>
+
+<blockquote class="note">
+<strong>Warning:</strong><br />
+<em>This command has not yet been implemented.</em>  
+</blockquote>
+
+<p>
+We are now ready to use scons to build the package; to do this, simply
+type <strong><code>scons</code></strong> in the top directory of the
+package: 
+</p>
+
+<p class="code">% scons</p>
+
+<i>editing in progress</i>
+
+<p>
+So far, we have just compiled all of the code; we haven't installed
+it, yet.  And once we have installed, we'll want to declare it to EUPS
+so that we can use it.  To do this, we pass the "install" and
+"declare" targets to the <strong><code>scons</code></strong> command:
+</p>
+
+<p class="code">% scons install declare</p>
+
+<p>
+As you might have guessed, we could have just skipped the first
+<strong><code>scons</code></strong> invocation and gone straight to
+<strong><code>scons install declare</code></strong>.  
+</p>
+
+<p>
+By default, the package will get installed into our
+<strong><code>$LSST_DEVEL</code></strong> area (or if we don't have
+one, <strong><code>$LSST_HOME</code></strong>).  We can change this
+destination passing <strong><code>prefix=</code></strong><em>dir</em>
+as an argument to the <strong><code>scons</code></strong> command.
+</p>
+
+<a name="newpkg">
+<h3>7.3  Creating a New LSST Package</h3></a>
+
+<i>editing in progress</i>
+
+<a name="release">
+<h3>7.4  Creating a Package Release</h3></a>
+
+<i>editing in progress</i>
+
+<a name="resources">
+<h2>8.  Additional Resources</h2></a>
+
+If you have questions about getting started with development, feel
+free to contact Ray Plante (rplante at ncsa.uiuc.edu).  However, if
+you are planning to do development and were fairly successful in
+getting the software installed and code checked out of SVN, then you
+should start to become familiar with our issue and bug tracking
+system, Trac.  
+
+<a name="trac">
+<h3>8.1  Issue Tracking with Trac</h3></a>
+
+<p>
+Our issue tracking system is a web-based product called
+<a href="http://www.trac.org">Trac</a> which can be access via
+<a href="http://dev.lsstcorp.org/trac">http://dev.lsstcorp.org/trac</a>.  
+It includes two very useful features that help support collaborative
+development:
+</p>
+
+<ul>
+  <li> <strong>A subversion repository browser</strong>:  this allows
+       one to not only easily browse the source code but also track
+       the history of updates.  </li>
+  <li> <strong>A Wiki</strong>:  this is an environment that allows
+       us to easily create and edit web pages over the web using 
+       simple text mark-up (simpler than HTML) in a collaborative
+       way.  We can use this to capture highly dynamic information
+       like programming tips and "how-tos".  
+</ul>
+
+In order to edit on the Wiki and to submit bug reports, you will need
+to get a login for the Trac portal; consult <a href="#traclogin">these
+instructions</a> for more information.  
+
+<i>editing in progress</i>
+
+<a name="continuum">
+<h3>8.2  Build Testing with Continuum</h3></a>
+
+<i>editing in progress</i>
+
+</body> </html>
