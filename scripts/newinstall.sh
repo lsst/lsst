@@ -106,7 +106,15 @@ eups distrib install -v -r $EUPS_PKGROOT/bootstrap lssteups || {
 setup lssteups
 
 # install the essential stuff
-eups distrib install lsst
+eups distrib install lsst || {
+    echo "Failed to install foundation packages"
+    exit 1
+}
+setup lsst && cp $LSST_DIR/etc/loadLSST.* $LSST_HOME
+if [ $? > 0 ]; then
+    echo "Problem setting up the lsst package"
+    exit 1
+fi
 
 echo 
 echo "Foundation packages is now installed (the lsstpkg command is available)"
