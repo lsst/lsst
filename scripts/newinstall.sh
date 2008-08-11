@@ -8,6 +8,7 @@
 SHELL=/bin/bash
 LSST_HOME=$PWD
 export EUPS_PKGROOT=#EUPS_PKGROOT   #Replace with proper value
+export SVNROOT=svn+ssh://svn.lsstcorp.org
 owneups=
 httpget=
 
@@ -111,9 +112,11 @@ eups distrib install lsst || {
     exit 1
 }
 setup lsst && cp $LSST_DIR/etc/loadLSST.* $LSST_HOME
-if [ $? > 0 ]; then
-    echo "Problem setting up the lsst package"
-    exit 1
+if [ -z "$LSST_DIR" ]; then
+    echo "Warning: Problem setting up lsst package"
+fi
+if [ ! -e "$LSST_HOME/loadLSST.sh" -o ! -e "$LSST_HOME/loadLSST.csh" ]; then
+    echo "Warning: Problem installing loadLSST.*"
 fi
 
 echo 
