@@ -45,6 +45,8 @@ def filter_file(target, source, flts, vals):
         if sf: sf.close()
         if tf: tf.close()
 
+    os.chmod(str(target), os.stat(str(source))[0])
+
 def FilterFilesInto(env, targetdir, source):
     """filter a bunch of files and put results into the target directory
     """
