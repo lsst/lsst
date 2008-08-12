@@ -205,3 +205,149 @@ class BuildDistrib(eupsDistrib.DefaultDistrib):
                               self.Eups.noaction, self.verbose, self.log)
         except OSError, e:
             raise RuntimeError("Failed to clean up build dir, " + buildDir)
+
+    def _getInstallDirParts(self, product, version):
+        path = None
+        out = []
+        if not self.Eups.noeups:
+            pinfo = self.Eups.listProducts(product, version)
+            if len(pinfo) > 0:
+                pinfo = ping[0]
+                path = pinfo[3]
+                db = pinfo[2]
+
+                if path.startswith(db) and db != path:
+                    out.append(db)
+                    path = path[len(db)+1:]
+
+                    if path.startswith("external/"):
+                        out.append("external")
+                        path = path[len("external/"):]
+
+                    out.append(path)
+                else:
+                    p = path.find(os.path.join(product,version))
+                    if p > 0:
+                        db = path[:p]
+                        path = path[p:]
+
+                        if db.endswith("external/"):
+                            db = db[:-(len("exernal/"))]
+                            out.append(db)
+                            out.append("external")
+                        else:
+                            out.append(db)
+                        if out[0][-1] == '/': out[0] = out[0][:-1]
+
+                out.append(path)
+
+        return out
+
+    def _getDistIdParts(self, installParts):
+        parts = installParts
+
+        out = []
+        if "external" in parts:
+            out.append("external")
+
+        installdir = apply(os.path.join, parts)
+        buildfile = product+".bld"
+        if not os.path.exists(installdir, "ups", buildfile):
+            buildfile = "%s-%s.tar.gz" % (product, version)
+        out.append(buildfile)
+
+        return out;
+
+
+    def getDistIdForPackage(self, product, version, flavor=None):
+        """return the distribution ID that for a package distribution created
+        by this Distrib class (via createPackage())
+        @param product        the name of the product to create the package 
+                                distribution for
+        @param version        the name of the product version
+        @param flavor         the flavor of the target platform; this may 
+                                be ignored by the implentation.  None means
+                                that a non-flavor-specific ID is preferred, 
+                                if supported.
+        """
+        parts = self._getDistIdParts(self.getInstallDirParts())
+        if parts is None or len(parts) == 0:
+            return None
+
+        return "lsstbuild:" + os.path.join(parts)
+
+    def _getDistFile(self, serverDir, distidparts):
+        return os.path.join([serverDir, distidparts[0:-1], product, 
+                             version, distidparts[-1]])
+
+    def packageCreated(self, serverDir, product, version, flavor=None):
+        """return True if a distribution package for a given product has 
+        apparently been deployed into the given server directory.  
+        @param serverDir      a local directory representing the root of the 
+                                  package distribution tree
+        @param product        the name of the product to create the package 
+                                distribution for
+        @param version        the name of the product version
+        @param flavor         the flavor of the target platform; this may 
+                                be ignored by the implentation.  None means
+                                that the status of a non-flavor-specific package
+                                is of interest, if supported.
+        """
+        return os.path.exists(self._getDistFile(serverDir, 
+                                                self.getDistIdParts(product, 
+                                                                    version)))
+
+    def createPackage(self, serverDir, product, version, flavor=None):
+        """Write a package distribution into server directory tree and 
+        return the distribution ID.  If a package is made up of several files,
+        all of them (except for the manifest) should be deployed by this 
+        function.  This includes the table file if it is not incorporated
+        another file.  
+        @param serverDir      a local directory representing the root of the 
+                                  package distribution tree
+        @param product        the name of the product to create the package 
+                                distribution for
+        @param version        the name of the product version
+        @param flavor         the flavor of the target platform; this may 
+                                be ignored by the implentation.  None means
+                                that a non-flavor-specific package is preferred, 
+                                if supported.
+        """
+        instparts = self.getInstallDirParts(product, version)
+        installdir = os.path.join(instparts)
+        distIdFile = self._getDistFile(serverDir, getDistIdParts(instparts))
+
+        distDir = os.path.dirname(distIdFile)
+
+        # make the product directory
+        if not os.path.exists(distDir):
+            os.makedirs(distDir)
+
+        # copy the table file over, if available
+        tfile = os.path.join(installdir, "ups", product+".table")
+        if os.path.exists(tfile):
+            shutil.copyfile(tfile, os.join,dir(distDir, os.path.basename(tfile)))
+
+        # copy over the src tar file, if available
+        tfile = os.path.join(installdir, "ups", 
+                             "%s-%s.tar.gz" % (product, version) )
+        if os.path.exists(tfile):
+            shutil.copyfile(tfile, os.join,dir(distDir, os.path.basename(tfile)))
+        else:
+            if self.verbose > 0:
+                print >> self.log, "Note: Don't know how to package source", \
+                    "code for", product, version
+
+        # copy a build file over if it exists
+        tfile = os.path.join(installdir, "ups", os.path.basename(distIdFile))
+        if distIdFile.endswith(".bld") and os.path.exists(tfile):
+            shutil.copy(tfile, distIdFile)
+
+
+        
+
+
+
+
+
+        

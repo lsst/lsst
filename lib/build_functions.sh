@@ -164,7 +164,7 @@ function make {
     fi
     echo $make $*
     $make $* >> $buildlog 2>&1 || {
-        echo "configure ..."
+        echo "make ..."
         tail -20 $buildlog
         echo "$prog: make failed; see $PWD/$buildlog for details"
         return 1
@@ -180,7 +180,7 @@ function makeinstall {
     fi
     echo $make install
     $make install >> $buildlog 2>&1 || {
-        echo "configure ..."
+        echo "make install ..."
         tail -20 $buildlog
         echo "$prog: make install failed; see $PWD/$buildlog for details"
         return 1
@@ -215,14 +215,21 @@ function simplescons {
 #@
 # run "python setup.py install"
 #
-function simplepysetup {
-    echo python setup.py install --prefix=$installdir $*
-    python setup.py install --prefix=$installdir $* >> $buildlog 2>&1 || {
+function pysetup {
+    echo python setup.py install $*
+    python setup.py install $* >> $buildlog 2>&1 || {
         echo "python setup.py ..."
         tail -20 $buildlog
         echo "$prog: python setup.py install failed; see $PWD/$buildlog for details"
         return 1
     }
+}
+
+#@
+# run "python setup.py install" with --home
+#
+function simplepysetup {
+    pysetup --home=$installdir $*
 }
 
 #@
