@@ -110,7 +110,7 @@ function main {
     check_env || return $?
     case "$cmd" in
         *) echo $eups distrib ${argv[*]} 
-           # exec $eups distrib ${argv[*]} 
+           exec $eups distrib ${argv[*]} 
     esac
 
     echo "$prog: Programmer error: failed to execute arguments:" ${argv[*]}
