@@ -189,7 +189,7 @@ class BuildDistrib(eupsDistrib.DefaultDistrib):
                 fd.close()
 
         try:
-            eupsServer.system("cd %s && lssteupsbuild.sh -b %s -r %s %s %s %s %s" % 
+            eupsServer.system("cd %s && lssteupsbuild.sh -D -b %s -r %s %s %s %s %s" % 
                               (buildDir, buildDir, self.distServer.base, 
                                distFile, installDir, product, version), 
                               self.Eups.noaction, self.verbose, self.log) 

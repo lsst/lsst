@@ -25,6 +25,8 @@ defsetupfile="./eupssetups.sh"
 
 tmpdir=
 installdir=
+fromdistrib=
+dosetupr=
 pkgbase=`echo $EUPS_PKGROOT | sed -e 's/\s*|.*$//'`
 
 function process_command_line {
@@ -34,6 +36,7 @@ function process_command_line {
             -t) tmpdir="$2"; shift;;
             -b) builddir="$2"; shift;;
             -r) pkgbase="$2"; shift;;
+            -D) fromdistrib="1" ;;
             *)  break;;
         esac
         shift
@@ -80,6 +83,10 @@ function process_command_line {
     if [ -z "$builddir" ]; then
         [ -n "$tmpdir" ] || tmpdir=$PWD
         builddir="$tmpdir/$product-$version"
+    fi
+
+    if [ -z "$fromdistrib" ]; then
+        dosetupr="1"
     fi
 
     return 0

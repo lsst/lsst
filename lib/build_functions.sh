@@ -203,8 +203,8 @@ function simplescons {
         echo scons is not setup via eups
         return 4
     fi
-    echo scons install declare
-    scons install declare >> $buildlog 2>&1 || {
+    echo scons install declare $*
+    scons install declare $* >> $buildlog 2>&1 || {
         echo "scons ..."
         tail -20 $buildlog
         echo "$prog: scons install failed; see $PWD/$buildlog for details"
@@ -313,6 +313,7 @@ function unpack_tar_and_build {
         unpacking_and_building=
         return 1
     }
+    [ -n "$dosetupr" -a -f "ups/$product.table" ] && setup -r .
 
     # Now build and install the product
     if [ -f "$internalbuildfile" ]; then
