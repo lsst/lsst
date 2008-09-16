@@ -108,7 +108,7 @@ setup lssteups
 
 # install the essential stuff
 eups distrib install lsst || {
-    echo "Failed to install foundation packages"
+    echo "Failed to install infrastructure packages"
     exit 1
 }
 setup lsst && cp $LSST_DIR/etc/loadLSST.* $LSST_HOME
@@ -120,11 +120,11 @@ if [ ! -e "$LSST_HOME/loadLSST.sh" -o ! -e "$LSST_HOME/loadLSST.csh" ]; then
 fi
 
 echo 
-echo "Foundation packages is now installed (the lsstpkg command is available)"
+echo "Infrastructure packages are now installed (the lsstpkg command is available)"
 echo 
 
 while [ $# -gt 0 ]; do
-    eups distrib install "$1"
+    eups distrib install "$1" || exit 1
     shift
 done
 
