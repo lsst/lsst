@@ -37,7 +37,7 @@ def main():
     if not os.access(fromstack, (os.R_OK|os.X_OK)):
         raise RuntimeError("%s: directory not readable/descendable" % fromstack)
         
-    if not os.path.exists(tostack):
+    if os.path.exists(tostack):
         if opts.new:
             raise RuntimeError("%s: destination directory already exists")
         elif not os.path.isdir(tostack) or \
