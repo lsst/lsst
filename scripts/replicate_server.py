@@ -19,7 +19,7 @@ def main():
     cli.add_option("-v", "--verbose", action="count", dest="verbose",
                    default=0,
                    help="Be chattier (repeat for even more chat)")
-    cli.add_option("-n", "--new", action="const_true", dest="new", default=False,
+    cli.add_option("-n", "--new", action="store_true", dest="new", default=False,
                    help="Insist that the output directory previously not exist")
 
     (opts, args) = cli.parse_args()
