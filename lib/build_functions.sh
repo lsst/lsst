@@ -47,7 +47,7 @@ function user_is_root {
 function interrupted {
     echo Build has been interrupted!
     echo 
-    echo Be sure to run "lsstpkg remove $product $version" to clean up the mess
+    echo Be sure to run \"lsstpkg clean $product $version\" to clean up the mess
     echo 
     exit 2
 }
@@ -136,6 +136,7 @@ function doconfig {
         return 2
     fi
     echo ./configure --prefix=$installdir $*
+    echo ./configure --prefix=$installdir $* >> $buildlog
     ./configure --prefix=$installdir $* >> $buildlog 2>&1 || {
         echo "configure ..."
         tail -20 $buildlog
@@ -163,6 +164,7 @@ function make {
         return `missing_config make`
     fi
     echo $make $*
+    echo $make $* >> $buildlog 
     $make $* >> $buildlog 2>&1 || {
         echo "make ..."
         tail -20 $buildlog
@@ -179,6 +181,7 @@ function makeinstall {
         missing_config make; exit $?
     fi
     echo $make install
+    echo $make install >> $buildlog
     $make install >> $buildlog 2>&1 || {
         echo "make install ..."
         tail -20 $buildlog
@@ -196,15 +199,17 @@ function simplemake {
 }
 
 #@
-#  run "scons install declare"
+#  run "scons install declare".  The $sconsopt variable, set to "opt=3" by 
+#  default, will be included in the scons command line.
 #
 function simplescons {
     if [ -z "$SCONS_DIR" ]; then
         echo scons is not setup via eups
         return 4
     fi
-    echo scons install declare $*
-    scons install declare $* >> $buildlog 2>&1 || {
+    echo scons $sconsopt install declare $*
+    echo scons $sconsopt install declare $* >> $buildlog 
+    scons $sconsopt install declare $* >> $buildlog 2>&1 || {
         echo "scons ..."
         tail -20 $buildlog
         echo "$prog: scons install failed; see $PWD/$buildlog for details"
@@ -217,6 +222,7 @@ function simplescons {
 #
 function pysetup {
     echo python setup.py install $*
+    echo python setup.py install $* >> $buildlog
     python setup.py install $* >> $buildlog 2>&1 || {
         echo "python setup.py ..."
         tail -20 $buildlog
@@ -313,7 +319,7 @@ function unpack_tar_and_build {
         unpacking_and_building=
         return 1
     }
-    [ -n "$dosetupr" -a -f "ups/$product.table" ] && setup -r .
+    selfsetup   # "setup -r ." is only done if $setupTableDeps != ""
 
     # Now build and install the product
     if [ -f "$internalbuildfile" ]; then
@@ -371,6 +377,26 @@ function unpack_tar_and_enter {
     fi
     cd $subdir
 
+}
+
+#@ 
+#  Set up the package to be built.  This requires that the current directory 
+#  have a "ups" subdirectory containing a table file.  If none such file exists, 
+#  setup will not be attempted.  
+# 
+#  if $setupTableDeps is non-empty, setup will be done by running "setup -r ." 
+#  so that the dependencies from the table file are also setup.  If $dosetupr is
+#  empty, only a "setup -j -r ."  is done.  This prevents the table file from 
+#  overriding the environment required by manifest.
+#
+function selfsetup {
+    if [ -f "ups/$product.table" ]; then
+        if [ -n "$setupTableDeps" ]; then
+            setup -r .
+        else
+            setup -j -r .
+        fi
+    fi
 }
 
 #@

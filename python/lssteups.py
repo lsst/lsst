@@ -47,13 +47,11 @@ class DistribServer(eupsServer.ConfigurableDistribServer):
 
         if not self.config.has_key('DIST_URL'):
             self.config['DIST_URL'] = "%(base)s/%(product)s/%(version)s/%(path)s";
-        if not self.config.has_key('DIST_FLAVOR_URL'):
-            self.config['DIST_FLAVOR_URL'] = "%(base)s/%(product)s/%(version)s/%(flavor)s/%(path)s";
+        if not self.config.has_key('TARBALL_FLAVOR_URL'):
+            self.config['TARBALL_FLAVOR_URL'] = "%(base)s/%(product)s/%(version)s/%(flavor)s/%(path)s";
 
         if not self.config.has_key('EXTERNAL_DIST_URL'):
             self.config['EXTERNAL_DIST_URL'] = "%(base)s/external/%(product)s/%(version)s/%(path)s";
-        if not self.config.has_key('EXTERNAL_DIST_FLAVOR_URL'):
-            self.config['EXTERNAL_DIST_FLAVOR_URL'] = "%(base)s/external/%(product)s/%(version)s/%(flavor)s/%(path)s";
 
         if not self.config.has_key('FILE_URL'):
             self.config['FILE_URL'] = \
@@ -71,6 +69,13 @@ class DistribServer(eupsServer.ConfigurableDistribServer):
             self.config['MANIFEST_FILE_RE'] = \
                 r"^(?P<product>[^\-\s]+)(-(?P<version>\S+))?" + \
                 r"(@(?P<flavor>[^\-\s]+))?.manifest$"
+
+        if not self.config.has_key('LOCATION_FLAVOR_URL'):
+            self.config['LOCATION_FLAVOR_URL'] = \
+                "%(base)s/%(product)s/%(version)s/%(flavor)s/%(path)s";
+        if not self.config.has_key('EXTERNAL_LOCATION_FLAVOR_URL'):
+            self.config['EXTERNAL_LOCATION_FLAVOR_URL'] = \
+                "%(base)s/external/%(product)s/%(version)s/%(flavor)s/%(path)s";
 
         if not self.config.has_key('DISTRIB_CLASS'):
             self.setConfigProperty('DISTRIB_CLASS',
@@ -124,7 +129,6 @@ class BuildDistrib(eupsDistrib.DefaultDistrib):
         eupsDistrib.Distrib.__init__(self, Eups, distServ, flavor, tag, options,
                                      verbosity, log)
 
-        self.buildDir = self.getOption('buildDir', "_build_")
         self.setupfile = self.getOption('setupsFile', "eupssetups.sh")
 
     # @staticmethod   # requires python 2.4
@@ -144,16 +148,14 @@ class BuildDistrib(eupsDistrib.DefaultDistrib):
     parseDistID = staticmethod(parseDistID)  # should work as of python 2.2
 
     def installPackage(self, location, product, version, productRoot, 
-                       installDir=None, setups=None):
+                       installDir=None, setups=None, buildDir=None):
         """install a package, (typically) building from source.  The setups
         will be used to set the environment used to build the package.
         """
-
-        buildDir = None
-        try:
-            buildDir = self.makeBuildDirFor(productRoot, product, version)
-        except OSError, e:
-            raise RuntimeError("Failed to create build directory: " + str(e))
+        if not buildDir:
+            buildDir = self.getOption('buildDir', '_build_')
+        if self.verbose > 0:
+            print >> self.log, "Building in", buildDir
 
         # set the installation directory
         if installDir is None:
@@ -165,7 +167,10 @@ class BuildDistrib(eupsDistrib.DefaultDistrib):
         installDir = os.path.join(installRoot, self.Eups.flavor, installDir)
 
         if not os.path.isdir(buildDir):
-            raise RuntimeError("%s: not a directory (please remove)")
+            try:
+                os.makedirs(buildDir)
+            except:
+                raise RuntimeError("%s: unable to create build directory" % buildDir)
 
         # fetch the package from the server;  by default, the URL will be 
         # of the form pkgroot/location.  With this convention, the location
@@ -232,7 +237,7 @@ class BuildDistrib(eupsDistrib.DefaultDistrib):
                         path = path[p:]
 
                         if db.endswith("external/"):
-                            db = db[:-(len("exernal/"))]
+                            db = db[:-(len("external/"))]
                             out.append(db)
                             out.append("external")
                         else:
@@ -270,7 +275,7 @@ class BuildDistrib(eupsDistrib.DefaultDistrib):
                                 that a non-flavor-specific ID is preferred, 
                                 if supported.
         """
-        parts = self._getDistIdParts(self.getInstallDirParts())
+        parts = self._getDistIdParts(self._getInstallDirParts())
         if parts is None or len(parts) == 0:
             return None
 
@@ -294,8 +299,8 @@ class BuildDistrib(eupsDistrib.DefaultDistrib):
                                 is of interest, if supported.
         """
         return os.path.exists(self._getDistFile(serverDir, 
-                                                self.getDistIdParts(product, 
-                                                                    version)))
+                                                self._getDistIdParts(product, 
+                                                                     version)))
 
     def createPackage(self, serverDir, product, version, flavor=None):
         """Write a package distribution into server directory tree and 
@@ -313,9 +318,10 @@ class BuildDistrib(eupsDistrib.DefaultDistrib):
                                 that a non-flavor-specific package is preferred, 
                                 if supported.
         """
-        instparts = self.getInstallDirParts(product, version)
+        instparts = self._getInstallDirParts(product, version)
         installdir = os.path.join(instparts)
-        distIdFile = self._getDistFile(serverDir, getDistIdParts(instparts))
+        distIdFile = self._getDistFile(serverDir, 
+                                       self._getDistIdParts(instparts))
 
         distDir = os.path.dirname(distIdFile)
 
@@ -343,11 +349,3 @@ class BuildDistrib(eupsDistrib.DefaultDistrib):
         if distIdFile.endswith(".bld") and os.path.exists(tfile):
             shutil.copy(tfile, distIdFile)
 
-
-        
-
-
-
-
-
-        

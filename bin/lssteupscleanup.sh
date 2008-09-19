@@ -49,7 +49,7 @@ normsemaphore=
 if [ -e "$builddir/$build_semaphore" ]; then
     echo $prog: Another build apparently in progress in $builddir
     normsemaphore=1
-    exit 1
+    exit 2
 fi
 
 if [ -d "$builddir" ]; then
@@ -59,11 +59,11 @@ if [ -d "$builddir" ]; then
     }
 
     empty_build_dir
-    echo rmdir $builddir
-    rmdir $builddir || {
-        echo $prog: Failed to remove $builddir
-        exit 1
-    }
+#    echo rmdir $builddir
+#    rmdir $builddir || {
+#        echo $prog: Failed to remove $builddir
+#        exit 1
+#    }
 fi
 
 exit 0

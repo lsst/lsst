@@ -22,6 +22,7 @@ buildlog=build.log
 internalbuildfile="distrib.$bldext"
 build_semaphore="_BUILDING_"
 defsetupfile="./eupssetups.sh"
+sconsopt="opt=3"
 
 tmpdir=
 installdir=
@@ -36,6 +37,7 @@ function process_command_line {
             -t) tmpdir="$2"; shift;;
             -b) builddir="$2"; shift;;
             -r) pkgbase="$2"; shift;;
+            -o) sconsopt="opt=$2"; shift;;
             -D) fromdistrib="1" ;;
             *)  break;;
         esac
@@ -86,7 +88,10 @@ function process_command_line {
     fi
 
     if [ -z "$fromdistrib" ]; then
-        dosetupr="1"
+        # when eups distrib is building, an eupssetup.sh file will be provided
+        # that sets up the environement; thus, we will ignore the dependencies
+        # specified in the table file.  
+        setupTableDeps="1"
     fi
 
     return 0

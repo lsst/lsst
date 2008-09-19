@@ -71,7 +71,7 @@ normsemaphore=
 if [ -e "$builddir/$build_semaphore" ]; then
     echo $prog: Another build apparently in progress in $builddir
     normsemaphore=1
-    exit 1
+    exit 2
 fi
 touch "$builddir/$build_semaphore"
 cd $builddir
@@ -85,7 +85,7 @@ if [ -n "$setupfile" ]; then
     echo "Setting up environment (via $setupfile)..."
     . $setupfile || {
         echo $prog: Failed to load environment from $setupfile
-        return 1
+        exit 1
     }
 fi
 
