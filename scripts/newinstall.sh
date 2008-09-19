@@ -38,15 +38,15 @@ fi
 
 # Create the initial set of directories 
 #
-mkdir -p eups _build_
-cat > _build_/README <<EOF
+mkdir -p eups EupsBuildDir
+cat > EupsBuildDir/README <<EOF
 This directory is used to build packages, 
 EOF
 
 # Download and install EUPS
 # 
 if [ -z "$owneups" ]; then
-    cd _build_ && mkdir eups-default && cd eups-default
+    cd EupsBuildDir && mkdir eups-default && cd eups-default
 
     echo "Pulling down EUPS..."
     $httpget $EUPS_PKGROOT/external/eups/eups-default.tar.gz >eups-default.tar.gz
@@ -79,7 +79,7 @@ if [ -z "$owneups" ]; then
     [ -e default ] && rm default
     ln -s $eupsver default
     cd $LSST_HOME || exit 2
-    rm -rf _build_/eups-default
+    rm -rf EupsBuildDir/eups-default
 
     # load EUPS into the environment
     source eups/default/bin/setups.sh
