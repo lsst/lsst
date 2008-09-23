@@ -18,7 +18,7 @@
 <font size="+0">Ray Plante, NCSA</font><br>
 <font font-weight="400" size="-1">
 <!-- hhmts start -->
-Last modified: Tue Aug 26 08:23:16 2008
+Last modified: Tue Sep 23 15:21:49 2008
 <!-- hhmts end --></font></h1>
 
 <p>
@@ -221,6 +221,16 @@ this recipe:
        take about 60 minutes.  
        </p>
 
+<blockquote class="note">
+<strong>Note:</strong><br />
+If you do not have <code>curl</code> on your machine, you can use
+<code>wget</code> instead, as in:
+<p class="code">% curl -o newinstall.sh http://dev.lsstcorp.org/dmspkgs/newinstall.sh
+curl: Command not found.
+% <strong>wget http://dev.lsstcorp.org/dmspkgs/newinstall.sh</strong>
+% bash newinstall.sh LSSTPipe</p>
+</blockquote>
+
        <p>
        This script has two phases to it.  First, the script will
        create some directories that will contain installed software
@@ -379,17 +389,17 @@ Required product python 2.5.2 already installed
 now installing boost 1.35.0
 Version: svn
 Setting up environment (via ./eupssetups.sh)...
-/usr/bin/curl http://dev.lsstcorp.org/tstdms/external/boost/1.35.0/boost_1_35_0.tar.gz > boost_1_35_0.tar.gz
+/usr/bin/curl http://dev.lsstcorp.org/dmspkgs/external/boost/1.35.0/boost_1_35_0.tar.gz > boost_1_35_0.tar.gz
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
 100 27.2M  100 27.2M    0     0  7198k      0  0:00:03  0:00:03 --:--:-- 7257k
 boost_1_35_0.tar.gz
 tar zvxf boost_1_35_0.tar.gz
-./configure --prefix=/home/lsst/tstdms/Linux64/external/boost/1.35.0
+./configure --prefix=/home/lsst/dmspkgs/Linux64/external/boost/1.35.0
 /usr/bin/make
 /usr/bin/make install
 Emptying the build directory
-rmdir /home/lsst/tstdms/_build_/boost-1.35.0
+rmdir /home/lsst/dmspkgs/_build_/boost-1.35.0
 Package boost 1.35.0 installed successfully
 </p>
 

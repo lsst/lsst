@@ -117,16 +117,16 @@ class Manifest:
             else:
                 instfile = "%s-%s.tar.gz" % (pkgname, version)
             
-        if not tablefile:
-            tablefile = os.path.join(pkgpath, pkgname+".table")
         if not installdir:
             installdir = os.path.join(pkgpath, pkgname, version)
+        if not tablefile:
+            tablefile = os.path.join(pkgpath, pkgname+".table")
         if not installid:
             if insttype:
                 installid = "%s:" % insttype
             else:
                 installid = ''
-            installid += os.path.join(pkgpath,instfile)
+            installid += os.path.join(installdir,instfile)
 
         self.addRecord(pkgname, flavor, version, tablefile, installdir,
                        installid)
