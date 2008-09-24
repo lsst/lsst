@@ -46,12 +46,11 @@ class DistribServer(eupsServer.ConfigurableDistribServer):
             self.config['LIST_FLAVOR_URL'] = "%(base)s/%(flavor)s/%(tag)s.list";
 
         if not self.config.has_key('DIST_URL'):
-            self.config['DIST_URL'] = "%(base)s/%(product)s/%(version)s/%(path)s";
+            self.config['DIST_URL'] = "%(base)s/%(path)s";
+        if not self.config.has_key('EXTERNAL_DIST_URL'):
+            self.config['EXTERNAL_DIST_URL'] = "%(base)s/external/%(path)s";
         if not self.config.has_key('TARBALL_FLAVOR_URL'):
             self.config['TARBALL_FLAVOR_URL'] = "%(base)s/%(product)s/%(version)s/%(flavor)s/%(path)s";
-
-        if not self.config.has_key('EXTERNAL_DIST_URL'):
-            self.config['EXTERNAL_DIST_URL'] = "%(base)s/external/%(product)s/%(version)s/%(path)s";
 
         if not self.config.has_key('FILE_URL'):
             self.config['FILE_URL'] = \
@@ -69,13 +68,6 @@ class DistribServer(eupsServer.ConfigurableDistribServer):
             self.config['MANIFEST_FILE_RE'] = \
                 r"^(?P<product>[^\-\s]+)(-(?P<version>\S+))?" + \
                 r"(@(?P<flavor>[^\-\s]+))?.manifest$"
-
-        if not self.config.has_key('LOCATION_FLAVOR_URL'):
-            self.config['LOCATION_FLAVOR_URL'] = \
-                "%(base)s/%(product)s/%(version)s/%(flavor)s/%(path)s";
-        if not self.config.has_key('EXTERNAL_LOCATION_FLAVOR_URL'):
-            self.config['EXTERNAL_LOCATION_FLAVOR_URL'] = \
-                "%(base)s/external/%(product)s/%(version)s/%(flavor)s/%(path)s";
 
         if not self.config.has_key('DISTRIB_CLASS'):
             self.setConfigProperty('DISTRIB_CLASS',
@@ -153,7 +145,7 @@ class BuildDistrib(eupsDistrib.DefaultDistrib):
         will be used to set the environment used to build the package.
         """
         if not buildDir:
-            buildDir = self.getOption('buildDir', '_build_')
+            buildDir = self.getOption('buildDir', 'EupsBuildDir')
         if self.verbose > 0:
             print >> self.log, "Building in", buildDir
 
@@ -211,59 +203,6 @@ class BuildDistrib(eupsDistrib.DefaultDistrib):
         except OSError, e:
             raise RuntimeError("Failed to clean up build dir, " + buildDir)
 
-    def _getInstallDirParts(self, product, version):
-        path = None
-        out = []
-        if not self.Eups.noeups:
-            pinfo = self.Eups.listProducts(product, version)
-            if len(pinfo) > 0:
-                pinfo = ping[0]
-                path = pinfo[3]
-                db = pinfo[2]
-
-                if path.startswith(db) and db != path:
-                    out.append(db)
-                    path = path[len(db)+1:]
-
-                    if path.startswith("external/"):
-                        out.append("external")
-                        path = path[len("external/"):]
-
-                    out.append(path)
-                else:
-                    p = path.find(os.path.join(product,version))
-                    if p > 0:
-                        db = path[:p]
-                        path = path[p:]
-
-                        if db.endswith("external/"):
-                            db = db[:-(len("external/"))]
-                            out.append(db)
-                            out.append("external")
-                        else:
-                            out.append(db)
-                        if out[0][-1] == '/': out[0] = out[0][:-1]
-
-                out.append(path)
-
-        return out
-
-    def _getDistIdParts(self, installParts):
-        parts = installParts
-
-        out = []
-        if "external" in parts:
-            out.append("external")
-
-        installdir = apply(os.path.join, parts)
-        buildfile = product+".bld"
-        if not os.path.exists(installdir, "ups", buildfile):
-            buildfile = "%s-%s.tar.gz" % (product, version)
-        out.append(buildfile)
-
-        return out;
-
-
     def getDistIdForPackage(self, product, version, flavor=None):
         """return the distribution ID that for a package distribution created
         by this Distrib class (via createPackage())
@@ -275,15 +214,7 @@ class BuildDistrib(eupsDistrib.DefaultDistrib):
                                 that a non-flavor-specific ID is preferred, 
                                 if supported.
         """
-        parts = self._getDistIdParts(self._getInstallDirParts())
-        if parts is None or len(parts) == 0:
-            return None
-
-        return "lsstbuild:" + os.path.join(parts)
-
-    def _getDistFile(self, serverDir, distidparts):
-        return os.path.join([serverDir, distidparts[0:-1], product, 
-                             version, distidparts[-1]])
+        return "lsstbuild:" + self._getDistLocation(product, version)
 
     def packageCreated(self, serverDir, product, version, flavor=None):
         """return True if a distribution package for a given product has 
@@ -298,10 +229,42 @@ class BuildDistrib(eupsDistrib.DefaultDistrib):
                                 that the status of a non-flavor-specific package
                                 is of interest, if supported.
         """
-        return os.path.exists(self._getDistFile(serverDir, 
-                                                self._getDistIdParts(product, 
-                                                                     version)))
+        return os.path.exists(os.path.join(serverDir, 
+                                           self._getDistLocation(product, 
+                                                                 version)))
 
+
+    def _getDistLocation(self, product, version):
+        tarfile = "%s-%s.tar.gz" % (product, version)
+
+        if not self.noeups:
+            try :
+                pinfo = self.Eups.listProducts(product, version)[0]
+                path = pinfo[3]
+                db = pinfo[2]
+
+                if path.startswith(db) and db != path:
+                    installdir = path[len(db)+1:]
+                else:
+                    p = path.find(os.path.join(product,version))
+                    if p > 0:
+                        db = path[:p]
+
+                        if db.endswith("external/"):
+                            p -= len("external/")
+                        installdir = path[p:]
+
+                buildfile = product+".bld"
+                if not os.path.exists(os.path.join(pinfo[3], "ups", buildfile)):
+                    buildfile = tarfile
+
+                return os.path.join(installdir, buildfile)
+
+            except IndexError:
+                pass
+
+        return os.path.join(product, version, tarfile)
+        
     def createPackage(self, serverDir, product, version, flavor=None):
         """Write a package distribution into server directory tree and 
         return the distribution ID.  If a package is made up of several files,
@@ -318,11 +281,9 @@ class BuildDistrib(eupsDistrib.DefaultDistrib):
                                 that a non-flavor-specific package is preferred, 
                                 if supported.
         """
-        instparts = self._getInstallDirParts(product, version)
-        installdir = os.path.join(instparts)
-        distIdFile = self._getDistFile(serverDir, 
-                                       self._getDistIdParts(instparts))
-
+        distId = self._getDistLocation(product, version)
+        installdir = os.path.dirname(distId)
+        distIdFile = os.path.join(serverDir, distId)
         distDir = os.path.dirname(distIdFile)
 
         # make the product directory
@@ -332,13 +293,13 @@ class BuildDistrib(eupsDistrib.DefaultDistrib):
         # copy the table file over, if available
         tfile = os.path.join(installdir, "ups", product+".table")
         if os.path.exists(tfile):
-            shutil.copyfile(tfile, os.join,dir(distDir, os.path.basename(tfile)))
+            shutil.copyfile(tfile, os.path.join(distDir,os.path.basename(tfile)))
 
         # copy over the src tar file, if available
         tfile = os.path.join(installdir, "ups", 
                              "%s-%s.tar.gz" % (product, version) )
         if os.path.exists(tfile):
-            shutil.copyfile(tfile, os.join,dir(distDir, os.path.basename(tfile)))
+            shutil.copyfile(tfile, os.join(distDir, os.path.basename(tfile)))
         else:
             if self.verbose > 0:
                 print >> self.log, "Note: Don't know how to package source", \
