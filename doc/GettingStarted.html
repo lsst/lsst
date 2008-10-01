@@ -18,7 +18,7 @@
 <font size="+0">Ray Plante, NCSA</font><br>
 <font font-weight="400" size="-1">
 <!-- hhmts start -->
-Last modified: Wed Oct  1 05:44:48 2008
+Last modified: Wed Oct  1 09:31:23 2008
 <!-- hhmts end --></font></h1>
 
 <p>
@@ -47,28 +47,32 @@ document the "LSST Build and Test Systems".
          <dt> <a href="#lh_install">2.3.  Installing Additional Packages</a></dt>
          <dt> <a href="#lh_prob">2.4.  If Something Goes Wrong</a>  </dt>
        </dl> </dd>
-  <dt> <a href="#sandbox">3.  Creating a Development Sandbox</a>       </dt>
-  <dt> <a href="#rcfile">4.  Updating Your Shell RC File</a>           </dt>
-  <dt> <a href="#testdata">5.  Downloading test data</a>               </dt>
-  <dt> <a href="#srcco">6.  Checking out LSST source code</a>          </dt>
+  <dt> <a href="#using">3. Using and Maintaining the Software Stack</a> </dt>
   <dd> <dl>
-         <dt> <a href="#svnlsst">6.1. Using Subversion for LSST
+         <dt> <a href="#loadLSST">3.1. Setting Up Your Environment</a> </dt>
+         <dt> <a href="#rcfile">3.2.   Updating Your Shell RC File</a> </dt>
+         <dt> <a href="#sandbox">3.3.  Creating a Development Sandbox</a> </dt>
+         <dt> <a href="#updating">3.4. Updating Your Software Stack</a> </dt>
+         <dt> <a href="#testdata">3.5. Downloading test data</a> </dt>
+       </dl> </dd>
+  <dt> <a href="#srcco">4.  Checking out LSST source code</a>          </dt>
+  <dd> <dl>
+         <dt> <a href="#svnlsst">4.1. Using Subversion for LSST
               Development</a>                                          </dt> 
-         <dt> <a href="#svnsurvival">6.2. An SVN Survival Guide</a>    </dt> 
+         <dt> <a href="#svnsurvival">4.2. An SVN Survival Guide</a>    </dt> 
        </dl> </dd>
-  <dt> <a href="#work">7.  Working with LSST packages</a>              </dt>
+  <dt> <a href="#work">5.  Working with LSST packages</a>              </dt>
   <dd> <dl>
-         <dt> <a href="#eups">7.1. An Introduction to EUPS</a>         </dt>
-         <dt> <a href="#build">7.2. Building and Installing an LSST
+         <dt> <a href="#eups">5.1. An Introduction to EUPS</a>         </dt>
+         <dt> <a href="#build">5.2. Building and Installing an LSST
               Package</a>                                              </dt> 
-         <dt> <a href="#newpkg">7.3. Creating a New LSST Package</a>   </dt>
-         <dt> <a href="#release">7.4. Creating a Package Release</a>   </dt>
+         <dt> <a href="#newpkg">5.3. Creating a New LSST Package</a>   </dt>
+         <dt> <a href="#release">5.4. Creating a Package Release</a>   </dt>
        </dl> </dd>
-  <dt> <a href="#resources">8.  Additional Resources</a> </dt>
+  <dt> <a href="#resources">6.  Additional Resources</a> </dt>
   <dd> <dl>
-         <dt> <a href="#trac">8.1  Issue Tracking with Trac</a> </dt>
-         <dt> <a href="#contint">8.2  Build Testing with
-              BuildBot</a> </dt>
+         <dt> <a href="#trac">6.1  Issue Tracking with Trac</a> </dt>
+         <dt> <a href="#contint">6.2  Build Testing with BuildBot</a> </dt>
        </dl> </dd>
 </dl>
 
@@ -99,21 +103,24 @@ In brief, to create a complete LSST development environment, you will..
   <li> Use the LSST distribution tools to download and install the
         software stack (<a href="#lsst_home">Section 2</a>), </li>
   <li> Create a software installation sandbox
-       (<a href="#sandbox">Section 3</a>), </li>
+       (<a href="#sandbox">Section 3.3</a>), </li>
   <li> Use the tools to download selected test data
-       (<a href="#testdata">Section 5</a>), and </li>
+       (<a href="#testdata">Section 3.4</a>), and </li>
   <li> Check out source code from the code repository
-       (<a href="#srcco">Section 6</a>) </li>
+       (<a href="#srcco">Section 4</a>) </li>
 </ol>
 
 <p>
-Once you have an <code>LSST_HOME</code> area
-installed (or have one that was installed by someone else made
-available to you), you will probably find it convenient to
-add some lines to your shell "rc" file (<a href="#rcfile">Section
-4</a>).  You will also need to become familiar with the developers'
-build process; an introduction to this covered in
-<a href="#work">Section 7</a>.  
+If someone else has already installed the LSST stack on your platform,
+then you skip the installation instructions and go directly to
+<a href="#using">Section 3</a> to learn how to using the software
+stack.  Either way, once you have an <code>LSST_HOME</code> area
+installed, you will probably find it convenient to add some lines to
+your shell "rc" file (<a href="#rcfile">Section 3.2</a>).  You will
+also need to become familiar with the developers' build process:
+<a href="#srco">Section 4</a> introduces our Subversion code
+repository, and <a href="#work">Section 5</a> explains how to build
+LSST packages from source.  
 </p>
 
 <p>
@@ -269,7 +276,7 @@ software environment:
 <p class="code">% source loadLSST.csh    # for tcsh users
 % source loadLSST.sh     # for bash users</p>
 
-(See section 4 for more details.)
+(See <a href="#using">Section 3</a> for more details.)
        
 <a name="lh_results">
 <h3>2.2.  What You've Created</h3></a>
@@ -278,7 +285,7 @@ If the above installation process completes successfully, then you
 should notice the following:
 
 <p class="code">% ls
-_build_  eups  Linux  loadLSST.csh  loadLSST.sh  newinstall.sh  ups_db
+EupsBuildDir  eups  Linux  loadLSST.csh  loadLSST.sh  newinstall.sh  ups_db
 </p>
        
 <p>
@@ -301,7 +308,7 @@ In summary, the contents include:
   <li> <code>loadLSST.csh</code> and
        <code>loadLSST.sh</code>: 
        the environment initialization scripts.  </li>
-  <li> <code>_build_</code>: a scratch directory used
+  <li> <code>EupsBuildDir</code>: a scratch directory used
        for building packages before they are installed.  </li>
   <li> <code>newinstall.sh</code>:  the script
        you just ran. </li>
@@ -317,7 +324,8 @@ The <code>loadLSST.csh</code> and
 
 <p>
 A user would usually do this at the beginning of a session, either
-explicitly or via a shell "rc" file (see section 4).
+explicitly or via a shell "rc" file (see <a href="rcfile">Section
+3.2</a>). 
 </p>
 
 The "flavor" directory--usually called 
@@ -400,7 +408,7 @@ tar zvxf boost_1_35_0.tar.gz
 /usr/bin/make
 /usr/bin/make install
 Emptying the build directory
-rmdir /home/lsst/dmspkgs/_build_/boost-1.35.0
+rmdir /home/lsst/dmspkgs/EupsBuildDir/boost-1.35.0
 Package boost 1.35.0 installed successfully
 </p>
 
@@ -424,7 +432,7 @@ that is currently recommended by the project.
 <p>
 As the first line of its output is meant to suggest, the <code>lsstpkg</code> 
 command is a thin layer around the <code>eups distrib</code> command.
-To learn more about the eups tool, see <a href="#eups">section 7.1</a>.
+To learn more about the eups tool, see <a href="#eups">section 5.1</a>.
 </p>
 
 <blockquote class="note">
@@ -458,7 +466,7 @@ this:
 </p>
 
 <p class="code">...
-lssteupsbuild.sh: scons install failed; see .../_build_/ip_diffim-3.0/ip_diffim-3.0/build.log for details
+lssteupsbuild.sh: scons install failed; see .../EupsBuildDir/ip_diffim-3.0/ip_diffim-3.0/build.log for details
 Failed to build and install ip_diffim-3.0.tar.gz
 </p>
 
@@ -512,7 +520,7 @@ libraries install.  Follow the link to the page on your architecture
 <p>
 If you are inclined to investigate the problem further on your
 platform (always appreciated), note that you can find the uninstalled
-package under <code>$LSST_HOME/_build_</code>.  Usually you must
+package under <code>$LSST_HOME/EupsBuildDir</code>.  Usually you must
 descend two directories named after the failed package
 (e.g. "ip_diffim-3.0") to find the build log called
 <code>build.log</code>.  
@@ -523,22 +531,23 @@ If the problem has been corrected (either on the server or with your
 OS), you restart the installation process where you left off without
 having to reinstall packages which were previously installed
 correctly.  Before you restart though, it's a good idea to first
-remove the package that failed.  This is also done with the
-<code>lsstpkg</code> command.  For example, suppose you had a failure
-while installing Boost.  First, <code>lsstpkg</code> will require that
-you specify the version of the package, so you will need to determine
-that.  This is obvious from the error message shown above (the version
-was "3.0").  To remove the package, type:
+clean out the package that failed.  This is also done with the
+<code>lsstpkg</code> command which can remove the any remnants of a
+partially built or installed package.  For example, suppose you had a
+failure while installing Boost.  First, <code>lsstpkg</code> will
+require that you specify the version of the package, so you will need
+to determine that.  This is obvious from the error message shown above
+(the version was "3.0").  To clean out the package, type:
 </p>
 
-<p class="code">% lsstpkg remove ip_diffim 3.0
+<p class="code">% lsstpkg clean ip_diffim 3.0
 </p>
 
 <p>
 You can now restart <code>lsstpkg</code>:
 </p>
 
-<p class="code">% lsstpkg fetch LSSTPipe
+<p class="code">% lsstpkg install LSSTPipe
 Installing 0.1 of LSSTPipe
 Product termcap (version 1.3.1, flavor Linux) is already declared
 Product tcltk (version 8.5a4, flavor Linux) is already declared
@@ -546,69 +555,96 @@ Product readline (version 5.2, flavor Linux) is already declared
 ...
 </p>
 
-<a name="sandbox">
-<h2>3.  Creating a Development Sandbox</h2></a>
+Note that you do not need to the entire LSSTPipe stack installed in
+order to start working with parts of the stack.  If you are able to
+run the <code>lsstpkg</code> command, then you have a minimal stack
+sufficient for checking out code and building new packages.  If there
+is a specific package that you need that is not yet installed
+(<em><a href="#eupslist">how to list what's installed</a></em>), you
+can try using the <code>lsstpkg</code> to install it directly
+(<a href="#lh_install">Section 2.3</a>).  
+
+<a name="using">
+<h2>3.  Using and Maintaining the Software Stack</h2></a>
+
+You should now have an LSST software stack that you can start using.
+This section explains how set the LSST software environment each time
+you start a session (Sections <a href="#loadLSST">3.1</a> and
+<a href="#rcfile">3.2</a>) as well as how to install new packages
+(Sections <a href="#sandbox">3.3</a> and <a href="#updating">3.4</a>)
+and test data (<a href="#testdata"3.5>Section 3.5</a>).
+
+<a name="loadLSST">
+<h3>3.1. Setting Up Your Environment</h3></a>
+
+Whenever you start a new session (i.e. start a new shell), you will
+need to first load the LSST software environment.  The easiest way to
+do this by sourcing the stack's <code>loadLSST.*sh</code> set-up
+script.  For example, if the stack is installed in the
+<code>/lsst/stack</code> directory and you use the bash shell, then
+you can type:
+
+<p class="code">% source loadLSST.sh </p>
+
+If you use csh or tcsh as you shell, you instead type:
+
+<p class="code">% source loadLSST.csh </p>
 
 <p>
-You may be working on a system in which the software stack has been
-installed for you by an administrator, to be shared by a group of
-users.  If you do not have write permission on
-<code>$LSST_HOME</code>, you will not be able to install new
-packages into that stack.  Or, if you do have permission, you may not
-want new packages to get installed there (e.g. because you don't want
-to make an experimental or "in-development" package installation
-visible to others).  In both situations, it is useful to have an
-private "sandbox" where you can install new packages.
+Now you are ready to use and build LSST packages.
 </p>
 
 <p>
-The <code>lsst</code> packages provides a script to create a sandbox
-directory.  Once created, we can integrate this private sandbox into
-build system by setting the <code>LSST_DEVEL</code> environment
-variable to the sandbox directory name.  Then (after sourcing
-<code>loadLSST.*sh</code>), this directory will not only become the
-directory that packages are installed into by default, it will be the
-first directory the EUPS system will look for packages to load into
-the environment.  If it doesn't find it in <code>$LSST_DEVEL</code>,
-it will look in <code>$LSST_HOME</code>.  Thus, the sandbox only needs
-to contain packages one wishes to override packages in <code>$LSST_HOME</code>.
+Sourcing this set-up script does the following:
+<ul>
+  <li> Sets up the <a href="#eups">EUPS</a> tool environment </li>
+  <li> Prepends <code>$LSST_DEVEL</code> to the <code>EUPS_PATH</code>
+       environment variable (discussed in <a href="#sandbox">Section 3.3</a>).
+       </li>
+  <li> Defines some helpful environment variables:
+       <ul>
+         <li> <code>LSST_HOME</code>:  the root directory of the stack
+              (e.g. <code>/lsst/stack</code>) </li>
+         <li> <code>LSST_PKGS</code>:  the directory where packages
+              are installed--that is, <code>$LSST_HOME/</code><em>platform</em>
+              where <em>platform</em> indicates your development
+              platform (or <em>flavor</em>: e.g. <code>Linux</code>,
+              <code>Linux64</code>, or <code>DarwinX86</code>).  </li>
+         <li> <code>LSST_SVN</code>:  the root of the Subversion code
+              repository.  </li>
+         <li> <code>LSST_DMS</code>:  the code repository directory
+              where LSST software packages are found. </li>
+       </ul> </li>
+  <li> Sets up the basic <code>lsst</code> package.  </li>
+</ul>
 </p>
 
 <p>
-To create a sandbox called <code>lsstsandbox</code> under the current
-directory, use the <code>mksandbox</code> command:
+Note that you are not obligated use this setup script; some users may
+prefer to take greater control over the LSST environment.  If you
+don't use the <code>loadLSST.*sh</code> script, then you will at a
+minimum need to set up EUPS yourself (by sourcing
+<code>eups/default/bin/setups.*sh</code> under the
+<code>$LSST_HOME</code> directory).  Then you will need to use the
+<a href="#eupsselect">EUPS command setup</a> to set up the individual
+packages you need.  
 </p>
 
-<p class="code">% mksandbox lsstsandbox
-% ls lsstsandbox
-Linux64 ups_db</p>
-
-<blockquote class="note">
-<strong>Command not found?</strong><br />
-Did running <code>mksandbox</code> return <code>mksandbox: Command not
-found</code>?  This means your LSST software environment is not set.
-This is most easily corrected by typing "<code>source loadLSST.sh</code>"
-(for bash users) or "<code>source loadLSST.csh</code>" (for csh/tcsh
-users).  If you do not use <code>loadLSST.*sh</code> setup EUPS, then
-you need to make sure the <code>lsst</code> package is setup by typing
-<code>setup lsst</code>.
-</blockquote>
-
-Now to use this sandbox, set <code>LSST_DEVEL</code> and reset your
-LSST software environment.  For example, if your shell is bash:
-
-<p class="code">% export LSST_DEVEL=$PWD/lsstsandbox
-% source $LSST_HOME/loadLSST.sh
-</p>
-
-or if you are using csh/tcsh:
-
-<p class="code">% setenv LSST_DEVEL $PWD/lsstsandbox
-% source $LSST_HOME/loadLSST.csh
+<p>
+When you set up the <code>lsst</code> package you will get basic
+environment needed to build or install an LSST package.  This
+includes the following packages,
+<ul>
+  <li> <code>python</code> </li>
+  <li> <code>scons</code>, used to build LSST packages from source</li>
+  <li> <code>lsst</code> and <code>lssteups</code>, providing the
+       <code>lsstpkg</code> tool used for installing packages
+       downloaded from the LSST development server.  </li>
+</ul>
 </p>
 
 <a name="rcfile">
-<h2>4.  Updating Your Shell RC File</h2></a>
+<h3>3.2.  Updating Your Shell RC File</h3></a>
 
 <p>
 If you are going to do regular development, then you will probably
@@ -649,7 +685,7 @@ Alternatively, if you use <code>bash</code>:
 # are helpful.  
 #
 export LSST_HOME=/the/installation/root4/LSST
-export LSST_DEVEL=/my/LSST/sandbox/$EUPS_FLAVOR 
+export LSST_DEVEL=/my/LSST/sandbox
 
 #
 # the setlsst command loads the environment on demand
@@ -671,22 +707,22 @@ Note these comments:
        Any needed environment variables (namely,
        <code>$LSST_HOME</code> and <code>$EUPS_PATH</code>) are set to
        defaults.  
-       </li>
+       </li> <p />
 
   <li> If you chose not to create a sandbox, do not define
        <code>LSST_DEVEL</code>.  New packages will automatically be
-       installed into <code>$LSST_HOME</code> instead.  </li>
+       installed into <code>$LSST_HOME</code> instead.  </li> <p />
 
   <li> If you uncomment the last line, the LSST environment will be
        loaded by default with the start of each new shell.  Doing this
        automatically or manually is a matter of your preference.
-       </li>
+       </li> <p />
 
   <li> These lines are just suggestions; you are welcome to specialize
        them to your taste.  For instance, you may add EUPS
        <code>setup</code> commands to select certain packages by
-       default (see <a href="#eups">section 7.1</a> for details).
-       </li>
+       default (see <a href="#eups">section 5.1</a> for details).
+       </li> <p />
 
   <li> If you have other EUPS-managed directories besides
        <code>$LSST_HOME</code> and
@@ -700,8 +736,126 @@ Note these comments:
 </ul>
 
 
+
+<a name="sandbox">
+<h3>3.3  Creating a Development Sandbox</h3></a>
+
+<p>
+You may be working on a system in which the software stack has been
+installed for you by an administrator, to be shared by a group of
+users.  If you do not have write permission on
+<code>$LSST_HOME</code>, you will not be able to install new
+packages into that stack.  Or, if you do have permission, you may not
+want new packages to get installed there (e.g. because you don't want
+to make an experimental or "in-development" package installation
+visible to others).  In both situations, it is useful to have an
+private "sandbox" where you can install new packages.
+</p>
+
+<p>
+The <code>lsst</code> packages provides a script to create a sandbox
+directory.  Once created, we can integrate this private sandbox into
+build system by setting the <code>LSST_DEVEL</code> environment
+variable to the sandbox directory name.  Then (after sourcing
+<code>loadLSST.*sh</code>), this directory will not only become the
+directory that packages are installed into by default, it will be the
+first directory the EUPS system will look for packages to load into
+the environment.  If it doesn't find it in <code>$LSST_DEVEL</code>,
+it will look in <code>$LSST_HOME</code>.  Thus, the sandbox only needs
+to contain packages one wishes to override packages in <code>$LSST_HOME</code>.
+</p>
+
+<p>
+To create a sandbox called <code>lsstsandbox</code> under the current
+directory, use the <code>mksandbox</code> command:
+</p>
+
+<p class="code">% mksandbox lsstsandbox
+% ls lsstsandbox
+Linux64 ups_db</p>
+
+<blockquote class="note">
+<strong>Command not found?</strong><br />
+Did running <code>mksandbox</code> return <code>mksandbox: Command not
+found</code>?  This means your LSST software environment is not set
+(discussed in <a href="#loadLSST">Section 3.1</a>).  This is most
+easily corrected by typing "<code>source loadLSST.sh</code>" (for bash
+users) or "<code>source loadLSST.csh</code>" (for csh/tcsh users).  If
+you do not use <code>loadLSST.*sh</code> setup EUPS, then you need to
+make sure the <code>lsst</code> package is setup by typing 
+<code>setup lsst</code>.
+</blockquote>
+
+Now to use this sandbox, set <code>LSST_DEVEL</code> and reset your
+LSST software environment.  For example, if your shell is bash:
+
+<p class="code">% export LSST_DEVEL=$PWD/lsstsandbox
+% source $LSST_HOME/loadLSST.sh
+</p>
+
+or if you are using csh/tcsh:
+
+<p class="code">% setenv LSST_DEVEL $PWD/lsstsandbox
+% source $LSST_HOME/loadLSST.csh
+</p>
+
+<a name="updating">
+<h3>3.4.  Updating Your Software Stack </h3></a>
+
+<p>
+If you installed the software stack yourself
+(<a href="#lsst_home">Section 2</a>), then you probably know that you
+can use the <code>lsstpkg</code> to install new packages.  If not,
+review <a href="#lh_install">Section 2.3</a> to see how to use this
+tool to install individual packages.  
+</p>
+
+<p>
+To get the latest versions of required pipeline packages, you try
+re-installing the <em>pseudo-package</em> <code>LSSTPipe</code> at any
+time:
+</p>
+
+<p class="code">% lsstpkg install LSSTPipe
+Installing 0.1 of LSSTPipe
+Product tcltk (version 8.5a4, flavor Linux) is already declared
+Product python (version 2.5.2, flavor Linux) is already declared.
+...
+</p>
+
+<p>
+This will install what are considered the "current" versions of all of
+the pipeline packages.  If "current" set has not changed since the
+last time you ran this, then you will only see above kinds of messages
+about a package already being installed.  If a new package has been
+added to the <code>LSSTPipe</code> set or if the "current" version of
+a package has changed, the new package will be downloaded and
+installed.  
+</p>
+
+<p>
+Note that new versions of packages may become available that are not
+yet considered "current".  If you want to install a non-current
+version of a package, you will need to request it explicitly:
+</p>
+
+<p class="code">% lsstpkg install afw 3.2</p>
+
+<p>
+If you want to just find out what versions of a package are
+available from the server, use can use <code>lsstpkg list</code>:
+</p>
+
+<p class="code">% lsstpkg list afw
+eups distrib list afw
+Available products from primary server (http://dev.lsstcorp.org/dmspkgs):
+  afw                  generic    3.0
+  afw                  generic    3.1
+  afw                  generic    3.2
+</p>
+
 <a name="testdata">
-<h2>5.  Downloading Test Data</h2></a>
+<h3>3.5.  Downloading Test Data</h3></a>
 
 <blockquote class="note">
 <strong>Note:</strong><br />
@@ -709,7 +863,7 @@ This section is under construction...
 </blockquote>
 
 <a name="srcco">
-<h2>6.  Checking Out LSST Source Code</h2></a>
+<h2>4.  Checking Out LSST Source Code</h2></a>
 
 <p>
 We use <a href="http://www.subversion.org/">Subversion (svn)</a> as our 
@@ -752,7 +906,7 @@ pointers to binary distributions as well.
 <p>
 If you are already familiar with using the Subversion client,
 <code>svn</code>, then skip to <a href="#svnstruct">the next section,
-"Repository Organization"</a>.  Note that section 6.2 provides a
+"Repository Organization"</a>.  Note that Section 4.2 provides a
 <a href="#svnsurvival">survival guide to SVN.</a> 
 </p>
 
@@ -886,7 +1040,7 @@ These sub-trees play the following roles:
        milestone is reached, the developer creates a versioned release
        of the package by copying the trunk into a subdirectory of
        <code>tags</code> named after the version--e.g.,
-       <code>tags/1.0</code>.  (See <a href="#release">section 7.4,
+       <code>tags/1.0</code>.  (See <a href="#release">section 5.4,
        "Creating a Package Release"</a> for details.)</dd>
 
   <dt> <code>tickets</code>
@@ -961,7 +1115,7 @@ doc  examples  include  lib  python  SConstruct  src  tests  ups
 </p>
 
 <p>
-You are now ready to hack!  Proceed to <a href="#work">section 7,
+You are now ready to hack!  Proceed to <a href="#work">section 5,
 "Working with LSST packages"</a> to learn more about building an LSST
 package.  
 </p>
@@ -1246,7 +1400,7 @@ represented by a subdirectory called <code>ups_db</code>.  (Typically, a
 <code>EUPS_PATH</code> directory also contains the actual packages
 registered in the database, but it doesn't have to.)   When you select
 a package with the EUPS command, <code>setup</code>
-(<a href="#eupssetup">section 7.1.3</a>), the EUPS_PATH directory
+(<a href="#eupssetup">section 5.1.3</a>), the EUPS_PATH directory
 databases are searched in order and the first one matching the request
 is selected.  
 </p>
@@ -1254,7 +1408,7 @@ is selected.
 <p>
 The <code>EUPS_PATH</code> also plays an important role when
 registering new packages with EUPS using <code>eups declare</code>
-(<a href="#eupsdeclare">section 7.1.4</a>) and installing packages
+(<a href="#eupsdeclare">section 5.1.4</a>) and installing packages
 with <code>eups distrib</code> (<a href="#lh_recipe">section
 2.1</a>).  In both cases, only the first directory is used by default;
 the others are ignored.  That is, <code>eups declare</code> will
@@ -1265,7 +1419,7 @@ directory.
 </p>
 
 <p>
-In <a href="#rcfile">section 4</a>, we recommended that you set the
+In <a href="#rcfile">Section 3.2</a>, we recommended that you set the
 value <code>EUPS_PATH</code> variable to
 <code>${LSST_DEVEL}:${LSST_HOME}</code>.  
 </p>
@@ -1480,8 +1634,8 @@ specific packages.
 <h4>7.1.4  Registering a New Package</h4></a>
 
 <p>
-When you installed packages with <code>eups distrib</code>
-(<a href="#lh_recipe">section 2.1</a>), the <code>eups declare</code>
+When you installed packages with <code>lsstpkg</code>
+(<a href="#lh_recipe">Section 2.1</a>), the <code>eups declare</code>
 command was run for you.  This registered each downloaded package into
 an EUPS database.  On occasion however, you will have to run
 <code>eups declare</code> by hand.  For example, you may want to
@@ -1596,7 +1750,7 @@ One of the things this does is load SCons into your environment.
 <p>
 At this point, you should, if you haven't already, check out (using
 <code>svn</code>) the LSST package you want to build;
-see <a href="#snvlsst">section 6.1</a> for details.  Once you have
+see <a href="#snvlsst">section 4.1</a> for details.  Once you have
 done this, change into the directory where you have checked out the
 package.  
 </p>
