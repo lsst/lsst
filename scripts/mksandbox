@@ -1,0 +1,35 @@
+#! /bin/bash
+#
+# create a directory tree for installing packages.
+#
+# usage: mksandbox sandbox_dir 
+#
+function usage { 
+    echo "Usage: $0 sandbox_dir"
+}
+
+if [ -z "$EUPS_DIR" ]; then
+    echo "$0: \$EUPS_DIR not defined; Please be sure EUPS is setup."
+    exit 3
+fi
+
+if [ -z "$1" ]; then 
+    echo "$0: Please specify the name of the sandbox directory"
+    usage
+    exit 1
+fi
+sbox="$1"
+
+if [ -e "$sbox" ]; then
+    [ -d "$sbox" ] || { echo $0: $sbox: exists but is not a directory; exit 2; }
+else
+    mkdir -p $sbox || { echo $0: ${sbox}: unable to create directory; exit 2; }
+fi
+cd $sbox
+
+{ 
+    mkdir -p ups_db && flavor=`eups flavor` &&  mkdir -p $flavor
+} || { echo $0: failed to complete sandbox setup; exit 2; }
+
+
+
