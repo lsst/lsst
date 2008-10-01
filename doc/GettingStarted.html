@@ -18,7 +18,7 @@
 <font size="+0">Ray Plante, NCSA</font><br>
 <font font-weight="400" size="-1">
 <!-- hhmts start -->
-Last modified: Wed Sep 24 10:06:59 2008
+Last modified: Wed Oct  1 05:44:48 2008
 <!-- hhmts end --></font></h1>
 
 <p>
@@ -110,9 +110,10 @@ In brief, to create a complete LSST development environment, you will..
 Once you have an <code>LSST_HOME</code> area
 installed (or have one that was installed by someone else made
 available to you), you will probably find it convenient to
-add some lines to your shell "rc" file (Section 4).  You will also
-need to become familiar with the developers' build process; an
-introduction to this covered in section 7.
+add some lines to your shell "rc" file (<a href="#rcfile">Section
+4</a>).  You will also need to become familiar with the developers'
+build process; an introduction to this covered in
+<a href="#work">Section 7</a>.  
 </p>
 
 <p>
@@ -549,38 +550,62 @@ Product readline (version 5.2, flavor Linux) is already declared
 <h2>3.  Creating a Development Sandbox</h2></a>
 
 <p>
-If you prefer that <code>LSST_HOME</code> be read-only,
-then you will want a <code>LSST_DEVEL</code>
-directory where you can install new, developmental, or experimental
-versions of packages.  If your <code>LSST_HOME</code>
-is on your personal machine which you do not share with other users,
-you may wish to not bother with a
-<code>LSST_DEVEL</code> directory.  
+You may be working on a system in which the software stack has been
+installed for you by an administrator, to be shared by a group of
+users.  If you do not have write permission on
+<code>$LSST_HOME</code>, you will not be able to install new
+packages into that stack.  Or, if you do have permission, you may not
+want new packages to get installed there (e.g. because you don't want
+to make an experimental or "in-development" package installation
+visible to others).  In both situations, it is useful to have an
+private "sandbox" where you can install new packages.
 </p>
 
 <p>
-The <code>LSST_DEVEL</code> tree has exactly the same
-structure as <code>LSST_HOME</code>.  The main
-difference is that <code>LSST_DEVEL</code> is not
-expected to have all of the packages installed but rather only the
-ones that might override what is in
-<code>LSST_HOME</code>.  
+The <code>lsst</code> packages provides a script to create a sandbox
+directory.  Once created, we can integrate this private sandbox into
+build system by setting the <code>LSST_DEVEL</code> environment
+variable to the sandbox directory name.  Then (after sourcing
+<code>loadLSST.*sh</code>), this directory will not only become the
+directory that packages are installed into by default, it will be the
+first directory the EUPS system will look for packages to load into
+the environment.  If it doesn't find it in <code>$LSST_DEVEL</code>,
+it will look in <code>$LSST_HOME</code>.  Thus, the sandbox only needs
+to contain packages one wishes to override packages in <code>$LSST_HOME</code>.
 </p>
 
 <p>
-The <code>build</code> package includes a tool,
-<code>mksandbox</code>, to help setup your own
-<code>LSST_DEVEL</code> area.  To create the
-directory, follow this recipe:
+To create a sandbox called <code>lsstsandbox</code> under the current
+directory, use the <code>mksandbox</code> command:
 </p>
 
-<p class="code">% setup build
-% cd $HOME/lsstsandbox   # choose your desired location
-% mksandbox
-% ls
-Linux ups_db</p>
+<p class="code">% mksandbox lsstsandbox
+% ls lsstsandbox
+Linux64 ups_db</p>
 
-Done.
+<blockquote class="note">
+<strong>Command not found?</strong><br />
+Did running <code>mksandbox</code> return <code>mksandbox: Command not
+found</code>?  This means your LSST software environment is not set.
+This is most easily corrected by typing "<code>source loadLSST.sh</code>"
+(for bash users) or "<code>source loadLSST.csh</code>" (for csh/tcsh
+users).  If you do not use <code>loadLSST.*sh</code> setup EUPS, then
+you need to make sure the <code>lsst</code> package is setup by typing
+<code>setup lsst</code>.
+</blockquote>
+
+Now to use this sandbox, set <code>LSST_DEVEL</code> and reset your
+LSST software environment.  For example, if your shell is bash:
+
+<p class="code">% export LSST_DEVEL=$PWD/lsstsandbox
+% source $LSST_HOME/loadLSST.sh
+</p>
+
+or if you are using csh/tcsh:
+
+<p class="code">% setenv LSST_DEVEL $PWD/lsstsandbox
+% source $LSST_HOME/loadLSST.csh
+</p>
 
 <a name="rcfile">
 <h2>4.  Updating Your Shell RC File</h2></a>
