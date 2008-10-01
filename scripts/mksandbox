@@ -2,10 +2,10 @@
 #
 # create a directory tree for installing packages.
 #
-# usage: mksandbox sandbox_dir 
+# usage: mksandbox [ sandbox_dir ]
 #
 function usage { 
-    echo "Usage: $0 sandbox_dir"
+    echo "Usage: $0 [ sandbox_dir ]"
 }
 
 if [ -z "$EUPS_DIR" ]; then
@@ -13,17 +13,13 @@ if [ -z "$EUPS_DIR" ]; then
     exit 3
 fi
 
-if [ -z "$1" ]; then 
-    echo "$0: Please specify the name of the sandbox directory"
-    usage
-    exit 1
-fi
 sbox="$1"
+[ -n "$sbox" ] || { echo Setting up current directory as a sandbox; sbox="$PWD"; }
 
 if [ -e "$sbox" ]; then
     [ -d "$sbox" ] || { echo $0: $sbox: exists but is not a directory; exit 2; }
 else
-    mkdir -p $sbox || { echo $0: ${sbox}: unable to create directory; exit 2; }
+    mkdir -p $sbox || { echo $0: $sbox: unable to create directory; exit 2; }
 fi
 cd $sbox
 
