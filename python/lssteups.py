@@ -122,6 +122,8 @@ class BuildDistrib(eupsDistrib.DefaultDistrib):
                                      verbosity, log)
 
         self.setupfile = self.getOption('setupsFile', "eupssetups.sh")
+        self.nobuild = self.options.get("nobuild", False)
+        self.noclean = self.options.get("noclean", False)
 
     # @staticmethod   # requires python 2.4
     def parseDistID(distID):
@@ -167,41 +169,43 @@ class BuildDistrib(eupsDistrib.DefaultDistrib):
         # fetch the package from the server;  by default, the URL will be 
         # of the form pkgroot/location.  With this convention, the location
         # will include the product, version, and flavor components explicitly.
-        distFile = os.path.basename(location)
-        self.distServer.getFileForProduct(location, product, version, 
-                                          self.Eups.flavor, ftype="DIST",
-                                          filename=os.path.join(buildDir, 
-                                                                distFile))
+        if not self.nobuild:
+            distFile = os.path.basename(location)
+            self.distServer.getFileForProduct(location, product, version, 
+                                              self.Eups.flavor, ftype="DIST",
+                                              filename=os.path.join(buildDir, 
+                                                                    distFile))
 
-        # catch the setup commands to a file in the build directory
-        setupfile = os.path.join(buildDir, self.setupfile)
-        if os.path.exists(setupfile):
-            os.unlink(setupfile)
-        if setups and len(setups) > 0:
-            fd = open(setupfile, 'w')
+            # catch the setup commands to a file in the build directory
+            setupfile = os.path.join(buildDir, self.setupfile)
+            if os.path.exists(setupfile):
+                os.unlink(setupfile)
+            if setups and len(setups) > 0:
+                fd = open(setupfile, 'w')
+                try:
+                    for setup in setups:
+                        print >> fd, setup
+                finally:
+                    fd.close()
+
             try:
-                for setup in setups:
-                    print >> fd, setup
-            finally:
-                fd.close()
+                eupsServer.system("cd %s && lssteupsbuild.sh -D -b %s -r %s %s %s %s %s" % 
+                                  (buildDir, buildDir, self.distServer.base, 
+                                   distFile, installDir, product, version), 
+                                  self.Eups.noaction, self.verbose, self.log) 
+            except OSError, e:
+                raise RuntimeError("Failed to build and install " + location)
 
-        try:
-            eupsServer.system("cd %s && lssteupsbuild.sh -D -b %s -r %s %s %s %s %s" % 
-                              (buildDir, buildDir, self.distServer.base, 
-                               distFile, installDir, product, version), 
-                              self.Eups.noaction, self.verbose, self.log) 
-        except OSError, e:
-            raise RuntimeError("Failed to build and install " + location)
+            if os.path.exists(installDir):
+                self.setGroupPerms(installDir)
 
-        if os.path.exists(installDir):
-            self.setGroupPerms(installDir)
-
-        try:
-            eupsServer.system("cd %s && lssteupscleanup.sh -b %s" %
-                              (os.path.dirname(buildDir), buildDir),
-                              self.Eups.noaction, self.verbose, self.log)
-        except OSError, e:
-            raise RuntimeError("Failed to clean up build dir, " + buildDir)
+        if not self.noclean:
+            try:
+                eupsServer.system("cd %s && lssteupscleanup.sh -b %s" %
+                                  (os.path.dirname(buildDir), buildDir),
+                                  self.Eups.noaction, self.verbose, self.log)
+            except OSError, e:
+                raise RuntimeError("Failed to clean up build dir, " + buildDir)
 
     def getDistIdForPackage(self, product, version, flavor=None):
         """return the distribution ID that for a package distribution created
