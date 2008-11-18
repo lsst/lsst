@@ -207,9 +207,13 @@ function simplescons {
         echo scons is not setup via eups
         return 4
     fi
-    echo scons $sconsopt install declare $*
-    echo scons $sconsopt install declare $* >> $buildlog 
-    scons $sconsopt install declare $* >> $buildlog 2>&1 || {
+
+    idir=
+    [ -n "$installdir" ] && idir="prefix=$installdir"
+
+    echo scons $sconsopt $idir install declare $*
+    echo scons $sconsopt $idir install declare $* >> $buildlog 
+    scons $sconsopt $idir install declare $* >> $buildlog 2>&1 || {
         echo "scons ..."
         tail -20 $buildlog
         echo "$prog: scons install failed; see $PWD/$buildlog for details"
