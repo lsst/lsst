@@ -14,7 +14,7 @@ except ImportError:
 #
 # Allow "eups fetch" as an alias for "eups distrib install"
 #
-def eupsCmdHook(cmd, argv):
+def cmdHook(cmd, argv):
     """Called by eups to allow users to customize behaviour by defining it in EUPS_STARTUP
 
     The arguments are the command (e.g. "admin" if you type "eups admin")
@@ -23,6 +23,24 @@ def eupsCmdHook(cmd, argv):
 
     if cmd == "fetch":
         argv[1:2] = ["distrib", "install"]
+
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+#
+# A callback function called just before version strings are sorted
+#
+def versionHook(v1, v2):
+    """Called with the pair of versions that are to be sorted
+
+    For LSST, sort versions such as Tag+svnXXX and svnYYY purely on the "svn..." part
+    """
+
+    mat1 = re.search(r"(?:^|\+)(svn\d+)$", v1)
+    mat2 = re.search(r"(?:^|\+)(svn\d+)$", v2)
+    if mat1 and mat2:
+        v1 = mat1.group(1)
+        v2 = mat2.group(1)
+
+    return v1, v2
 
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -95,9 +113,15 @@ if __name__ == "__main__":
     #
     eupsDistribBuilder.buildfilePatchCallbacks.add(rewriteTicketVersion)
 
+    try:
+        eups.commandCallbacks.add(cmdHook)
+        eups.versionCallbacks.add(versionHook)
+    except AttributeError, e:
+        mat = re.search(r"'([^']+)'$", e.__str__())
+        print >> sys.stderr, "Your version of eups doesn't understand \"%s\"; continuing" % mat.group(1)
+    
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-import eups
 import eupsServer
 
 class ExtendibleConfigurableDistribServer(eupsServer.ConfigurableDistribServer):
