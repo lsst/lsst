@@ -21,7 +21,7 @@ def cmdHook(cmd, argv):
     and sys.argv, which you may modify;  cmd == argv[1] if len(argv) > 1 else None
     """
 
-    if cmd == "fetch":
+    if cmd == "eups fetch":
         argv[1:2] = ["distrib", "install"]
 
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -34,11 +34,12 @@ def versionHook(v1, v2):
     For LSST, sort versions such as Tag+svnXXX and svnYYY purely on the "svn..." part
     """
 
-    mat1 = re.search(r"(?:^|\+)(svn\d+)$", v1)
-    mat2 = re.search(r"(?:^|\+)(svn\d+)$", v2)
-    if mat1 and mat2:
-        v1 = mat1.group(1)
-        v2 = mat2.group(1)
+    if v1 and v2:
+        mat1 = re.search(r"(?:^|\+)(svn\d+)$", v1)
+        mat2 = re.search(r"(?:^|\+)(svn\d+)$", v2)
+        if mat1 and mat2:
+            v1 = mat1.group(1)
+            v2 = mat2.group(1)
 
     return v1, v2
 
@@ -102,9 +103,9 @@ if __name__ == "__main__":
 
     #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     #
-    # Define a distribution type "preferred"
+    # Define a distribution type "beta"
     #
-    eups.defineValidTags("preferred")
+    eups.defineValidTag("beta", ["stable"])
 
     if False:
         eups.defineValidSetupTypes("build") # this one's defined already
