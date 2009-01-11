@@ -1,5 +1,6 @@
-setupRequired(scons)
-setupRequired(lssteups)
+setupRequired(subversion >= 1.5.5)
+setupRequired(scons >= 3.2)
+setupRequired(lssteups >= 1.0)
 setupOptional(pacman)
 setupOptional(base)
 
