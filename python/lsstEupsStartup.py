@@ -28,20 +28,21 @@ def cmdHook(cmd, argv):
 #
 # A callback function called just before version strings are sorted
 #
-def versionHook(v1, v2):
-    """Called with the pair of versions that are to be sorted
+def versionHook(v1, v2, compar):
+    """Called with the pair of versions that are to be sorted; compar is the usual version comparison
+    function for your possible convenience.
 
-    For LSST, sort versions such as Tag+svnXXX and svnYYY purely on the "svn..." part
+    Throw ValueError if the versions can't be sorted
     """
 
     if v1 and v2:
-        mat1 = re.search(r"(?:^|\+)(svn\d+)$", v1)
-        mat2 = re.search(r"(?:^|\+)(svn\d+)$", v2)
-        if mat1 and mat2:
-            v1 = mat1.group(1)
-            v2 = mat2.group(1)
+        numeric1 = re.search(r"^\d", v1) != None
+        numeric2 = re.search(r"^\d", v2) != None
 
-    return v1, v2
+        if numeric1 != numeric2:
+            raise ValueError
+
+    return compar(v1, v2)
 
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -116,7 +117,7 @@ if __name__ == "__main__":
 
     try:
         eups.commandCallbacks.add(cmdHook)
-        eups.versionCallbacks.add(versionHook)
+        eups.versionCallback.set(versionHook)
     except AttributeError, e:
         mat = re.search(r"'([^']+)'$", e.__str__())
         print >> sys.stderr, "Your version of eups doesn't understand \"%s\"; continuing" % mat.group(1)
