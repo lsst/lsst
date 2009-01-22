@@ -39,8 +39,12 @@ def versionHook(v1, v2, compar):
         numeric1 = re.search(r"^\d", v1) != None
         numeric2 = re.search(r"^\d", v2) != None
 
-        if numeric1 != numeric2:
+        if numeric1 != numeric2:        # numbers may only be compared to numbers (e.g. 3.1 > 2.9)
             raise ValueError
+        elif not numeric1:
+            prefix = os.path.commonprefix([v1, v2])
+            if not prefix:              # require a common prefix for versions that can be sorted
+                raise ValueError
 
     return compar(v1, v2)
 
@@ -55,10 +59,10 @@ def rewriteTicketVersion(line):
 
     global noLsstSvn
     if noLsstSvn:
-        if noLsstSvn > 1:
+        if noLsstSvn > 0:
             print >> sys.stderr, "Unable to import lsst.svn --- maybe scons isn't setup?"
             noLsstSvn = -1
-        return
+        return line
     #
     # Look for a tagname that we recognise as having special significance
     #
@@ -85,15 +89,17 @@ def rewriteTicketVersion(line):
                     return line
 
                 if rewrite is None:
-                    raise RuntimeError, ""
+                    raise RuntimeError
 
                 if revision:
                     rewrite += " -r %s" % revision
 
                 line = re.sub(r"/tags/([^/\s]+)", rewrite, line)
             except RuntimeError, e:
-                raise RuntimeError, ("rewriteTicketVersion: invalid version specification \"%s\" in %s: %s" % \
-                                     (URL, line[:-1], e))
+                msg = "rewriteTicketVersion: invalid version specification \"%s\" in \"%s\"" % (URL, line[:-1])
+                if e.__str__():
+                    msg += ": %s" % e
+                raise RuntimeError, msg
 
     except AttributeError, e:
         print >> sys.stderr, "Your version of sconsUtils is too old to support parsing version names"
