@@ -177,6 +177,8 @@ class BuildDistrib(eupsDistrib.DefaultDistrib):
                                                                     distFile))
 
             # catch the setup commands to a file in the build directory
+            # make sure every setup line is includes the -j option
+            setupre = re.compile(r"\bsetup\b")
             setupfile = os.path.join(buildDir, self.setupfile)
             if os.path.exists(setupfile):
                 os.unlink(setupfile)
@@ -184,6 +186,7 @@ class BuildDistrib(eupsDistrib.DefaultDistrib):
                 fd = open(setupfile, 'w')
                 try:
                     for setup in setups:
+                        setup = setupre.sub("setup -j", setup)
                         print >> fd, setup
                 finally:
                     fd.close()
