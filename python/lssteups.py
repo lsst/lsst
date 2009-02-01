@@ -192,8 +192,8 @@ class BuildDistrib(eupsDistrib.DefaultDistrib):
                     fd.close()
 
             try:
-                eupsServer.system("cd %s && lssteupsbuild.sh -D -b %s -r %s %s %s %s %s" % 
-                                  (buildDir, buildDir, self.distServer.base, 
+                eupsServer.system("cd %s && lssteupsbuild.sh -p %s -D -b %s -r %s %s %s %s %s" % 
+                                  (buildDir, os.environ["EUPS_PATH"], buildDir, self.distServer.base, 
                                    distFile, installDir, product, version), 
                                   self.Eups.noaction, self.verbose, self.log) 
             except OSError, e:

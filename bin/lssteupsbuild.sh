@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /usr/bin/env bash
 #  
 #  A wrapper build script
 #
@@ -7,10 +7,11 @@
 #           distribFile [ installDir [ product version ]]
 #  Options:
 #     -b buildDir        build the product in this directory 
-#     -t buildDirRoot    if -b is not provided create and use a default 
-#                          build directory below this directory.
+#     -p eupsPath        the value of EUPS_PATH
 #     -r pkgRoot         the base server URL for retrieving files from 
 #                          the package server
+#     -t buildDirRoot    if -b is not provided create and use a default 
+#                          build directory below this directory.
 #  Arguments:
 #     distribFile  the location file downloaded from the distribution server
 #     installDir   the directory to install the product into
@@ -36,7 +37,7 @@ if [ ! -d "$libdir"  -o ! -r "$libdir" ]; then
     exit 1
 fi
 
-# Read in definitions and funtion definitions
+# Read in definitions and function definitions
 #
 . $libdir/build_functions.sh
 

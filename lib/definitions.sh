@@ -34,11 +34,12 @@ function process_command_line {
 
     while [ $# -gt 0 ]; do
         case "$1" in 
-            -t) tmpdir="$2"; shift;;
-            -b) builddir="$2"; shift;;
-            -r) pkgbase="$2"; shift;;
-            -o) sconsopt="opt=$2"; shift;;
             -D) fromdistrib="1" ;;
+            -b) builddir="$2"; shift;;
+            -o) sconsopt="opt=$2"; shift;;
+            -p) export EUPS_PATH="$2"; shift;;
+            -r) pkgbase="$2"; shift;;
+            -t) tmpdir="$2"; shift;;
             *)  break;;
         esac
         shift
