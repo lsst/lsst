@@ -39,6 +39,10 @@ Alias("install", env.Install(env['prefix'], "doc"))
 Alias("install", env.Install(env['prefix'], "etc"))
 Alias("install", env.InstallEups(env['prefix'] + "/ups", glob.glob("ups/*.table")))
 
+if "check" in BUILD_TARGETS:
+    env.Command("configure", "configure.ac", ["autoconf"])
+    env.Command("check", "configure", ["configure"])
+
 env.Declare()
 env.Help("""
 deploy/lsst:  LSST Build Environment Tools
@@ -46,3 +50,4 @@ deploy/lsst:  LSST Build Environment Tools
 This provides tools for building LSST products and installing them into
 the software distribution server.  This package relies on the eups capabilities.
 """)
+
