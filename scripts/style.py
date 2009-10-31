@@ -928,8 +928,18 @@ class TestFourSpaceIndent(Test):
 # 6-4 (use K&R block style)
 class TestKR(Test):
     def __init__(self, filetype):
-        Test.__init__(self, 1, "^\s*\{", "6-4", "Use K&R block style.", filetype, ["c", "cc", "h"])
-        
+        Test.__init__(self, 1, "", "6-4", "Use K&R block style.", filetype, ["c", "cc", "h"])
+    def apply(self, lines):
+        vList = []
+        if (self.getFiletype() in self.getTypeList()):
+            for line in lines:
+                # a lone '{' is non-KR style, unless the previous line is blank
+                #  ... then it's ok as it denotes a block-scope
+                if (re.search("^\s*\{", line.stripped) and
+                    re.search("[^\s]+", lines[line.number - 2].stripped) ):
+                    vList.append( Violation(self, line.number) )
+        return vList
+       
 
 ####################################################################
 # 6-5 (public/protected/private left justified)
@@ -1103,10 +1113,12 @@ class Line():
         self.functionNames = []
         self.templateNames = []
         self.inClass     = False
+        self.inStruct    = False
         self.inPublic    = False
         self.inProtected = False
         self.inPrivate   = False
         self.className   = ""
+        self.structName  = ""
 
         
 ###################################################################
@@ -1118,12 +1130,14 @@ class Line():
 def flagLines(lines):
 
     inClass     = False
+    inStruct    = False
     inPublic    = False
     inProtected = False
     inPrivate   = False
 
     nNested = 0
     className = ""
+    structName = ""
     
     for line in lines:
 
@@ -1131,24 +1145,33 @@ def flagLines(lines):
         m = re.search("^\s*class\s+(\w+)\s*:?\s+", line.stripped)
         if m:
             className = m.group(1)
-            inClass, inPublic, inProtected, inPrivate = True, False, False, False
+            inClass, inStruct, inPublic, inProtected, inPrivate = True, False, False, False, False
+
+        # struct information
+        m = re.search("^\s*struct\s+(\w+)\s*:?\s+", line.stripped)
+        if m:
+            structName = m.group(1)
+            inClass, inStruct, inPublic, inProtected, inPrivate = False, True, False, False, False
             
-        if (inClass and re.search("^\s*public:", line.stripped)):
-            inClass, inPublic, inProtected, inPrivate = True,  True,  False, False
-        if (inClass and re.search("^\s*protected:", line.stripped)): 
-            inClass, inPublic, inProtected, inPrivate = True,  False, True,  False
-        if (inClass and re.search("^\s*private:", line.stripped)):
-            inClass, inPublic, inProtected, inPrivate = True,  False, False, True
-        if (inClass and re.search("^};\s*", line.stripped)):
-            inClass, inPublic, inProtected, inPrivate = False, False, False, False
+        if ((inClass or inStruct) and re.search("^\s*public:", line.stripped)):
+            inPublic, inProtected, inPrivate = True,  False, False
+        if ((inClass or inStruct) and re.search("^\s*protected:", line.stripped)): 
+            inPublic, inProtected, inPrivate = False, True,  False
+        if ((inClass or inStruct) and re.search("^\s*private:", line.stripped)):
+            inPublic, inProtected, inPrivate = False, False, True
+        if ((inClass or inStruct) and re.search("^};\s*", line.stripped)):
+            inClass, inStruct, inPublic, inProtected, inPrivate = False, False, False, False, False
 
         line.inClass     = inClass
+        line.inStruct    = inStruct
         line.inPublic    = inPublic
         line.inProtected = inProtected
         line.inPrivate   = inPrivate
 
         if inClass:
             line.className = className
+        if inStruct:
+            line.structName = structName
 
         if (re.search("\{", line.stripped)): nNested += 1
         if (re.search("\}", line.stripped)): nNested -= 1
@@ -1207,7 +1230,7 @@ def parseLines(lines, filetype):
 
             # kill normal strings, but leave #included filenames alone
             if ( not re.search("^\#include", stripped) ):
-                stripped = re.sub("\"[^\"]*\"", "", stripped) 
+                stripped = re.sub("\"[^\"]*\"", "\"\"", stripped) 
 
         ################################################
         # Python comments
@@ -1270,6 +1293,7 @@ def getVariableNames(line, stypes = getPrimitivesOr() + "|" + getUserTypeRegex()
     # kill possible 'const = 0' as that denote a virtual function
     line = re.sub("const(\s*=\s*0)?", "", line)
     line = re.sub("static", "", line)
+    line = re.sub("typename", "", line)
     
     line = re.sub("^\s+", "", line)
     line = re.sub("\s+", " ", line)
@@ -1295,7 +1319,7 @@ def getVariableNames(line, stypes = getPrimitivesOr() + "|" + getUserTypeRegex()
         line = re.sub("\)[^\)]*$", "", line)
         rawList = [line]
 
-    # if there are "::" before '(', it's a function ... grab any arguments
+    # if there are "::" before '(', it's probably a function ... grab any arguments
     elif (re.search("[^\(]+::[^\(]+\(", line)):
         line = re.sub("[^\(]+::[^\(]+\(", "", line)
         if (re.search("\)[^\)]*", line)):
@@ -1307,6 +1331,17 @@ def getVariableNames(line, stypes = getPrimitivesOr() + "|" + getUserTypeRegex()
         line = re.sub("\)\s*[;\{]?\s*$", "", line)
         rawList = [line]
 
+        
+    #############################################################################
+    # eliminate other possible confusing parts
+        
+    # if we see a single colon, we want nothing after it (probably setting private vars from arg list)
+    m = re.search("[^:]:([^:].*)$", line)
+    if m:
+        s = re.sub("([\(\)])", r'\\\1', m.group(1))
+        line = re.sub(":" + s + "$", "", line)
+        rawList = [line]
+        
     ###########################################################################
     # try to match each candidate variable declaration
     variableList = []
@@ -1314,6 +1349,10 @@ def getVariableNames(line, stypes = getPrimitivesOr() + "|" + getUserTypeRegex()
     #    print rawList
     for raw in rawList:
 
+        # don't get fooled by return statements
+        if re.search("^\s*return\s", raw):
+            continue
+        
         base = "^(?:" + stypes + ")"
         pointRef = "(?:\s+[\&\*]\s*|[\&\*]\s+|\s+)"
         plainVar = "\w[\w\d]*"         # plain variable ... no assignment
@@ -1593,12 +1632,18 @@ def main():
                       help = "Provide a file containing a list of " +
                       "'filename rule line' to ignore (default = %default)")
     parser.add_option("-l", "--showline", dest = "showline", action = "store_true",
-                      default = False, help = "Show the offending line (default = %default)")
+                      default = False, help = "Show the offending line (same as -w) (default = %default)")
+    parser.add_option("-p", "--showstripped", dest = "showstripped", action = "store_true",
+                      default = False, help = "Show the stripped offending line (default = %default)")
+    parser.add_option("-w", "--showraw", dest = "showraw", action = "store_true",
+                      default = False, help = "Show the raw offending line (default = %default)")
     parser.add_option("-s", "--severity", dest = "severity", type = int,
                       default = 5, help = "Minimum severity (highest numerical value) " +
                       "to display (default = %default)")
     opts, args = parser.parse_args()
 
+    if opts.showline:
+        opts.showraw = True
 
     if len(args) != 1:
         parser.print_help()
@@ -1652,6 +1697,7 @@ def main():
     violationSort = sorted(violationList, key = lambda x: x.getLineNumber());
     if violationSort:
         print "// -*- parasoft -*-"
+        print infile
     for violation in violationSort:
         lineNumber = str(violation.getLineNumber())
         rule = violation.getId()
@@ -1661,8 +1707,10 @@ def main():
         if ( not doIgnore  and  (severity <= opts.severity) ):
             print "%-4s \t%-60s \t%10s" % (lineNumber + ":", violation.getComment(),
                                            "LsstDm-" + rule + "-" + str(severity))
-            if (opts.showline):
+            if (opts.showraw):
                 print lines[int(lineNumber) - 1].raw,
+            if (opts.showstripped):
+                print lines[int(lineNumber) - 1].stripped,
 
 
 #############################################################
