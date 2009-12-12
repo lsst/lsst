@@ -16,7 +16,7 @@ public:
 private:
 
     int _a, _b;
-    int getB() { return _b; }
+    int _getB() { return _b; }
     
 };
 

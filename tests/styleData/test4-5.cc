@@ -12,14 +12,14 @@ private:
 
     int _a;
 
-    int getValue() {                           
+    int _getValue() {                           
         return _a;
     }
-    inline float getA() {      // ok
+    inline float _getA() {      // ok
         return _a;
     }
 
-    inline float getStuff() {   // fail
+    inline float _getStuff() {   // fail
         float _b = _a*_a;
         float _c = b*b;
         return _c;

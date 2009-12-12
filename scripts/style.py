@@ -187,8 +187,13 @@ class TestFunctionName(Test):
                     if re.search("^[A-Z]", functionName):
                         vList.append(Violation(self, line.number, "Starts uppercase"))
                     # check for underscores
-                    if re.search("_", functionName):
-                        vList.append(Violation(self, line.number, "Constains underscore"))
+                    hasUnderscore = re.search("_", functionName)
+                    hasNonLeadingUnderscore = re.search("[^_]_", functionName)
+                    hasLeadingUnderscore = re.search("^_", functionName)
+                    if (not line.inPrivate and hasUnderscore):
+                        vList.append(Violation(self, line.number, "Contains underscore"))
+                    if (line.inPrivate and hasNonLeadingUnderscore):
+                        vList.append(Violation(self, line.number, "Contains non-leading underscore"))
                 
         return vList
     
@@ -245,7 +250,7 @@ class TestAllCapAbbreviation(Test):
 
     
 ###################################################################
-# 3.10 (private variables have '_' prefix)
+# 3.10 (private variables and functions have '_' prefix)
 # - what to do with 'protected' ?
 class TestLeadingUnderscore(Test):
     def __init__(self, filetype):
@@ -263,6 +268,12 @@ class TestLeadingUnderscore(Test):
                         inParens2 = re.search("^[^\)]*" + tmp + "[^\)]*\)", line.stripped)
                         if ( re.search("^[^_]", tmp) and not (inParens1 or inParens2)):
                             vList.append( Violation(self, line.number, variable) )
+                    for functionName in line.functionNames:
+                        # check for underscores
+                        hasLeadingUnderscore = re.search("^_", functionName)
+                        if (not hasLeadingUnderscore):
+                            vList.append(Violation(self, line.number, "Missing leading underscore"))
+
             return vList
         else:
             return []
@@ -437,13 +448,17 @@ class TestPreventMultipleHeader(Test):
     def apply(self, lines):
         vList = []
         if (self.getFiletype() in self.getTypeList()):
-            m = re.search("^\#if !defined\((LSST_[A-Z_]+_H)\)\s*$", lines[1].stripped)
-            if (not m):
+            m1 = re.search("^\#if !defined\((LSST_[A-Z_]+_H)\)\s*$", lines[1].stripped)
+            m2 = re.search("^\#ifndef (LSST_[A-Z_]+_H)\s*$", lines[1].stripped)
+            if (not m1 and not m2):
                 vList.append(Violation(self, 2))
 
             # check the second line too, but only if the first is good
-            if m:
-                tag = m.group(1)
+            if m1 or m2:
+                if m1:
+                    tag = m1.group(1)
+                if m2:
+                    tag = m2.group(1)
                 if (not re.search("^\#define " + tag + "(?:\s+1)?\s*$", lines[2].stripped)):
                     vList.append(Violation(self, 3))
 
@@ -485,6 +500,9 @@ class TestIncludesFirst(Test):
                 
                 # strip other preprocessor lines
                 lineTmp = re.sub("^#(define|if).*$", "", lineTmp)
+
+                # strip 'extern' statements as they may contain #include
+                lineTmp = re.sub("^extern.*$", "", lineTmp)
                 
                 if ( not re.search("^\#include", lineTmp) and len(lineTmp.strip()) > 0 ):
                     foundNonIncludeStatement = True
@@ -788,14 +806,17 @@ class TestDestructorExceptions(Test):
 # 5-29 (destructors should be virtual)
 class TestVirtualDestructor(Test):
     def __init__(self, filetype):
-        Test.__init__(self, 1, "", "5-29", "Destructors should be virtual", filetype, ["c", "cc", "h"])
+        Test.__init__(self, 1, "", "5-29", "Polym. base class destructors should be virtual",
+                      filetype, ["c", "cc", "h"])
     def apply(self, lines):
         vList = []
         if (self.getFiletype() in self.getTypeList()):
             for line in lines:
                 # virtual declaration is only in the class definition
-                if (re.search("^\s*\~", line.stripped) and
-                    not re.search("virtual", line.stripped)):
+                isDestructor = re.search("^\s*\~", line.stripped)
+                isBaseClass = line.inClass and re.search("Base$", line.className)
+                isVirtual = re.search("^\s*virtual", line.stripped)
+                if (isDestructor and isBaseClass and not isVirtual):
                     vList.append(Violation(self, line.number))
         return vList
 
