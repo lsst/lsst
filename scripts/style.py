@@ -122,7 +122,7 @@ class Test():
         if ( self.getFiletype() in self.getTypeList() ):
             for line in lines:
                 if ( re.search(self.regex, line.stripped) ):
-                    vList.append( Violation(self, line.number) )
+                    vList.append( Violation(self, line) )
         return vList
 
     
@@ -130,9 +130,22 @@ class Test():
 # 3-1 (user types mixed-case, start upper)
 class TestUserType(Test):
     def __init__(self, filetype):
-        Test.__init__(self, 1, "typedef.*\s+([a-z]\w*);\s*$", "3-1",
+        Test.__init__(self, 1, "", "3-1",
                       "User defined types must be mixed-case, starting with uppercase.",
                       filetype, ["c", "cc", "h"])
+
+    def apply(self, lines):
+        vList = []
+        if (self.getFiletype() in self.getTypeList()):
+            for line in lines:
+                isTypedef = re.search("typedef.*\s+([a-z]\w*);\s*$", line.stripped)
+                # we'll let the typedef'd iterators slide through
+                isIterator = re.search("iterator;\s*$", line.stripped)
+                if isTypedef and not isIterator:
+                    vList.append(Violation(self, line))
+                            
+        return vList
+
         
 ##################################################################
 # 3-2 (variables mixed-case, start lower)
@@ -144,7 +157,7 @@ class TestVariableName(Test):
     def apply(self, lines):
         vList = []
         for line in lines:
-            iLine = line.number
+            iLine = line
 
             if (self.getFiletype() in self.getTypeList()):
                 for variable in line.variableNames:
@@ -153,7 +166,7 @@ class TestVariableName(Test):
                     variable = re.sub("\s*[\*\&]\s*", "", variable)
                     
                     # check for upper case start
-                    if (line.inPrivate):
+                    if (line.inPrivate or line.inProtected):
                         if re.search("^_[A-Z]", variable):
                             vList.append(Violation(self, iLine, "\"" + variable + "\" starts uppercase"))
                         # check for underscores
@@ -185,15 +198,15 @@ class TestFunctionName(Test):
                 for functionName in line.functionNames:
                     # check of upper case start
                     if re.search("^[A-Z]", functionName):
-                        vList.append(Violation(self, line.number, "Starts uppercase"))
+                        vList.append(Violation(self, line, "Starts uppercase"))
                     # check for underscores
                     hasUnderscore = re.search("_", functionName)
                     hasNonLeadingUnderscore = re.search("[^_]_", functionName)
                     hasLeadingUnderscore = re.search("^_", functionName)
                     if (not line.inPrivate and hasUnderscore):
-                        vList.append(Violation(self, line.number, "Contains underscore"))
+                        vList.append(Violation(self, line, "Contains underscore"))
                     if (line.inPrivate and hasNonLeadingUnderscore):
-                        vList.append(Violation(self, line.number, "Contains non-leading underscore"))
+                        vList.append(Violation(self, line, "Contains non-leading underscore"))
                 
         return vList
     
@@ -227,7 +240,7 @@ class TestTemplateStartsUpper(Test):
                 templateNameList = getTemplateNames(line.stripped)
                 for name in templateNameList:
                     if re.search("^[a-z]", name):
-                        vList.append( Violation(self, line.number) )
+                        vList.append( Violation(self, line, name) )
         return vList
 
 
@@ -243,7 +256,7 @@ class TestAllCapAbbreviation(Test):
             for line in lines:
                 for variable in line.variableNames:
                     if (re.search("[A-Z]{2}", variable)):
-                        vList.append( Violation(self, line.number, "\"" + variable + "\"") )
+                        vList.append( Violation(self, line, "\"" + variable + "\"") )
         return vList
     
 
@@ -263,16 +276,24 @@ class TestLeadingUnderscore(Test):
             for line in lines:
                 if line.inPrivate:
                     for variable in line.variableNames:
+                        # strip pointer/ref characters
                         tmp = re.sub("\s*[\*\&]\s*", "", variable)
+                        #in parens
+                        inParens0 = re.search("\([^\)]*" + tmp + "[^\)]*\)$", line.stripped)
+                        # has leading paren
                         inParens1 = re.search("\([^\)]*" + tmp + "[^\)]*$", line.stripped)
+                        # has trailing paren
                         inParens2 = re.search("^[^\)]*" + tmp + "[^\)]*\)", line.stripped)
-                        if ( re.search("^[^_]", tmp) and not (inParens1 or inParens2)):
-                            vList.append( Violation(self, line.number, variable) )
+                        # is comma separated
+                        inCommas = re.search(tmp + ".*,\s*$", line.stripped)
+                        isArg = inParens0 or inParens1 or inParens2 or inCommas
+                        if ( re.search("^[^_]", tmp) and not isArg):
+                            vList.append( Violation(self, line, variable) )
                     for functionName in line.functionNames:
                         # check for underscores
                         hasLeadingUnderscore = re.search("^_", functionName)
                         if (not hasLeadingUnderscore):
-                            vList.append(Violation(self, line.number, "Missing leading underscore"))
+                            vList.append(Violation(self, line, "Missing leading underscore"))
 
             return vList
         else:
@@ -292,7 +313,7 @@ class TestObjectNameInMethod(Test):
                 if line.inClass:
                     for method in line.functionNames:
                         if ( re.search(line.className.lower(), method.lower())):
-                            vList.append( Violation(self, line.number) )
+                            vList.append( Violation(self, line) )
         return vList
 
     
@@ -309,8 +330,12 @@ class TestBooleanIs(Test):
             for line in lines:
                 variableList = getVariableNames(line.stripped, "bool")
                 for variable in variableList:
-                    if ( not re.search("^(is|has)", variable) ):
-                        vList.append(Violation(self, line.number, variable))
+                    if ( line.inPrivate or line.inProtected ):
+                        if ( not re.search("^(_is|_has)", variable) ):
+                            vList.append(Violation(self, line, variable))
+                    else:
+                        if ( not re.search("^(is|has)", variable) ):
+                            vList.append(Violation(self, line, variable))
         return vList
 
 
@@ -328,7 +353,7 @@ class TestNegativeBoolean(Test):
                 variableList = getVariableNames(line.stripped, "bool")
                 for variable in variableList:
                     if ( re.search("[nN]ot?", variable) ):
-                        vList.append(Violation(self, line.number))
+                        vList.append(Violation(self, line))
         return vList
 
     
@@ -341,8 +366,8 @@ class TestEmacsHeader(Test):
     def apply(self, lines):
         vList = []
         if (self.getFiletype() in self.getTypeList()):
-            if ( not re.search("^//\s+-\*- LSST-C\+\+ -\*-", lines[0].raw) ):
-                vList.append(Violation(self, 1))
+            if ( not re.search("^//\s+-\*- (?:LSST-C|lsst-c)\+\+ -\*-", lines[0].raw) ):
+                vList.append(Violation(self, lines[0]))
         return vList
 
 ###################################################################
@@ -361,7 +386,7 @@ class TestOneClassFiles(Test):
 
             filenameBase = re.sub(".h$", "", os.path.basename(self.filename))
             if ( len(classNames) == 1 and not re.search("^" + classNames[0] + "$", filenameBase) ):
-                vList.append(Violation(self, line.number))
+                vList.append(Violation(self, line))
                 
         return vList
 
@@ -380,7 +405,7 @@ class TestNonTemplateInH(Test):
                     
                 isTemplatized = re.search("^\s*template", lines[line.number - 2].stripped)
                 if ( len(line.functionNames) > 0 and not isTemplatized and isTooLong ):
-                    vList.append(Violation(self, line.number))
+                    vList.append(Violation(self, line))
                 
         return vList
 
@@ -402,7 +427,7 @@ class TestInlineProhibited(Test):
                     isTooLong = (definitionLength > 1)
 
                     if ( len(line.functionNames) > 0 and isTooLong ):
-                        vList.append(Violation(self, line.number))
+                        vList.append(Violation(self, line))
             
         return vList
     
@@ -418,7 +443,7 @@ class TestLength(Test):
         if (self.getFiletype() in self.getTypeList()):
             for line in lines:
                 if ( re.search("^.{111,}$", line.raw) ):
-                    vList.append(Violation(self, line.number))
+                    vList.append(Violation(self, line))
         return vList
 
 
@@ -432,11 +457,11 @@ class TestAvoidSpecialChars(Test):
         if (self.getFiletype() in self.getTypeList()):
             for line in lines:
                 if ( re.search("\t", line.stripped)):
-                    vList.append(Violation(self, line.number, "contains \\t"))
+                    vList.append(Violation(self, line, "contains \\t"))
                 if ( re.search("\r", line.stripped)):
-                    vList.append(Violation(self, line.number, "contains \\r"))
+                    vList.append(Violation(self, line, "contains \\r"))
                 if ( re.search("\f", line.stripped)):
-                    vList.append(Violation(self, line.number, "contains \\f"))
+                    vList.append(Violation(self, line, "contains \\f"))
         return vList
     
 
@@ -451,7 +476,7 @@ class TestPreventMultipleHeader(Test):
             m1 = re.search("^\#if !defined\((LSST_[A-Z_]+_H)\)\s*$", lines[1].stripped)
             m2 = re.search("^\#ifndef (LSST_[A-Z_]+_H)\s*$", lines[1].stripped)
             if (not m1 and not m2):
-                vList.append(Violation(self, 2))
+                vList.append(Violation(self, lines[1]))
 
             # check the second line too, but only if the first is good
             if m1 or m2:
@@ -460,7 +485,7 @@ class TestPreventMultipleHeader(Test):
                 if m2:
                     tag = m2.group(1)
                 if (not re.search("^\#define " + tag + "(?:\s+1)?\s*$", lines[2].stripped)):
-                    vList.append(Violation(self, 3))
+                    vList.append(Violation(self, lines[2]))
 
         return vList
 
@@ -479,7 +504,7 @@ class TestSortGroupIncludes(Test):
                 if ( re.search("^\#include\s+\"\w+\.h(pp)?\"\s*$", line.stripped) ):
                     foundQuoteStyle = True
                 if ( foundQuoteStyle and re.search("^\#include\s*\<\w+(\.h|\.hpp)?\>\s*$", line.stripped) ):
-                    vList.append(Violation(self, line.number))
+                    vList.append(Violation(self, line))
         return vList
 
 
@@ -507,7 +532,7 @@ class TestIncludesFirst(Test):
                 if ( not re.search("^\#include", lineTmp) and len(lineTmp.strip()) > 0 ):
                     foundNonIncludeStatement = True
                 if ( foundNonIncludeStatement and (re.search("^\#include", lineTmp)) ):
-                    vList.append(Violation(self, line.number))
+                    vList.append(Violation(self, line))
         return vList
     
     
@@ -544,17 +569,17 @@ class TestPubProPriv(Test):
                 
                 if (re.search("^\s*public:", line.stripped) and line.inClass):
                     if order[0]:
-                        vList.append( Violation(self, line.number, "'public' repeated") )
+                        vList.append( Violation(self, line, "'public' repeated") )
                     nSeg += 1
                     order[0] = nSeg
                 if (re.search("^\s*protected:", line.stripped) and line.inClass): 
                     if order[1]:
-                        vList.append( Violation(self, line.number, "'protected' repeated") )
+                        vList.append( Violation(self, line, "'protected' repeated") )
                     nSeg += 1
                     order[1] = nSeg
                 if (re.search("^\s*private:", line.stripped) and line.inClass): 
                     if order[2]:
-                        vList.append( Violation(self, line.number, "'private' repeated") )
+                        vList.append( Violation(self, line, "'private' repeated") )
                     nSeg += 1
                     order[2] = nSeg
                 if (re.search("^\s*};\s*", line.stripped) and lines[line.number - 2].inClass):
@@ -564,7 +589,7 @@ class TestPubProPriv(Test):
                         (order[0] and order[2] and order[0] > order[2])    #pub>pri
                         ):
                         msg = "'" + lines[line.number - 2].className + "' out of order"
-                        vList.append( Violation(self, line.number, msg) )
+                        vList.append( Violation(self, line, msg) )
                     order, seg = [0, 0, 0], 0
             return vList
         else:
@@ -594,8 +619,13 @@ class TestPublicConstStatic(Test):
             for line in lines:
                 # nNested counts how many blocks are nested ... greater than 1 is a variable in a function
                 if (line.inPublic and line.nNested == 1):
-                    if (len(line.variableNames) > 0 and not re.search("(const|static)", line.stripped)):
-                        vList.append(Violation(self, line.number))
+                    if (len(line.variableNames) > 0):
+                        isArgument = re.search("\([^\)]+" + ".*".join(line.variableNames) + "[^\(]+\)",
+                                               line.stripped)
+                        isConstStatic = re.search("(const|static)", line.stripped)
+                        
+                    if (len(line.variableNames) > 0 and not isConstStatic and not isArgument):
+                        vList.append(Violation(self, line, "variables: " + ", ".join(line.variableNames)))
         return vList
 
     
@@ -615,7 +645,7 @@ class TestConstAfterType(Test):
                     variable = re.sub("\&", "\\&", variable) # refs
                     regex = "const\s+(" + stypes + ")\s+" + variable
                     if ( re.search(regex, line.stripped) ):
-                        vList.append(Violation(self, line.number))
+                        vList.append(Violation(self, line))
         return vList
 
 
@@ -634,7 +664,7 @@ class TestForLoopControl(Test):
             for line in lines:
                 if ( re.search("^\s*for\s*\(([^;]+);([^;]+);([^;]+)\)", line.stripped) and
                      re.search(",", line.stripped) ):
-                    vList.append(Violation(self, line.number))
+                    vList.append(Violation(self, line))
         return vList
 
 
@@ -670,10 +700,10 @@ class TestBreakContinue(Test):
                     inSwitch = False
                     
                 if (re.search("^\s*break;", line.stripped) and not inSwitch):
-                    vList.append(Violation(self, line.number, "used 'break'"))
+                    vList.append(Violation(self, line, "used 'break'"))
 
                 if (re.search("^\s*continue;", line.stripped)):
-                    vList.append(Violation(self, line.number, "used 'continue'"))
+                    vList.append(Violation(self, line, "used 'continue'"))
                     
         return vList
 
@@ -748,7 +778,7 @@ class TestConstRefForNonPrimitives(Test):
                             isPrimitive = True
                     if (not isPrimitive and
                         not re.search("(const\s*\&|Ptr)", declaration)):
-                        vList.append(Violation(self, line.number))
+                        vList.append(Violation(self, line))
         return vList
         
 
@@ -768,10 +798,10 @@ class TestOneArgConstructors(Test):
                     # if it's only 1 arg, it should fit on one line ... there will be exceptions
                     m = re.search("^\s*([^\(]+)\s*\([^\),]+\s[^\),]+\)", line.stripped)
                     if m:
-                        name = m.group(1)
+                        name = re.sub(r"([\&\[\]])", r'\\\1', m.group(1))
                         if (re.search(name, line.className) and
                             not re.search("^\s*explicit", line.stripped)):
-                            vList.append(Violation(self, line.number))
+                            vList.append(Violation(self, line))
         return vList
 
     
@@ -797,7 +827,7 @@ class TestDestructorExceptions(Test):
                 if (re.search("\}", line.stripped) and inDestructor and nNested == 0):
                     inDestructor = False
                 if (inDestructor and re.search("^\s*throw", line.stripped)):
-                    vList.append(Violation(self, line.number))
+                    vList.append(Violation(self, line))
                     
         return vList
 
@@ -817,7 +847,7 @@ class TestVirtualDestructor(Test):
                 isBaseClass = line.inClass and re.search("Base$", line.className)
                 isVirtual = re.search("^\s*virtual", line.stripped)
                 if (isDestructor and isBaseClass and not isVirtual):
-                    vList.append(Violation(self, line.number))
+                    vList.append(Violation(self, line))
         return vList
 
 
@@ -856,7 +886,7 @@ class TestCharStar(Test):
                 # allow char * for argv[]
                 if (re.search("char\s*(const\s*)?\*", line.stripped) and
                     not re.search("^int main", line.stripped)):
-                    vList.append( Violation(self, line.number) )
+                    vList.append( Violation(self, line) )
         return vList
 
 
@@ -871,7 +901,7 @@ class TestCArray(Test):
             for line in lines:
                 for variable in line.variableNames:
                     if (re.search("\[[^\]]+\]", variable) ):
-                        vList.append( Violation(self, line.number) )
+                        vList.append( Violation(self, line) )
         return vList
 
 
@@ -886,7 +916,7 @@ class TestUsingOnlyStd(Test):
             for line in lines:
                 if ( re.search("^\s*using", line.stripped) and
                      not re.search("\s*std\s*;\s*$", line.stripped) ):
-                    vList.append( Violation(self, line.number) )
+                    vList.append( Violation(self, line) )
         return vList
 
 ###################################################################
@@ -939,7 +969,7 @@ class TestFourSpaceIndent(Test):
                         isContinuation = True
                             
                     if ( nLead % 4 != 0 and not (isContinuation or isBracketAligned)):
-                        vList.append( Violation(self, line.number) )
+                        vList.append( Violation(self, line) )
                 if (inParentheses and re.search("[^\(]+\)", line.stripped)):
                     inParentheses = False
         return vList
@@ -958,7 +988,7 @@ class TestKR(Test):
                 #  ... then it's ok as it denotes a block-scope
                 if (re.search("^\s*\{", line.stripped) and
                     re.search("[^\s]+", lines[line.number - 2].stripped) ):
-                    vList.append( Violation(self, line.number) )
+                    vList.append( Violation(self, line) )
         return vList
        
 
@@ -981,7 +1011,7 @@ class TestEmptyLoopOneLine(Test):
             for line in lines:
                 if (re.search("\{\s*$", line.stripped) and
                     re.search("^\s*\}\s*$", lines[line.number].stripped) ):
-                    vList.append( Violation(self, line.number) )
+                    vList.append( Violation(self, line) )
         return vList
 
     
@@ -1011,7 +1041,13 @@ class TestOperatorSpacing(Test):
                 mminus = re.search("(.?[\w\d]\-[^\-\=]|.?[^\-]\-[\w\d])", line.stripped)
 
                 if mequal:
-                    vList.append(Violation(self, line.number, "failed '='"))
+                    isDefault = False
+                    if line.variableNames > 0:
+                        isDefaultSameLine = re.search("\([^\)]*([^=]=[^=])+[^\(]*\)", line.stripped)
+                        isDefaultDiffLine = re.search("[\d\w]=[\d\w]+(?:\<\w+\>)?(?:\(.*\))?,", line.stripped)
+                        isDefault = isDefaultSameLine or isDefaultDiffLine
+                    if not isDefault:
+                        vList.append(Violation(self, line, "failed '='"))
 
                 # plus and minus appear in the other contexts ... check those!
                 if mplus:
@@ -1022,7 +1058,7 @@ class TestOperatorSpacing(Test):
                     mEolP = re.search("\+$", line.stripped)             # end of line
                     mBolP = re.search("^\s*\+", line.stripped)             # beginning of line
                     if ( not (mSciP or mPosP or mOvrP or mEolP or mBolP) ): 
-                        vList.append( Violation(self, line.number, "failed '+'") )
+                        vList.append( Violation(self, line, "failed '+'") )
                 if mminus:
                     match = mminus.group(1)
                     mSciN = re.search("[\d\.][eE]\-\d", match)          #sci.not
@@ -1032,10 +1068,10 @@ class TestOperatorSpacing(Test):
                     mBolN = re.search("^\s*\-", line.stripped)             # beginning of line
                     pointDeref = re.search("\->", match)                
                     if ( not (mSciN or mNegN or mOvrN or mEolN or mBolN or pointDeref)):
-                        vList.append( Violation(self, line.number, "failed '-'") )
+                        vList.append( Violation(self, line, "failed '-'") )
 
                 if ( re.search("([^\s][\!\&\|\+\-\*\/]\=|[\!\&\|\+\-\*\/]\=[^\s])", line.stripped) ):
-                    vList.append( Violation(self, line.number, "failed '[&|+-*/]='") )
+                    vList.append( Violation(self, line, "failed '[&|+-*/]='") )
 
         return vList
 
@@ -1052,14 +1088,14 @@ class TestCommaSpace(Test):
             for line in lines:
                 # careful, comma followed by \n is ok.
                 if ( re.search(",[^\s]", line.stripped) and not re.search(",\s*$", line.stripped) ):
-                    vList.append( Violation(self, line.number, "after comma") )
+                    vList.append( Violation(self, line, "after comma") )
                 m = re.search("^\s*(for|if|while|else|switch)[^\s\w]", line.stripped)
                 if (m and re.search("^(cc|c|h)$", self.getFiletype())):
                     rword = m.group(1)
-                    vList.append( Violation(self, line.number, "after reserved word '" + rword + "'") )
+                    vList.append( Violation(self, line, "after reserved word '" + rword + "'") )
                 # semi as last character is ok
                 if ( re.search(";[^\s]", line.stripped) and not re.search(";$", line.stripped)):
-                    vList.append( Violation(self, line.number, "after semi-colon") )
+                    vList.append( Violation(self, line, "after semi-colon") )
 
         return vList
 
@@ -1075,9 +1111,9 @@ class TestNestedNamespacesLeft(Test):
         if (self.getFiletype() in self.getTypeList()):
             for line in lines:
                 if ( re.search("namespace.*namespace", line.stripped) ):
-                    vList.append( Violation(self, line.number) )
+                    vList.append( Violation(self, line) )
                 if ( re.search("^\s+namespace", line.stripped) ):
-                    vList.append( Violation(self, line.number) )
+                    vList.append( Violation(self, line) )
         return vList
 
 
@@ -1092,7 +1128,7 @@ class TestDefault(Test):
         if (self.getFiletype() in self.getTypeList()):
             for line in lines:
                 if ( re.search(Test.getRegex(self), line.stripped) ):
-                    vList.append( Violation(self, line.number) )
+                    vList.append( Violation(self, line) )
         return vList
 
 
@@ -1104,9 +1140,10 @@ class TestDefault(Test):
 #
 ###################################################################
 class Violation():
-    def __init__(self, test, lineNumber, extraComment = ""):
+    def __init__(self, test, line, extraComment = ""):
         self.test = test
-        self.lineNumber = lineNumber
+        self.line = line
+        self.lineNumber = line.number
         self.extraComment = extraComment
 
     def getComment(self):
@@ -1140,7 +1177,7 @@ class Line():
         self.inPrivate   = False
         self.className   = ""
         self.structName  = ""
-
+        self.suppress    = []
         
 ###################################################################
 # Function flagLines
@@ -1278,6 +1315,13 @@ def parseLines(lines, filetype):
         line = Line(raw, stripped)
         line.number = iLine
         newLines.append(line)
+
+
+        ####################################################
+        # note if what's being suppressed
+        m = re.search("parasoft-suppress\s+([^\"]+)", raw)
+        if m:
+            line.suppress += m.group(1).split()
         
     flaggedLines = flagLines(newLines)
     return flaggedLines
@@ -1312,6 +1356,7 @@ def getVariableNames(line, stypes = getPrimitivesOr() + "|" + getUserTypeRegex()
 
     # clear out 'const', 'static', and some whitespace ... makes the regex matching easier
     # kill possible 'const = 0' as that denote a virtual function
+    originalLine = line
     line = re.sub("const(\s*=\s*0)?", "", line)
     line = re.sub("static", "", line)
     line = re.sub("typename", "", line)
@@ -1407,9 +1452,11 @@ def getVariableNames(line, stypes = getPrimitivesOr() + "|" + getUserTypeRegex()
         for variable in variables:
             if variable != '\n':
                 variable = re.sub("=.*$", "", variable) # strip '=' assignment
-                variable = re.sub("\([^\)]+\)", "", variable)  # strip '()' assignment
-                #print variable
-                variableList.append(variable.strip())
+                variable = re.sub("\([^\)]*\)", "", variable)  # strip '()' assignment
+                regex = "\<[^\>]*" + variable + "[^\<]*\>" # ignore it if it's in a template list
+                mm = re.search(regex, originalLine)
+                if not mm:
+                    variableList.append(variable.strip())
                 
     return variableList
 
@@ -1447,7 +1494,8 @@ def getTemplateNames(line):
     m = re.search("^\s*template<(.*?)>\s*$", line)
     if m:
         templateString = m.group(1)
-        templateNames = re.sub(",?\s*(typename|class)", "", templateString)
+        templateNames = re.sub(",?\s*(typename|class|bool|float|double|int|unsigned int)",
+                               "", templateString)
         templateNameList += templateNames.split()
     return templateNameList
 
@@ -1715,17 +1763,26 @@ def main():
     
     ##########################################################################
     # print the results, sorted by line number
-    violationSort = sorted(violationList, key = lambda x: x.getLineNumber());
-    if violationSort:
+    violationFinal = []
+    violationSort = sorted(violationList, key = lambda x: x.getLineNumber())
+
+    # skip the ones with a suppression line
+    for violation in violationSort:
+        parasoftSuppress = "LsstDm-" + violation.getId() in violation.line.suppress
+        if not parasoftSuppress:
+            violationFinal.append(violation)
+            
+    if violationFinal:
         print "// -*- parasoft -*-"
         print infile
-    for violation in violationSort:
+    for violation in violationFinal:
         lineNumber = str(violation.getLineNumber())
         rule = violation.getId()
         doIgnore = (ignore.has_key(infile) and ignore[infile].has_key(rule) and
                     (lineNumber in ignore[infile][rule]))
+        
         severity = violation.getSeverity()
-        if ( not doIgnore  and  (severity <= opts.severity) ):
+        if ( not doIgnore  and (severity <= opts.severity) ):
             print "%-4s \t%-60s \t%10s" % (lineNumber + ":", violation.getComment(),
                                            "LsstDm-" + rule + "-" + str(severity))
             if (opts.showraw):
