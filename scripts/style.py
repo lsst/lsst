@@ -353,7 +353,7 @@ class TestNegativeBoolean(Test):
                 variableList = getVariableNames(line.stripped, "bool")
                 for variable in variableList:
                     if ( re.search("[nN]ot?", variable) ):
-                        vList.append(Violation(self, line))
+                        vList.append(Violation(self, line, variable))
         return vList
 
     
@@ -567,22 +567,23 @@ class TestPubProPriv(Test):
             nSeg = 0
             for line in lines:
                 
-                if (re.search("^\s*public:", line.stripped) and line.inClass):
+                if (re.search("^\s*public:", line.stripped) and line.inClass and not line.inNestedClass):
                     if order[0]:
                         vList.append( Violation(self, line, "'public' repeated") )
                     nSeg += 1
                     order[0] = nSeg
-                if (re.search("^\s*protected:", line.stripped) and line.inClass): 
+                if (re.search("^\s*protected:", line.stripped) and line.inClass and not line.inNestedClass): 
                     if order[1]:
                         vList.append( Violation(self, line, "'protected' repeated") )
                     nSeg += 1
                     order[1] = nSeg
-                if (re.search("^\s*private:", line.stripped) and line.inClass): 
+                if (re.search("^\s*private:", line.stripped) and line.inClass and not line.inNestedClass): 
                     if order[2]:
                         vList.append( Violation(self, line, "'private' repeated") )
                     nSeg += 1
                     order[2] = nSeg
-                if (re.search("^\s*};\s*", line.stripped) and lines[line.number - 2].inClass):
+                if (re.search("^\s*};\s*", line.stripped) and lines[line.number - 2].inClass and
+                    not lines[line.number - 2].inNestedClass):
                     if (
                         (order[0] and order[1] and order[0] > order[1]) or #pub>pro
                         (order[1] and order[2] and order[1] > order[2]) or #pro>pri
@@ -949,17 +950,24 @@ class TestFourSpaceIndent(Test):
                     
                     # check and see if we're aligned to a '('
                     # ... the inParentheses test above will fail if an arg is x = func(y)
-                    isBracketAligned = True
+                    isBracketAligned = False
                     jLine = line.number - 2   # the previous line
 
-                    while (line.number - jLine < 8 and jLine > 0 and len(lines[jLine].stripped) > nLead):
-                        if ( not re.search("[\(\s]", lines[jLine].stripped[nLead - 1]) ):
-                            isBracketAligned = False
+                    while (line.number - jLine < 8 and jLine > 0):
+                        if len(lines[jLine].stripped) < (nLead + 1) or nLead == 0:
+                            jLine -= 1
+                            continue
+                        # if we're a ');', look for a '('
+                        # OR look for a '(' one space earlier
+                        if ( (re.search("[\)\]]", line.stripped[nLead]) and
+                              re.search("[\(\[]", lines[jLine].stripped[nLead]) ) or
+                             re.search("\(", lines[jLine].stripped[nLead - 1]) ):
+                            isBracketAligned = True
                             break
-                        if ( re.search("\(", lines[jLine].stripped[nLead - 1])):
-                            break
+                        
                         jLine -= 1
 
+                        
                     # check if the last char on the prev line was ','
                     # -- this catches argument lists that stretch over one line
                     #   - tempting to check ';' to catch for() loops, but ';' terminates all lines
@@ -996,8 +1004,16 @@ class TestKR(Test):
 # 6-5 (public/protected/private left justified)
 class TestClassBlocksLeft(Test):
     def __init__(self, filetype):
-        Test.__init__(self, 1, "^.+(class|private|protected|public):", "6-5",
-                      "class/public/protected/private should be left justified.", filetype, ["c", "cc", "h"])
+        Test.__init__(self, 1, "", "6-5", "class/public/protected/private should be left justified.",
+                      filetype, ["c", "cc", "h"])
+    def apply(self, lines):
+        vList = []
+        if (self.getFiletype() in self.getTypeList()):
+            for line in lines:
+                if (re.search("^.+(class|private|protected|public):", line.stripped) and
+                    not line.inNestedClass):
+                    vList.append( Violation(self, line) )
+        return vList
 
 
 ###################################################################
@@ -1045,7 +1061,8 @@ class TestOperatorSpacing(Test):
                     if line.variableNames > 0:
                         isDefaultSameLine = re.search("\([^\)]*([^=]=[^=])+[^\(]*\)", line.stripped)
                         isDefaultDiffLine = re.search("[\d\w]=[\d\w]+(?:\<\w+\>)?(?:\(.*\))?,", line.stripped)
-                        isDefault = isDefaultSameLine or isDefaultDiffLine
+                        mOvr = re.search("operator=\(", line.stripped)
+                        isDefault = isDefaultSameLine or isDefaultDiffLine or mOvr
                     if not isDefault:
                         vList.append(Violation(self, line, "failed '='"))
 
@@ -1053,8 +1070,9 @@ class TestOperatorSpacing(Test):
                 if mplus:
                     match = mplus.group(1)
                     mSciP = re.search("[\d\.][eE]\+\d", match)          #sci.not
-                    mPosP = re.search("[\:\=\+\-\*\/\(\,\<\>]\s*\+", match) # +ve num
+                    mPosP = re.search("[\:\=\+\-\*\/\(\,\<\>\?]\s*\+", match) # +ve num
                     mOvrP = re.search("operator\+\(", line.stripped)    #operator+ overload
+                    mRetP = re.search("return\s+\+", line.stripped)    #returning +ve
                     mEolP = re.search("\+$", line.stripped)             # end of line
                     mBolP = re.search("^\s*\+", line.stripped)             # beginning of line
                     if ( not (mSciP or mPosP or mOvrP or mEolP or mBolP) ): 
@@ -1062,16 +1080,19 @@ class TestOperatorSpacing(Test):
                 if mminus:
                     match = mminus.group(1)
                     mSciN = re.search("[\d\.][eE]\-\d", match)          #sci.not
-                    mNegN = re.search("[\:\=\+\-\*\/\(\,\<\>]\s*\-", match) # -ve num
+                    mNegN = re.search("[\:\=\+\-\*\/\(\,\<\>\?]\s*\-", match) # -ve num
+                    mRetN = re.search("return\s+\-", line.stripped)     # returning -ve
                     mOvrN = re.search("operator\-\(", line.stripped)    # operator- overload
                     mEolN = re.search("\-$", line.stripped)             # end of line
                     mBolN = re.search("^\s*\-", line.stripped)             # beginning of line
                     pointDeref = re.search("\->", match)                
-                    if ( not (mSciN or mNegN or mOvrN or mEolN or mBolN or pointDeref)):
+                    if ( not (mSciN or mNegN or mRetN or mOvrN or mEolN or mBolN or pointDeref)):
                         vList.append( Violation(self, line, "failed '-'") )
 
                 if ( re.search("([^\s][\!\&\|\+\-\*\/]\=|[\!\&\|\+\-\*\/]\=[^\s])", line.stripped) ):
-                    vList.append( Violation(self, line, "failed '[&|+-*/]='") )
+                    mOvr = re.search("operator[\&\|\*\+\-\/]?=\(", line.stripped)
+                    if not mOvr:
+                        vList.append( Violation(self, line, "failed '[&|+-*/]='") )
 
         return vList
 
@@ -1170,14 +1191,16 @@ class Line():
         self.variableNames = []
         self.functionNames = []
         self.templateNames = []
-        self.inClass     = False
-        self.inStruct    = False
-        self.inPublic    = False
-        self.inProtected = False
-        self.inPrivate   = False
-        self.className   = ""
-        self.structName  = ""
-        self.suppress    = []
+        self.inClass       = False
+        self.inStruct      = False
+        self.inPublic      = False
+        self.inProtected   = False
+        self.inPrivate     = False
+        self.inNestedClass  = False
+        self.inNestedStruct = False
+        self.className      = ""
+        self.structName     = ""
+        self.suppress       = []
         
 ###################################################################
 # Function flagLines
@@ -1187,12 +1210,14 @@ class Line():
 ###################################################################        
 def flagLines(lines):
 
-    inClass     = False
-    inStruct    = False
-    inPublic    = False
-    inProtected = False
-    inPrivate   = False
-
+    inClass        = False
+    inStruct       = False
+    inPublic       = False
+    inProtected    = False
+    inPrivate      = False
+    inNestedClass  = False
+    inNestedStruct = False
+    
     nNested = 0
     className = ""
     structName = ""
@@ -1203,29 +1228,41 @@ def flagLines(lines):
         m = re.search("^\s*class\s+(\w+)\s*:?\s+", line.stripped)
         if m:
             className = m.group(1)
+            if inClass or inStruct:
+                inNestedClass = True
             inClass, inStruct, inPublic, inProtected, inPrivate = True, False, False, False, False
-
+            
         # struct information
         m = re.search("^\s*struct\s+(\w+)\s*:?\s+", line.stripped)
         if m:
             structName = m.group(1)
+            if (inClass or inStruct):
+                inNestedStruct = True
             inClass, inStruct, inPublic, inProtected, inPrivate = False, True, False, False, False
-            
-        if ((inClass or inStruct) and re.search("^\s*public:", line.stripped)):
+
+        justInClassStruct = (inClass or inStruct) and not (inNestedClass or inNestedStruct)
+        if ((justInClassStruct) and re.search("^\s*public:", line.stripped)):
             inPublic, inProtected, inPrivate = True,  False, False
-        if ((inClass or inStruct) and re.search("^\s*protected:", line.stripped)): 
+        if ((justInClassStruct) and re.search("^\s*protected:", line.stripped)): 
             inPublic, inProtected, inPrivate = False, True,  False
-        if ((inClass or inStruct) and re.search("^\s*private:", line.stripped)):
+        if ((justInClassStruct) and re.search("^\s*private:", line.stripped)):
             inPublic, inProtected, inPrivate = False, False, True
-        if ((inClass or inStruct) and re.search("^};\s*", line.stripped)):
+        if ((justInClassStruct) and re.search("^};\s*", line.stripped)):
             inClass, inStruct, inPublic, inProtected, inPrivate = False, False, False, False, False
-
-        line.inClass     = inClass
-        line.inStruct    = inStruct
-        line.inPublic    = inPublic
-        line.inProtected = inProtected
-        line.inPrivate   = inPrivate
-
+            
+        if (inNestedClass and re.search("^};\s*", line.stripped)):
+            inNestedClass = False
+        if (inNestedStruct and re.search("^\};\s*", line.stripped)):
+            inNestedStruct = False
+            
+        line.inClass        = inClass
+        line.inStruct       = inStruct
+        line.inPublic       = inPublic
+        line.inProtected    = inProtected
+        line.inPrivate      = inPrivate
+        line.inNestedClass  = inNestedClass
+        line.inNestedStruct = inNestedStruct
+        
         if inClass:
             line.className = className
         if inStruct:
