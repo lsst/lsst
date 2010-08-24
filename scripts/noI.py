@@ -73,9 +73,13 @@ def main(log, retryscript):
     fp.close()
     
     i = 0
-    most_recent_compile_line = ""
+    compile_lines = {}
+    prev_line = ""
+    s = ""
+    already_compiling = {}
     while(True):
         line = sys.stdin.readline()
+        raw_line = line
         
         if not line:
             break
@@ -83,7 +87,8 @@ def main(log, retryscript):
         # stash the line if it's a compile statement
         # - do this before we strip off the -I -L and other options.
         if re.search("^g\+\+", line):
-            most_recent_compile_line = line.strip()
+            srcFile = (line.split())[-1]
+            compile_lines[srcFile] = line.strip()
             
         # trim the g++ options
         line = re.sub("\s+-([DILl]|Wl,)\S+", "", line)
@@ -95,15 +100,26 @@ def main(log, retryscript):
 
         # write a script to re-execute the compile statement which failed
         # ... no sense redoing the whole configure/build
-        if re.search(": error:", line) and len(most_recent_compile_line) > 0:
-            s = "#!/usr/bin/env bash\n"
-            s += "echo \"" + most_recent_compile_line + "\"\n"
-            s += most_recent_compile_line + "\n"  #" 2>&1 | " + sys.argv[0] + "\n"
-            fp = open(retryscript, 'w')
-            fp.write(s)
-            fp.close()
-            os.chmod(retryscript, 0744)
-            
+        m = re.search("^([^:]+):(\d+): error:", line)
+        if m:
+            srcFile = m.groups()[0]
+
+            # if a .h file, need to get the corresponding .cc file 
+            if re.search("\.h$", srcFile):
+                mm = re.search("In file included from ([^:]+):(\d+):", prev_line)
+                if mm:
+                    srcFile = mm.groups()[0]
+                    
+            if not already_compiling.has_key(srcFile):
+                compile_line = compile_lines[srcFile]
+                already_compiling[srcFile] = 1
+                
+                if len(s) == 0:
+                    s += "#!/usr/bin/env bash\n"
+                s += "echo \"" + compile_line + "\"\n"
+                s += compile_line + "\n"  #" 2>&1 | " + sys.argv[0] + "\n"
+
+                
         # highlight the text after searching for 'error' in the line
         # (highlighting inserts extra characters)
         line = regexColorReplace("([Ee]rror):", ["red", "bold"], line)
@@ -124,15 +140,23 @@ def main(log, retryscript):
         
         # add a line number to the output and make it bold
         line = "==" +str(i)+ "== " + line
+
+        prev_line = raw_line
         
         sys.stdout.write(line)
         sys.stdout.flush()
 
         if log:
-            fp_log.write(line)
+            fp_log.write(raw_line)
 
         i += 1
 
+    if len(s) > 0:
+        fp = open(retryscript, 'w')
+        fp.write(s)
+        fp.close()
+        os.chmod(retryscript, 0744)
+        
     if log:
         fp_log.close()
 
