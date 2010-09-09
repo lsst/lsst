@@ -73,28 +73,35 @@ def main(log, retryscript):
     fp.close()
     
     i = 0
-    compile_lines = {}
+    compile_lines = {}  # store the compile statement by path of the .cc file
+    srcFileLookup = {}  # need to lookup the .cc file to build if the error is in a .h file
     prev_line = ""
     s = ""
-    already_compiling = {}
+    already_compiling = {}  # avoid putting the same build line in the rebuild script multiple times
+    raw_lines = []
+    iLine = 0
     while(True):
         line = sys.stdin.readline()
         raw_line = line
+        raw_lines.append(raw_line)
+        iLine += 1
         
         if not line:
             break
 
-        # stash the line if it's a compile statement
+        # stash the line if it's a compile statement (starts with 'g++')
+        # POSSIBLE BUG if another compiler is used.
         # - do this before we strip off the -I -L and other options.
         if re.search("^g\+\+", line):
             srcFile = (line.split())[-1]
             compile_lines[srcFile] = line.strip()
             
-        # trim the g++ options
+        # trim the g++ options (-I -L etc.)
         line = re.sub("\s+-([DILl]|Wl,)\S+", "", line)
 
         ### warnings ###
         line = regexColorReplace("([Ww]arning):", ["yellow"], line)
+
         
         ### errors ###
 
@@ -102,20 +109,26 @@ def main(log, retryscript):
         # ... no sense redoing the whole configure/build
         m = re.search("^([^:]+):(\d+): error:", line)
         if m:
-            srcFile = m.groups()[0]
-
+            errFile = m.groups()[0]
+            srcFileLookup[srcFile] = errFile
+            
             # if a .h file, need to get the corresponding .cc file 
-            if re.search("\.h$", srcFile):
-                mm = re.search("In file included from ([^:]+):(\d+):", prev_line)
+            if re.search("\.h$", errFile):
+                mm = re.search("^\s+from ([^:]+.cc):(\d+):", raw_lines[iLine-2])
                 if mm:
-                    srcFile = mm.groups()[0]
-                    
+                    srcFileLookup[errFile] = mm.groups()[0]
+
+            
+            srcFile = srcFileLookup[errFile]
             if not already_compiling.has_key(srcFile):
                 compile_line = compile_lines[srcFile]
                 already_compiling[srcFile] = 1
-                
+
+                # write the #! line on the first pass
                 if len(s) == 0:
                     s += "#!/usr/bin/env bash\n"
+
+                # the rebuild script should echo what it's doing and do it.
                 s += "echo \"" + compile_line + "\"\n"
                 s += compile_line + "\n"  #" 2>&1 | " + sys.argv[0] + "\n"
 
