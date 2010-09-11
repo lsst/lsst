@@ -46,7 +46,13 @@ def regexColorReplace(regex, clrs, line):
         for clr in clrs:
             colorPattern += color(clr)
         colorPattern += pattern + color("reset")
-        out = re.sub(pattern, colorPattern, line)
+        # if it's just digits, it must be line numbers
+        # it'll match all digits, so we'll put the colon (g++ output) in the match expression
+        if re.search("^\d+$", pattern):
+            out = re.sub(":"+pattern, ":"+colorPattern, line)
+        else:
+            out = re.sub(pattern, colorPattern, line)
+            
     return out
 
 
@@ -138,10 +144,11 @@ def main(log, retryscript):
         line = regexColorReplace("([Ee]rror):", ["red", "bold"], line)
         
         ### filenames ###
-        line = regexColorReplace(r'\/?(\w+\.(?:cc|h|i|hpp)):\d+', ["cyan"], line)
+        line = regexColorReplace(r'\/?(\w+\.(?:cc|h|i|hpp)):\d+[,:]', ["cyan"], line)
         
         ### file linenumbers ###
-        line = regexColorReplace(r':(\d+)', ["magenta"], line)
+        # don't try to match the filename too, it's now wrapped in \esc for cyan
+        line = regexColorReplace(':(\d+)[,:]', ["magenta"], line)
 
         ### tests ###
         line = regexColorReplace("(passed)", ["green"], line)
