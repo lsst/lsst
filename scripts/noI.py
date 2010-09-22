@@ -88,7 +88,11 @@ def main(log, retryscript):
     iLine = 0
     while(True):
         line = sys.stdin.readline()
+        
         raw_line = line
+        if log:
+            fp_log.write(raw_line)
+
         raw_lines.append(raw_line)
         iLine += 1
         
@@ -165,9 +169,6 @@ def main(log, retryscript):
         
         sys.stdout.write(line)
         sys.stdout.flush()
-
-        if log:
-            fp_log.write(raw_line)
 
         i += 1
 
