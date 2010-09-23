@@ -124,9 +124,18 @@ def main(log, retryscript):
             
             # if a .h file, need to get the corresponding .cc file 
             if re.search("\.h$", errFile):
-                mm = re.search("^\s+from ([^:]+.cc):(\d+):", raw_lines[iLine-2])
+
+                # need to check two possibilities
+                # - .h file included directly in a .cc (it'll be listed on the previous line)
+                mm = re.search("^In file included from ([^:]+.cc):(\d+):", raw_lines[iLine-2])
+                # - .h file included from a chain of .h
+                # (.cc which includes the first in the chain will be on previous line ... different regex)
+                mm2 = re.search("^\s+from ([^:]+.cc):(\d+):", raw_lines[iLine-2])
+                
                 if mm:
                     srcFileLookup[errFile] = mm.groups()[0]
+                elif mm2:
+                    srcFileLookup[errFile] = mm2.groups()[0]
 
             
             srcFile = srcFileLookup[errFile]
