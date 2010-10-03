@@ -16,6 +16,7 @@ import sys
 import re
 import optparse
 import os
+import glob
 
 
 ##########################
@@ -61,7 +62,7 @@ def regexColorReplace(regex, clrs, line):
 # Main body of code
 #
 #############################################################
-def main(log, retryscript):
+def main(filedesc, log, retryscript):
 
     if log:
         fp_log = open("noI.log", 'w')
@@ -83,11 +84,12 @@ def main(log, retryscript):
     srcFileLookup = {}  # need to lookup the .cc file to build if the error is in a .h file
     prev_line = ""
     s = ""
+    srcFileList = []
     already_compiling = {}  # avoid putting the same build line in the rebuild script multiple times
     raw_lines = []
     iLine = 0
     while(True):
-        line = sys.stdin.readline()
+        line = filedesc.readline()
         
         raw_line = line
         if log:
@@ -106,6 +108,7 @@ def main(log, retryscript):
         # POSSIBLE BUG if another compiler is used.
         if re.search("^g\+\+", raw_line):
             srcFile = (line.split())[-1]
+            srcFileList.append(srcFile)
             compile_lines[srcFile] = raw_line.strip()
             srcFileLookup[srcFile] = srcFile
             
@@ -120,12 +123,14 @@ def main(log, retryscript):
         m = re.search("^([^:]+):(\d+): error:", line)
         if m:
             errFile = m.groups()[0]
-            #srcFileLookup[errFile] = errFile
             
             # if a .h file, need to get the corresponding .cc file 
             if re.search("\.h$", errFile):
 
+                ##########
                 # need to check two possibilities
+
+                
                 # - .h file included directly in a .cc (it'll be listed on the previous line)
                 mm = re.search("^In file included from ([^:]+.cc):(\d+):", raw_lines[iLine-2])
                 
@@ -137,25 +142,51 @@ def main(log, retryscript):
                 while (not mm2 and iL < maxLines):
                     mm2 = re.search("^\s+from ([^:]+.cc):(\d+):", raw_lines[iLine-2-iL])
                     iL += 1
-                
+
+                    
+                ##########
+                # now get the appropriate src file for this header error
                 if mm:
                     srcFileLookup[errFile] = mm.groups()[0]
                 elif mm2:
                     srcFileLookup[errFile] = mm2.groups()[0]
 
-            print "##### " + srcFile, errFile
-            srcFile = srcFileLookup[errFile]
-            if not already_compiling.has_key(srcFile):
-                compile_line = compile_lines[srcFile]
-                already_compiling[srcFile] = 1
+                # last ditch effort ... check the last few g++ statements and see if the outputs are there
+                else:
+                    maxCheck = 8
+                    iCheck = 0
+                    while (iCheck < maxCheck):
+                        if len(srcFileList) < iCheck:
+                            break
+                        
+                        srcFile = srcFileList[-iCheck]
+                        srcPattern = re.sub(".cc$", "", srcFile)
+                        possibleObjFiles = glob.glob(srcPattern+".*") #{o,os,so}")
+                        possibleObjFiles = filter(lambda x: re.search(".(o|os|so)$", x), possibleObjFiles)
+                            
+                        #if it built
+                        if len(possibleObjFiles) == 0:
+                            srcFileLookup[errFile] = srcFile
+                            break
+                        
+                        iCheck += 1
 
-                # write the #! line on the first pass
-                if len(s) == 0:
-                    s += "#!/usr/bin/env bash\n"
+            if not srcFileLookup.has_key(errFile):
+                print regexColorReplace("(.*)", ["red"],
+                                        "Can't associate "+errFile+" with a .cc file build.  No entry in build script.")
+            else:
+                srcFile = srcFileLookup[errFile]
+                if not already_compiling.has_key(srcFile):
+                    compile_line = compile_lines[srcFile]
+                    already_compiling[srcFile] = 1
 
-                # the rebuild script should echo what it's doing and do it.
-                s += "echo \"" + compile_line + "\"\n"
-                s += compile_line + "\n"  #" 2>&1 | " + sys.argv[0] + "\n"
+                    # write the #! line on the first pass
+                    if len(s) == 0:
+                        s += "#!/usr/bin/env bash\n"
+
+                    # the rebuild script should echo what it's doing and do it.
+                    s += "echo \"" + compile_line + "\"\n"
+                    s += compile_line + "\n"  #" 2>&1 | " + sys.argv[0] + "\n"
 
                 
         # highlight the text after searching for 'error' in the line
@@ -216,4 +247,4 @@ if __name__ == '__main__':
         parser.print_help()
         sys.exit(1)
     
-    main(opts.log, opts.retryscript)
+    main(sys.stdin, opts.log, opts.retryscript)
