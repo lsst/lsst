@@ -99,16 +99,16 @@ def main(log, retryscript):
         if not line:
             break
 
-        # stash the line if it's a compile statement (starts with 'g++')
-        # POSSIBLE BUG if another compiler is used.
-        # - do this before we strip off the -I -L and other options.
-        if re.search("^g\+\+", line):
-            srcFile = (line.split())[-1]
-            compile_lines[srcFile] = line.strip()
-            
         # trim the g++ options (-I -L etc.)
         line = re.sub("\s+-([DILl]|Wl,)\S+", "", line)
-
+        
+        # stash the line if it's a compile statement (starts with 'g++')
+        # POSSIBLE BUG if another compiler is used.
+        if re.search("^g\+\+", raw_line):
+            srcFile = (line.split())[-1]
+            compile_lines[srcFile] = raw_line.strip()
+            srcFileLookup[srcFile] = srcFile
+            
         ### warnings ###
         line = regexColorReplace("([Ww]arning):", ["yellow"], line)
 
@@ -120,7 +120,7 @@ def main(log, retryscript):
         m = re.search("^([^:]+):(\d+): error:", line)
         if m:
             errFile = m.groups()[0]
-            srcFileLookup[srcFile] = errFile
+            #srcFileLookup[errFile] = errFile
             
             # if a .h file, need to get the corresponding .cc file 
             if re.search("\.h$", errFile):
@@ -128,16 +128,22 @@ def main(log, retryscript):
                 # need to check two possibilities
                 # - .h file included directly in a .cc (it'll be listed on the previous line)
                 mm = re.search("^In file included from ([^:]+.cc):(\d+):", raw_lines[iLine-2])
+                
                 # - .h file included from a chain of .h
-                # (.cc which includes the first in the chain will be on previous line ... different regex)
-                mm2 = re.search("^\s+from ([^:]+.cc):(\d+):", raw_lines[iLine-2])
+                # (.cc which includes the first in the chain will be on a recent line ... different regex)
+                mm2 = False
+                maxLines = 2
+                iL = 0
+                while (not mm2 and iL < maxLines):
+                    mm2 = re.search("^\s+from ([^:]+.cc):(\d+):", raw_lines[iLine-2-iL])
+                    iL += 1
                 
                 if mm:
                     srcFileLookup[errFile] = mm.groups()[0]
                 elif mm2:
                     srcFileLookup[errFile] = mm2.groups()[0]
 
-            
+            print "##### " + srcFile, errFile
             srcFile = srcFileLookup[errFile]
             if not already_compiling.has_key(srcFile):
                 compile_line = compile_lines[srcFile]
