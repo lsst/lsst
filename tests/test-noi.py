@@ -1,12 +1,7 @@
 #!/usr/bin/env python
 #
-# Original filename: tests/test-noi.py
-#
 # Author: Steven Bickerton
-# Email: 
 # Date: Sun 2010-10-03 15:58:47
-# 
-# Summary: 
 # 
 """
 %prog [options]
@@ -29,7 +24,7 @@ import noI
 
 def main():
 
-    noiData = os.path.join(os.getenv("LSST_DIR"), "tests", "noiData", "*.stderr")
+    noiData = os.path.join(os.getenv("LSST_DIR"), "tests", "noIData", "*.stderr")
     errorMsgFiles = glob.glob(noiData)
 
     for errorMsgFile in errorMsgFiles:
