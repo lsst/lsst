@@ -2,7 +2,7 @@
 #
 # Setup our environment
 #
-import glob, os.path, re, os
+import glob, os.path, re, os, sys
 import lsst.SConsUtils as scons
 
 # before we get into the boiler plate scons stuff, we start with 
@@ -13,15 +13,17 @@ if not lssthome is None and os.environ.has_key('LSST_HOME'):
 if not lssthome and os.environ.has_key('EUPS_PATH'):
     lssthome = os.environ['EUPS_PATH'].split(":", 1)[0].strip()
 
-# okay start the standard stuff        
+# okay start the standard stuff
 
-opts = scons.LsstOptions()
-opts.AddOptions(('pkgsurl', 'the base url for the software server',
-                 'http://dev.lsstcorp.org/pkgs'),
-                ('lsst_home', 'the root directory for the LSST software stack',
-                 lssthome))
+print >> sys.stderr, "lssthome=", lssthome
 
-env = scons.makeEnv("lsst", r"$HeadURL$", options=opts)
+vars = scons.LsstVariables()
+vars.AddVariables(('pkgsurl', 'the base url for the software server',
+                   'http://dev.lsstcorp.org/dmspkgs'),
+                  ('lsst_home', 'the root directory for the LSST software stack',
+                   lssthome))
+
+env = scons.makeEnv("lsst", r"$HeadURL$", variables=vars)
 
 env.Command('bin', '', [Mkdir('bin')])
 env.Command('etc', '', [Mkdir('etc')])
