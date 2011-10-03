@@ -6,6 +6,7 @@
 import sys, os, os.path, re, atexit, shutil
 import eups.distrib.server as eupsServer
 import eups.distrib        as eupsDistrib
+import eups.lock
 
 defaultPackageBase = "http://dev.lsstcorp.org/pkgs"
 
@@ -96,17 +97,44 @@ class DistribServer(eupsServer.ConfigurableDistribServer):
         if ftype is None:
             ftype = os.path.splitext(path)[1]
             if ftype.startswith("."):  ftype = ftype[1:]
+        ftype = ftype.upper()
 
         # determine if we looking for an external product
-        ftype = ftype.upper()
         prefix = "external/"
-        if path.startswith(prefix):
+        if path.startswith(prefix) and not ftype.startswith("EXTERNAL_"):
             ftype = "EXTERNAL_" + ftype
-            path = path[len(prefix):]
+            # path = path[len(prefix):]
 
         return eupsServer.ConfigurableDistribServer.getFileForProduct(self,
                     path, product, version, flavor, ftype, filename, noaction)
 
+    def getTableFile(self, product, version, flavor, filename=None, 
+                     noaction=False):
+        """return the name of a local file containing a copy of the EUPS table
+        file for a desired product retrieved from the server.
+
+        This method encapsulates the mechanism for retrieving a table file 
+        from the server; sub-classes may over-ride this to specialize for a 
+        particular type of server.  
+
+        @param product     the desired product name
+        @param version     the desired version of the product
+        @param flavor      the flavor of the target platform
+        @param filename    the recommended name of the file to write to; the
+                             actual name may be different (if, say, a local 
+                             copy is already cached).  If None, a name will
+                             be generated.
+        @param noaction    if True, simulate the retrieval
+        """
+        try:
+            # search for a version specialized for the exact version
+            return eupsServer.ConfigurableDistribServer.getTableFile(product,
+                                          version, flavor, filename, noaction)
+        except eupsServer.RemoteFileNotFound, ex:
+            # try a generic one for the release (before +/- in version)
+            release = re.sub(r'[+\-].+$', '', version);
+            return eupsServer.ConfigurableDistribServer.getTableFile(product,
+                                          release, flavor, filename, noaction)
 
 
 class BuildDistrib(eupsDistrib.DefaultDistrib):
@@ -191,13 +219,26 @@ class BuildDistrib(eupsDistrib.DefaultDistrib):
                 finally:
                     fd.close()
 
+            lockReleased = False
             try:
+              # need to release an exclusive lock to allow the script 
+              # declare it's product, if it wishes.  (I;m not happy about 
+              # this
+              pid = os.getpid()
+              if os.environ.get('LOCK_PID', '') == str(pid):
+                  lockReleased = self._releaseLock(productRoot)
+
+              try:
                 eupsServer.system("cd %s && lssteupsbuild.sh -p %s -D -b %s -r %s %s %s %s %s" % 
                                   (buildDir, os.environ["EUPS_PATH"], buildDir, self.distServer.base, 
                                    distFile, installDir, product, version), 
                                   self.Eups.noaction, self.verbose, self.log) 
-            except OSError, e:
+              except OSError, e:
                 raise RuntimeError("Failed to build and install " + location)
+
+            finally:
+              if lockReleased:
+                  self._reestablishLock(productRoot)
 
             if os.path.exists(installDir):
                 self.setGroupPerms(installDir)
@@ -209,6 +250,24 @@ class BuildDistrib(eupsDistrib.DefaultDistrib):
                                   self.Eups.noaction, self.verbose, self.log)
             except OSError, e:
                 raise RuntimeError("Failed to clean up build dir, " + buildDir)
+
+    def _releaseLock(self, productRoot):
+        import pwd
+        who = pwd.getpwuid(os.geteuid())[0]
+        pid = os.getpid()
+        lockfile =  "exclusive-%s.%d" % (who, pid)
+        lockdir = os.path.join(eups.lock.getLockPath(productRoot), 
+                               eups.lock._lockDir)
+        if not os.path.exists(os.path.join(lockdir, lockfile)):
+            return False
+        if self.verbose > 1:
+            print >> self.log, "Released lock to run scons"
+        eups.lock.giveLocks([(lockdir, lockfile)], self.verbose)
+        return True
+
+    def _reestablishLock(self, productRoot):
+        eups.lock.takeLocks("eups distrib", productRoot, "exclusive", 
+                            verbose=self.verbose)
 
     def getDistIdForPackage(self, product, version, flavor=None):
         """return the distribution ID that for a package distribution created
