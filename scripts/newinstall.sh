@@ -99,7 +99,7 @@ mkdir `eups flavor`
 
 # install the LSST EUPS extension package
 
-eups distrib install -v -r $EUPS_PKGROOT/bootstrap lssteups || {
+eups distrib install -C -v -r $EUPS_PKGROOT/bootstrap lssteups || {
     echo "Failed to install lssteups, LSST's EUPS extension package"
     exit 2
 }
@@ -107,7 +107,7 @@ eups distrib install -v -r $EUPS_PKGROOT/bootstrap lssteups || {
 setup lssteups
 
 # install the essential stuff
-eups distrib install lsst || {
+eups distrib install -C lsst || {
     echo "Failed to install infrastructure packages"
     exit 1
 }
