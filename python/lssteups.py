@@ -49,7 +49,7 @@ class DistribServer(eupsServer.ConfigurableDistribServer):
         if not self.config.has_key('DIST_URL'):
             self.config['DIST_URL'] = "%(base)s/%(path)s";
         if not self.config.has_key('EXTERNAL_DIST_URL'):
-            self.config['EXTERNAL_DIST_URL'] = "%(base)s/external/%(path)s";
+            self.config['EXTERNAL_DIST_URL'] = "%(base)s/%(path)s";
         if not self.config.has_key('TARBALL_FLAVOR_URL'):
             self.config['TARBALL_FLAVOR_URL'] = "%(base)s/%(product)s/%(version)s/%(flavor)s/%(path)s";
 
