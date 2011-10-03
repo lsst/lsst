@@ -49,6 +49,7 @@ function process_command_line {
     installdir=`echo $2`
     product=`echo $3` 
     version=`echo $4`
+    release=`echo $version | sed -e 's/[\+\-].*//'`
 
     if [ -z "$distfile" ]; then
         echo "$prog: source distribution file argument missing"

@@ -3,7 +3,7 @@
 import os, re, sys
 import pdb
 import eups
-import eupsDistribBuilder
+import eups.distrib.builder
 try:
     import lsst.svn
     noLsstSvn = 0
@@ -14,7 +14,7 @@ except ImportError:
 #
 # Allow "eups fetch" as an alias for "eups distrib install"
 #
-def cmdHook(cmd, argv):
+def cmdHook(Eups, cmd, opts, args):
     """Called by eups to allow users to customize behaviour by defining it in EUPS_STARTUP
 
     The arguments are the command (e.g. "admin" if you type "eups admin")
@@ -25,28 +25,38 @@ def cmdHook(cmd, argv):
         argv[1:2] = ["distrib", "install"]
 
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-#
-# A callback function called just before version strings are sorted
-#
-def versionHook(v1, v2, compar):
-    """Called with the pair of versions that are to be sorted; compar is the usual version comparison
-    function for your possible convenience.
 
-    Throw ValueError if the versions can't be sorted
-    """
+from eups.VersionCompare import VersionCompare
 
-    if v1 and v2:
-        numeric1 = re.search(r"^\d", v1) != None
-        numeric2 = re.search(r"^\d", v2) != None
+class LsstVersionCompare(VersionCompare):
+    """A functor used to sort version strings where numbers only compare to numbers, and versions with a
+    non-numeric prefix must have the _same_ prefix to be sortable"""
 
-        if numeric1 != numeric2:        # numbers may only be compared to numbers (e.g. 3.1 > 2.9)
-            raise ValueError
-        elif not numeric1:
-            prefix = os.path.commonprefix([v1, v2])
-            if not prefix:              # require a common prefix for versions that can be sorted
-                raise ValueError
+    def compare(self, v1, v2, mustReturnInt=True):
+        """Called with the pair of versions that are to be sorted.
 
-    return compar(v1, v2)
+        Return None if the versions can't be sorted
+        """
+
+        import os, re                   # importing into startup.py isn't good enough
+
+        if mustReturnInt:
+            return self.stdCompare(v1, v2)
+
+        if v1 and v2:
+            numeric1 = re.search(r"^\d", v1) != None
+            numeric2 = re.search(r"^\d", v2) != None
+
+            if numeric1 != numeric2:        # numbers may only be compared to numbers (e.g. 3.1 > 2.9)
+                return None
+            elif not numeric1:
+                prefix = os.path.commonprefix([v1, v2])
+                if not prefix:              # require a common prefix for versions that can be sorted
+                    return None
+
+        return self.stdCompare(v1, v2)
+
+hooks.version_cmp = LsstVersionCompare()
 
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -63,6 +73,8 @@ def rewriteTicketVersion(line):
             print >> sys.stderr, "Unable to import lsst.svn --- maybe scons isn't setup?"
             noLsstSvn = -1
         return line
+
+    import lsst, re, sys                # need to import here as definition is used as a callback
     #
     # Look for a tagname that we recognise as having special significance
     #
@@ -106,35 +118,25 @@ def rewriteTicketVersion(line):
     
     return line
 
-if __name__ == "__main__":
+#
+# Rewrite ticket names into proper svn urls
+#
+eups.distrib.builder.buildfilePatchCallbacks.add(rewriteTicketVersion)
 
-    #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    #
-    # Define a distribution type "beta"
-    #
-    eups.defineValidTag("beta", ["stable"])
-
-    if False:
-        eups.defineValidSetupTypes("build") # this one's defined already
-    #
-    # Rewrite ticket names into proper svn urls
-    #
-    eupsDistribBuilder.buildfilePatchCallbacks.add(rewriteTicketVersion)
-
+if True:
     try:
         eups.commandCallbacks.add(cmdHook)
-        eups.versionCallback.set(versionHook)
     except AttributeError, e:
         mat = re.search(r"'([^']+)'$", e.__str__())
         print >> sys.stderr, "Your version of eups doesn't understand \"%s\"; continuing" % mat.group(1)
-    
+
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-import eupsServer
+import eups.distrib.server
 
-class ExtendibleConfigurableDistribServer(eupsServer.ConfigurableDistribServer):
+class ExtendibleConfigurableDistribServer(eups.distrib.server.ConfigurableDistribServer):
     """A version of ConfigurableDistribServer that we could augment
     """
 
     def __init__(self, *args):
-        super(eupsServer.ConfigurableDistribServer, self).__init__(*args)
+        super(eups.distrib.server.ConfigurableDistribServer, self).__init__(*args)
