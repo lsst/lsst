@@ -210,10 +210,12 @@ function simplescons {
 
     idir=
     [ -n "$installdir" ] && idir="prefix=$installdir"
+    ver=
+    [ -n "$version" ] && ver="version=$version"
 
-    echo scons $sconsopt $idir install declare $*
-    echo scons $sconsopt $idir install declare $* >> $buildlog 
-    scons $sconsopt $idir install declare $* >> $buildlog 2>&1 || {
+    echo scons $sconsopt $idir $ver install declare $*
+    echo scons $sconsopt $idir $ver install declare $* >> $buildlog 
+    scons $sconsopt $idir $ver install declare $* >> $buildlog 2>&1 || {
         echo "scons ..."
         tail -20 $buildlog
         echo "$prog: scons install failed; see $PWD/$buildlog for details"

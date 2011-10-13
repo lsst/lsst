@@ -361,8 +361,8 @@ class BuildDistrib(eupsDistrib.DefaultDistrib):
         distIdFile = os.path.join(serverDir, distId)
         distDir = os.path.dirname(distIdFile)
 
-        if letterVersion:
-            raise RuntimeError("Letter versions are not supported: %s" % letterVersion)
+#        if letterVersion:
+#            raise RuntimeError("Letter versions are not supported: %s" % letterVersion)
 
         # make the product directory
         if not os.path.exists(distDir):
