@@ -1,0 +1,121 @@
+#! /bin/bash
+#
+# This is a wrapper script for calling more specialized scripts--most
+# namely, eups distrib--used when installing and maintain packages in the 
+# LSST software stack.  
+#
+prog=`basename $0`
+eups="eups"
+loadLSST="loadLSST"
+
+#@
+# print a general but brief usage line
+#
+function print_usage {
+    echo "Usage:  $prog cmd [options] [arg ...]"
+    echo "        $prog -h|--help [cmd]"
+    echo "        $prog -V|--version"
+}
+
+#@
+#  print the help message
+#
+function print_help {
+    echo "Manage installed LSST packages via $eups distrib"
+    echo 
+    print_usage
+    echo "Commands give as cmd:"
+    echo "  install       fetch a named package from the server and install it"
+    echo "  fetch         alias for install"
+    echo "  remove        remove a (possibly partially-installed) package"
+    echo "  list          list the available packages from server"
+    echo "  create        create an installable package from the software stack"
+    echo "Help:"
+    echo "  -h, --help            print this message"
+    echo "  -h cmd, --help cmd    print help on a specific command"
+    echo "  -V, --version         print the version of this command"
+}
+
+#@
+#  print the version of this script and and the version of the underlying
+#  eups command
+#
+function print_version {
+    local eupsver=`$eups -V | sed -e 's/Version: //'`
+    local thisver="svn(unbuilt)"
+
+    echo "$prog version $thisver using $eups version $eupsver"
+}
+
+#@
+#  return 0 if the necessary environment is in place.  An exit value of 1
+#  is returned if either of the eups or lssteups packages are not setup.
+#
+function check_env {
+    if [ -z "EUPS_DIR" -o ! -d "$EUPS_DIR" ]; then
+        echo "$prog: $eups apparently not available"
+
+        sh="sh"
+        echo $SHELL | grep -q 'csh$' && sh="csh"
+
+        if [ -n "$LSST_HOME" ]; then
+            echo "type 'source $LSST_HOME/$loadLSST.$sh'"
+        else
+            echo "Load the LSST environment by sourcing the $loadLSST.$sh" \
+                 "startup script"
+        fi
+        return 1
+    fi
+    if [ -z "LSSTEUPS_DIR" -o ! -d "$LSSTEUPS_DIR" ]; then
+        echo "lssteups apparently not available; type 'setup lssteups'"
+        return 1
+    fi
+    return 0
+}
+
+#@
+#  process the command line arguments and pass them to the underlying 
+#  script (eups distrib)
+#
+function main {
+
+    local -a argv
+    local cmd=
+    local help=
+    local arg
+    while [ $# -gt 0 ]; do
+        arg=$1
+        case "$arg" in 
+            -h|--help)     help=$arg ;;
+            -V|--version)  print_version; return 0 ;;
+            -*)            ;;
+            fetch)         arg="install" && [ -z "$cmd" ] && cmd=$arg ;;
+            *)             [ -z "$cmd" ] && cmd=$arg ;;
+        esac
+        argv=(${argv[*]} $arg)
+        shift
+    done
+
+    if [ -n "$help" -a -z "$cmd" ]; then
+        print_help
+        return 0
+    fi
+
+    if [ -z "$cmd" ]; then
+        echo "$prog: Missing command argument"
+        print_usage
+        return 1
+    fi
+
+    check_env || return $?
+    case "$cmd" in
+        *) echo $eups distrib ${argv[*]} 
+           exec $eups distrib ${argv[*]} 
+    esac
+
+    echo "$prog: Programmer error: failed to execute arguments:" ${argv[*]}
+    return 2
+}
+
+main $*
+exit $?

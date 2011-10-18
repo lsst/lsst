@@ -1,4 +1,0 @@
-envPrepend(PYTHONPATH, ${PRODUCT_DIR}/python)
-envAppend(PATH, ${PRODUCT_DIR}/bin)
-envSet(SVNROOT, svn+ssh://svn.lsstcorp.org)   # needed to install sconsUtils
-

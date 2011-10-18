@@ -1,0 +1,9 @@
+setupRequired(scons)
+setupRequired(lssteups)
+setupOptional(pacman)
+setupOptional(base)
+
+envSet(SVNROOT, "svn+ssh://svn.lsstcorp.org")
+envSet(LSST_SVN, "svn+ssh://svn.lsstcorp.org")
+envSet(LSST_DMS, "svn+ssh://svn.lsstcorp.org/DMS")
+envPrepend(PATH, ${PRODUCT_DIR}/bin)
