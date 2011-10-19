@@ -3,7 +3,7 @@
 # Setup our environment
 #
 import glob, os.path, re, os, sys
-import lsst.SConsUtils as scons
+from lsst.sconsUtils import scripts, env, targets, log
 
 # before we get into the boiler plate scons stuff, we start with 
 # some specialization
@@ -15,37 +15,27 @@ if not lssthome and os.environ.has_key('EUPS_PATH'):
 
 # okay start the standard stuff
 
-print >> sys.stderr, "lssthome=", lssthome
+if "lsst_home" not in env:
+    env["lsst_home"] = lssthome
+if "pkgsurl" not in env:
+    log.fail("pkgsurl must be set on the command line with '--setenv pkgsurl=<value>'")
+env["lsst_home"] = "".join(env["lsst_home"])
+env["pkgsurl"] = "".join(env["pkgsurl"])
 
-vars = scons.LsstVariables()
-vars.AddVariables(('pkgsurl', 'the base url for the software server',
-                   'http://dev.lsstcorp.org/dmspkgs'),
-                  ('lsst_home', 'the root directory for the LSST software stack',
-                   lssthome))
+scripts.BasicSConstruct.initialize(
+    packageName="lsst",
+    versionString=r"$HeadURL$"
+)
 
-env = scons.makeEnv("lsst", r"$HeadURL$", variables=vars)
-
-env.Command('bin', '', [Mkdir('bin')])
-env.Command('etc', '', [Mkdir('etc')])
-env.Clean('bin', 'bin')
-
-for d in Split("scripts"):
-    SConscript("%s/SConscript" % d)
-
-env.Command("doc/README.txt", "README.txt", [Copy('$TARGET', '$SOURCE')])
+targets["doc"].extend(env.Command("doc/README.txt", "README.txt", [Copy('$TARGET', '$SOURCE')]))
 
 Alias("loadLSST", env.Install(env['lsst_home'], 
                               Split("etc/loadLSST.sh etc/loadLSST.csh")))
-Alias("install", env.Install(env['prefix'], "bin"))
-Alias("install", env.Install(env['prefix'], "doc"))
-Alias("install", env.Install(env['prefix'], "etc"))
-Alias("install", env.InstallEups(env['prefix'] + "/ups", glob.glob("ups/*.table")))
 
 if "check" in BUILD_TARGETS:
     env.Command("configure", "configure.ac", ["autoconf"])
     env.Command("check", "configure", ["configure"])
 
-env.Declare()
 env.Help("""
 deploy/lsst:  LSST Build Environment Tools
 
@@ -53,3 +43,4 @@ This provides tools for building LSST products and installing them into
 the software distribution server.  This package relies on the eups capabilities.
 """)
 
+scripts.BasicSConstruct.finish(defaults=["bin", "doc", "etc"])

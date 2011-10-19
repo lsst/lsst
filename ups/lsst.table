@@ -1,7 +1,5 @@
-setupRequired(scons)
+setupRequired(sconsUtils >= 4.6.0.0)
 setupRequired(lssteups)
-setupOptional(pacman)
-setupOptional(base)
 
 envSet(SVNROOT, "svn+ssh://svn.lsstcorp.org")
 envSet(LSST_SVN, "svn+ssh://svn.lsstcorp.org")

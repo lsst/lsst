@@ -1,13 +1,11 @@
-#
+# -*- python -*-
 #
 import sys
+from lsst.sconsUtils import env, targets
 SConscript("FileFilter.SConscript")
-Import("env")
-Import("FilterFilesInto")
 
-print >> sys.stderr, "pkgsurl=%s" % env['pkgsurl']
+print >> sys.stderr, "pkgsurl=%s" % env['pkgsurl'][0]
 print >> sys.stderr, "lsst_home=%s" % env['lsst_home']
 
-FilterFilesInto(env, "../etc", Split("newinstall.sh loadLSST.sh loadLSST.csh"))
-FilterFilesInto(env, "../bin", Split("lsstpkg mksandbox switcheups tbl2man style.py noI.py ptest.sh"))
-
+targets["etc"] = env.FilterFilesInto("#etc", Split("newinstall.sh loadLSST.sh loadLSST.csh"))
+targets["bin"] = env.FilterFilesInto("#bin", Split("lsstpkg mksandbox switcheups tbl2man style.py noI.py ptest.sh"))
