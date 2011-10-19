@@ -30,7 +30,7 @@ scripts.BasicSConstruct.initialize(
 targets["doc"].extend(env.Command("doc/README.txt", "README.txt", [Copy('$TARGET', '$SOURCE')]))
 
 Alias("loadLSST", env.Install(env['lsst_home'], 
-                              Split("etc/loadLSST.sh etc/loadLSST.csh")))
+                              Split("etc/loadLSST.sh etc/loadLSST.csh etc/loadLSST.zsh")))
 
 if "check" in BUILD_TARGETS:
     env.Command("configure", "configure.ac", ["autoconf"])
