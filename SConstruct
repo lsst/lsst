@@ -43,4 +43,4 @@ This provides tools for building LSST products and installing them into
 the software distribution server.  This package relies on the eups capabilities.
 """)
 
-scripts.BasicSConstruct.finish(defaultList=["bin", "doc", "etc"])
+scripts.BasicSConstruct.finish(defaultTargets=["bin", "doc", "etc"])
