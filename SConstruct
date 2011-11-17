@@ -22,10 +22,7 @@ if "pkgsurl" not in env:
 env["lsst_home"] = "".join(env["lsst_home"])
 env["pkgsurl"] = "".join(env["pkgsurl"])
 
-scripts.BasicSConstruct.initialize(
-    packageName="lsst",
-    versionString=r"$HeadURL$"
-)
+scripts.BasicSConstruct.initialize("lsst")
 
 targets["doc"].extend(env.Command("doc/README.txt", "README.txt", [Copy('$TARGET', '$SOURCE')]))
 
@@ -43,4 +40,5 @@ This provides tools for building LSST products and installing them into
 the software distribution server.  This package relies on the eups capabilities.
 """)
 
-scripts.BasicSConstruct.finish(defaultTargets=["bin", "doc", "etc"])
+scripts.BasicSConstruct.finish(defaultTargets=["bin", "doc", "etc", "loadLSST"],
+                               subDirList=["bin", "doc", "python", "etc", "tests", "ups"])
