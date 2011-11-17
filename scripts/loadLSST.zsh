@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/zsh
 #
 #  Source this file directly or copy it to your own directory for 
 #  modifications. 
@@ -11,7 +11,7 @@ if [ -z "$EUPS_PKGROOT" ]; then
 fi 
 
 # Load EUPS
-. $LSST_HOME/eups/default/bin/setups.sh
+. $LSST_HOME/eups/default/bin/setups.zsh
 
 # make sure LSST_DEVEL is part of the EUPS path
 if [ -n "$LSST_DEVEL" ]; then
