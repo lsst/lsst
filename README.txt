@@ -12,29 +12,25 @@ $LSST_HOME, the root directory of the LSST software stack; see "Using
 loadLSST" below).  If the user does not use this script, he can simply
 run "setup lsst" instead.
 
-Currently, this package is main concerned with package installation.
 When this package is setup, it will:
 
   o  setup the lssteups package, which is required for downloading
        packages from dev.lsstcorp.org.
 
-  o  setup the pacman package, if needed
-
   o  provides useful commands for managing packages:
-     + lsstpkg:     a thin wrapper around eups distrib.  Using this
-                       script guarantees that the lssteups extensions
-                       will be used.
      + switcheups:  a script that will switch the version of eups
                        that will be loaded when sourcing loadLSST.*sh
+     + lsstpkg:     a thin wrapper around eups distrib.  Using this
+                       script guarantees that the lssteups extensions
+                       will be used (deprecated).
 
 For building products, this package provides the following:
 
   o  it sets two useful environment variables that saves typing when
      checking out packages from the SVN repository:
 
-     + LSST_SVN     The SVN repository's base URL, 
-                       svn+ssh://svn.lsstcorp.org
-     + LSST_DMS     The base SVN URL for the root directory for current
+     + LSST_GIT     The Git repository's base URL, git@git.lsstcorp.org
+     + LSST_DMS     The base Git URL to the directory containing 
                        LSST products
 
   o  it setups up the base package, which is necessary for properly
@@ -51,6 +47,12 @@ doc/GettingStarted.html.  Sourcing this file does the following:
    o  sets the LSST_HOME environment variable to the root of the LSST
         software stack.  This is the directory where the loadLSST
         scripts are found.  
+
+   o  sets the LSST_PKGROOT and (if not already set) the EUPS_PKGROOT
+        environment variables.  The latter is used by "eups distrib"
+        for retrieving and installing new product packages.  If 
+        EUPS_PKGROOT is not already set, it is set to the value of 
+        $LSST_PKGROOT
 
    o  sets the LSST_PKGS environment variable to the platform-specific 
         subdirectory of $LSST_HOME where LSST packages are installed.
@@ -78,10 +80,12 @@ may be adding other setup commands.
 The loadLSST scripts can be installed into LSST_HOME by typing 
 "scons loadLSST"  
 
-Server Maintenance
+Other Tools
 
-This package also provides tools for maintaining a package
-distribution server (such as at dev.lsstcorp.org).  These include:
+This package is also the home of these lesser used tools:
 
-  o  etc/newinstall.sh   this is used to install a package from scratch
+  o  etc/newinstall.sh   this is used to install a package from
+     scratch.
+
+
 
