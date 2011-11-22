@@ -1,7 +1,7 @@
 setupRequired(sconsUtils >= 4.6.0.4)
 setupRequired(lssteups)
 
-envSet(SVNROOT, "svn+ssh://svn.lsstcorp.org")
-envSet(LSST_SVN, "svn+ssh://svn.lsstcorp.org")
-envSet(LSST_DMS, "svn+ssh://svn.lsstcorp.org/DMS")
+envSet(GITROOT, "git@git.lsstcorp.org")
+envSet(LSST_GIT, "git@git.lsstcorp.org")
+envSet(LSST_DMS, "git@git.lsstcorp.org:LSST/DMS")
 envPrepend(PATH, ${PRODUCT_DIR}/bin)
