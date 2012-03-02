@@ -1,6 +1,5 @@
 dnl -*- sh -*-
 dnl A configure.ac script that checks that all of LSST's prerequisites are present
-dnl libtool m4 wget LaTeX (from texlive-latex)
 dnl
 AC_INIT([LSST], "1.0", [rhl@astro.princeton.edu])
 
@@ -11,8 +10,10 @@ AC_PROG_CC
 AC_PROG_CXX
 
 AC_PROG_FC
+AC_CHECK_PROG(latex, latex, yes, no)
 AC_PROG_LEX
-AC_CHECK_PROG(wget, wget)
+AC_CHECK_PROG(libtool, libtool, yes, no)
+AC_CHECK_PROG(wget, wget, yes, no)
 AC_PROG_YACC
 AC_CHECK_PROGS(M4, m4, gm4)
 
@@ -57,7 +58,7 @@ dnl
 ok=yes
 echo ""
 
-AC_MSG_RESULT([N.b. we are not checking libtool and e2fsprogs-devel])
+dnl AC_MSG_RESULT([N.b. we are not checking for e2fsprogs-devel])
 
 if [[ "$ac_cpp" = "" ]]; then
    AC_MSG_WARN([Please install a C compiler (e.g. gcc-c++)])
@@ -78,8 +79,23 @@ if [[ "$ac_ct_FC" = "" ]]; then
    fi
 fi
 
+if [[ " $ac_cv_prog_latex" = "" ]]; then
+   AC_MSG_WARN([Please install LaTeX (e.g. from texlive-latex])
+   ok=no
+fi
+
 if [[ " $ac_cv_prog_LEX" = "" ]]; then
    AC_MSG_WARN([Please install flex])
+   ok=no
+fi
+
+if [[ " $ac_cv_prog_libtool" = "" ]]; then
+   AC_MSG_WARN([Please install libtool])
+   ok=no
+fi
+
+if [[ " $ac_cv_prog_wget" = "" ]]; then
+   AC_MSG_WARN([Please install wget])
    ok=no
 fi
 
