@@ -65,7 +65,7 @@ dnl
 ok=yes
 echo ""
 
-dnl AC_MSG_RESULT([N.b. we are not checking for e2fsprogs-devel])
+dnl AC_MSG_RESULT([N.b. we are not checking for e2fsprogs])
 
 if [[ "$ac_cpp" = "" ]]; then
    AC_MSG_WARN([Please install a C compiler (e.g. gcc-c++)])
@@ -86,7 +86,7 @@ if [[ "$ac_ct_FC" = "" ]]; then
    if false; then
       AC_MSG_RESULT([I don't see a fortran compiler.  This is probably OK])
    else
-      AC_MSG_WARN([Please install a fortran compiler if you're building numpy (e.g. gcc-fortran)])
+      AC_MSG_WARN([Please install a fortran compiler if you're building numpy (e.g. gcc-gfortran)])
       ok=no
    fi
 fi
@@ -127,36 +127,36 @@ if [[ " $ac_cv_prog_M4" = "" ]]; then
 fi
  
 if [[ $ac_cv_header_X11_Intrinsic_h != "yes" -o ${ac_cv_lib_Xt_XtAddActions} != "yes" ]]; then
-   AC_MSG_WARN([Please install libXt-devel])
+   AC_MSG_WARN([Please install X11 (e.g. libXt-devel on RHEL6)])
    ok=no
 fi
 
 if [[ $ac_cv_header_curses_h != "yes" -o $ac_cv_lib_curses_cbreak != "yes" ]]; then
-   AC_MSG_WARN([Please install ncurses-devel])
+   AC_MSG_WARN([Please install curses (e.g. ncurses-devel on RHEL6)])
    ok=no
 fi
 
 if [[ $ac_cv_header_readline_readline_h != "yes" -o $ac_cv_lib_readline_readline != "yes" ]]; then
-   AC_MSG_WARN([Please install readline-devel (or editline-devel)])
+   AC_MSG_WARN([Please install readline or editline (e.g. readline-devel on RHEL6))])
    ok=no
 fi
 
 if [[ $ac_cv_header_uuid_uuid_h != "yes" -o $ac_cv_lib_uuid_uuid_parse != "yes" ]]; then
-   AC_MSG_WARN([Please install libuuid-devel])
+   AC_MSG_WARN([Please install libuuid (e.g. libuuid-devel on RHEL6)])
    ok=no
 fi
 
 dnl if [[ $ac_cv_header_ext2fs_ext2_io_h != "yes" ]]; then
-dnl    AC_MSG_WARN([Please install e2fsprogs-devel])
+dnl    AC_MSG_WARN([Please install e2fsprogs (e.g. e2fsprogs-devel on RHEL6)])
 dnl    ok=no
 dnl fi
 
 if [[ $ac_cv_header_zlib_h != "yes" -o $ac_cv_lib_z_zlibVersion != "yes" ]]; then
-   AC_MSG_WARN([Please install zlib-devel])
+   AC_MSG_WARN([Please install zlib (e.g. zlib-devel on RHEL6)])
    ok=no
 fi
 if [[ $ac_cv_header_bzlib_h != "yes" -o $ac_cv_lib_bz2_BZ2_bzlibVersion != "yes" ]]; then
-   AC_MSG_WARN([Please install bzip2-devel])
+   AC_MSG_WARN([Please install bzip2 (e.g. bzip2-devel on RHEL6)])
    ok=no
 fi
 
