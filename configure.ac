@@ -9,10 +9,13 @@ dnl sinclude(configMacros/zlib.m4)
 AC_PROG_CC
 AC_PROG_CXX
 
+AC_CHECK_PROG(curl, curl, yes, no)
 AC_PROG_FC
 AC_CHECK_PROG(latex, latex, yes, no)
 AC_PROG_LEX
 AC_CHECK_PROG(libtool, libtool, yes, no)
+AC_CHECK_PROG(make, make, yes, no)
+AC_CHECK_PROG(perl, perl, yes, no)
 AC_CHECK_PROG(wget, wget, yes, no)
 AC_PROG_YACC
 AC_CHECK_PROGS(M4, m4, gm4)
@@ -74,6 +77,11 @@ if [[ "$ac_ct_CXX" = "" ]]; then
    ok=no
 fi
 
+if [[ "$ac_cv_prog_curl" = "" ]]; then
+   AC_MSG_WARN([Please install curl])
+   ok=no
+fi
+
 if [[ "$ac_ct_FC" = "" ]]; then
    if false; then
       AC_MSG_RESULT([I don't see a fortran compiler.  This is probably OK])
@@ -98,13 +106,18 @@ if [[ " $ac_cv_prog_libtool" = "" ]]; then
    ok=no
 fi
 
-if [[ " $ac_cv_prog_wget" = "" ]]; then
-   AC_MSG_WARN([Please install wget])
+if [[ "$ac_cv_prog_make" = "" ]]; then
+   AC_MSG_WARN([Please install make])
    ok=no
 fi
 
-if [[ " $ac_cv_prog_YACC" = "" ]]; then
-   AC_MSG_WARN([Please install yacc (or bison)])
+if [[ "$ac_cv_prog_perl" = "" ]]; then
+   AC_MSG_WARN([Please install perl])
+   ok=no
+fi
+
+if [[ "$ac_cv_prog_wget" = "" ]]; then
+   AC_MSG_WARN([Please install wget])
    ok=no
 fi
 
