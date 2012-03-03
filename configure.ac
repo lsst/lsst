@@ -26,11 +26,22 @@ if [[ `uname` = "Darwin" ]]; then
     LDFLAGS="$LDFLAGS -L/usr/X11/lib"
 fi
 AC_CHECK_LIB(Xt, XtAddActions)
+
 AC_CHECK_HEADERS(curses.h)
 AC_CHECK_LIB(curses, cbreak)
+
 AC_CHECK_HEADERS(readline/readline.h)
 AC_CHECK_LIB(readline, readline)
+# if readline is absent, try editline instead
+if [[ $ac_cv_header_readline_readline_h != "yes" ]]; then
+   AC_CHECK_HEADERS(editline/readline.h)
+   AC_CHECK_LIB(editline, readline)
+   ac_cv_header_readline_readline_h=$ac_cv_header_editline_readline_h
+   ac_cv_lib_readline_readline=$ac_cv_lib_editline_readline
+fi
+
 dnl AC_CHECK_HEADERS(ext2fs/ext2_io.h)
+
 AC_CHECK_HEADERS(uuid/uuid.h)
 if [[ `uname` = "Darwin" ]]; then
     AC_CHECK_LIB(System, uuid_parse)
@@ -39,13 +50,6 @@ else
     AC_CHECK_LIB(uuid, uuid_parse)
 fi
 
-# if readline is absent, try editline instead
-if [[ $ac_cv_header_readline_readline_h != "yes" ]]; then
-   AC_CHECK_HEADERS(editline/readline.h)
-   AC_CHECK_LIB(editline, readline)
-   ac_cv_header_readline_readline_h=$ac_cv_header_editline_readline_h
-   ac_cv_lib_readline_readline=$ac_cv_lib_editline_readline_h
-fi
 AC_CHECK_HEADERS(zlib.h)
 AC_CHECK_LIB(z, zlibVersion)
 
