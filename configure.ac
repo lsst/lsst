@@ -91,17 +91,17 @@ if [[ "$ac_ct_FC" = "" ]]; then
    fi
 fi
 
-if [[ " $ac_cv_prog_latex" = "" ]]; then
+if [[ "$ac_cv_prog_latex" = "" ]]; then
    AC_MSG_WARN([Please install LaTeX (e.g. from texlive-latex])
    ok=no
 fi
 
-if [[ " $ac_cv_prog_LEX" = "" ]]; then
-   AC_MSG_WARN([Please install flex])
-   ok=no
+if [[ "$ac_cv_prog_LEX" = "" ]]; then
+    AC_MSG_WARN([Please install flex])
+    ok=no
 fi
 
-if [[ " $ac_cv_prog_libtool" = "" ]]; then
+if [[ "$ac_cv_prog_libtool" = "" ]]; then
    AC_MSG_WARN([Please install libtool])
    ok=no
 fi
@@ -121,7 +121,12 @@ if [[ "$ac_cv_prog_wget" = "" ]]; then
    ok=no
 fi
 
-if [[ " $ac_cv_prog_M4" = "" ]]; then
+if [[ "$ac_cv_prog_YACC" = "" ]]; then
+    AC_MSG_WARN([Please install bison])
+    ok=no
+fi
+
+if [[ "$ac_cv_prog_M4" = "" ]]; then
    AC_MSG_WARN([Please install m4])
    ok=no
 fi
