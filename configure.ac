@@ -167,4 +167,7 @@ dnl Well, are we winning?
 dnl
 if [[ $ok = "yes" ]]; then
    AC_MSG_RESULT([You seem to have all prerequisites installed; congratulations.])
+   exit 0
 fi
+
+exit 1
