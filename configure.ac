@@ -74,6 +74,21 @@ if [[ "$ac_ct_CXX" = "" ]]; then
    ok=no
 fi
 
+if [[ "$ac_ct_CXX" = "" ]]; then
+   AC_MSG_WARN([Please install a C++ compiler (gcc-c++ on RHEL6)])
+   ok=no
+fi
+
+if [[ "$GCC" = "yes" ]]; then
+   GCC_VERSION="$($CC -dumpversion 2>/dev/null || echo 0.0.0)"
+   GCC_VERSION_MAJOR=$(echo $GCC_VERSION | cut -d'.' -f1)
+   GCC_VERSION_MINOR=$(echo $GCC_VERSION | cut -d'.' -f2)
+   if [[ "$GCC_VERSION_MAJOR" -lt 4 -o \( "$GCC_VERSION_MAJOR" -eq 4 -a "$GCC_VERSION_MINOR" -lt 2 \) ]]; then
+      AC_MSG_WARN([Your GCC is too old (you have $GCC_VERSION, and need at least g++ 4.2)])
+      ok=no
+   fi
+fi
+
 if [[ "$ac_cv_prog_curl" = "" ]]; then
    AC_MSG_WARN([Please install curl (curl on RHEL6)])
    ok=no
