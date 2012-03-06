@@ -3,22 +3,25 @@
 usage()
 {
 cat <<-EOF
-usage: $(basename $0) [-f] [-d] <path_to_CUDA_Toolkit> [pkg_dir]
-	
+usage: $(basename $0) [-f] [-d] [-r=pkgroot] <path_to_CUDA_Toolkit>
+usage: $(basename $0) [-f] [-d] [-r=pkgroot] -a
+
 Generate an EUPS package wrapper around NVIDIA CUDA Toolkit.
 
 Options:
+    -a              autodetect CUDA if nvcc is on path
+    -r              root where to generate the EUPS package
     -f              overwrite package if already exists
     -d              declare the package to EUPS
     -h              help
 
 Notes:
-    If [pkg_dir] is not given, the package will be generated in
+    If pkgroot is not given, the package will be generated in
     "\$EUPS_PATH/<flavor>/cuda_toolkit/\$VERSION".
 EOF
 }
 
-while getopts 'fdh' OPTION
+while getopts 'fdhar:' OPTION
 do
 	case $OPTION in
 	    h)
@@ -28,8 +31,14 @@ do
 	    f)
 	           FORCE=yes
 	           ;;
+	    r)
+	           PKG="$OPTARG"
+	           ;;
 	    d)
 	           DECLARE=yes
+	           ;;
+	    a)
+	           AUTO=yes
 	           ;;
 	    ?)
 		   usage
@@ -39,8 +48,7 @@ do
 	shift $((OPTIND-1)); OPTIND=1
 done
 
-
-if [ $# -ne 1 -a $# -ne 2 ]; then
+if [ ! \( -z "$AUTO" -a $# -eq 1 \) -a ! \( ! -z "$AUTO" -a $# -eq 0 \) ]; then
 	usage
 	exit 1
 fi
@@ -49,18 +57,17 @@ fi
 set -e
 
 # Detect CUDA compiler and version
-CUDA="$1"
+CUDA="${1-$(which nvcc 2>/dev/null | xargs dirname 2>/dev/null | xargs dirname 2>/dev/null)}"
 NVCC="$CUDA/bin/nvcc"
 test -x $NVCC || { echo "Error: $NVCC does not exist or isn't executable."; exit 1; }
 VERSION=$($NVCC --version | sed -n 's/^.*elease \(.*\),.*/\1/p')
 
 # Decide where to generate the EUPS wrapper package
-if [ -z "$2" ]; then
+if [ -z "$PKG" ]; then
 	type eups 2>/dev/null 1>/dev/null || { echo "EUPS not found; have you sourced loadLSST.*?"; exit 1; }
 	PKG="$(eups path 0)/$(eups flavor)/cuda_toolkit/$VERSION"
 	DCL="eups declare cuda_toolkit $VERSION"
 else
-	PKG="$2"
 	DCL="eups declare -r $PKG cuda_toolkit $VERSION"
 fi
 
