@@ -8,4 +8,4 @@ print >> sys.stderr, "pkgsurl=%s" % env['pkgsurl'][0]
 print >> sys.stderr, "lsst_home=%s" % env['lsst_home']
 
 targets["etc"] = env.FilterFilesInto("#etc", Split("newinstall.sh loadLSST.sh loadLSST.zsh loadLSST.csh"))
-targets["bin"] = env.FilterFilesInto("#bin", Split("lsstpkg mksandbox switcheups tbl2man style.py noI.py ptest.sh"))
+targets["bin"] = env.FilterFilesInto("#bin", Split("lsstpkg mksandbox eupswrapcuda.sh switcheups tbl2man style.py noI.py ptest.sh"))
