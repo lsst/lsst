@@ -6,7 +6,6 @@
 #
 # set -x
 SHELL=/bin/bash
-LSST_HOME=$PWD
 export EUPS_PKGROOT=#EUPS_PKGROOT   #Replace with proper value
 export SVNROOT=svn+ssh://svn.lsstcorp.org
 owneups=
@@ -22,7 +21,11 @@ while [ $# -gt 0 ]; do
     esac
     shift
 done
-cd $LSST_HOME
+
+test ! -z "$LSST_HOME" || { echo '$LSST_HOME not set. Set it to the directory' \
+'that will hold the stack, or specify using -H option.' | fold -s; exit 1; }
+
+cd "$LSST_HOME" || { echo "Cannot enter $LSST_HOME. Aborting."; exit 1; }
 
 if [ -z "$httpget" ]; then
     httpget=`/usr/bin/which curl` || httpget=`/usr/bin/which wget`
