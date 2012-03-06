@@ -1,15 +1,48 @@
 #!/bin/bash
 
+usage()
+{
+cat <<-EOF
+usage: $(basename $0) [-f] [-d] <path_to_CUDA_Toolkit> [pkg_dir]
+	
+Generate an EUPS package wrapper around NVIDIA CUDA Toolkit.
+
+Options:
+    -f              overwrite package if already exists
+    -d              declare the package to EUPS
+    -h              help
+
+Notes:
+    If [pkg_dir] is not given, the package will be generated in
+    "\$EUPS_PATH/<flavor>/cuda_toolkit/\$VERSION".
+EOF
+}
+
+while getopts 'fdh' OPTION
+do
+	case $OPTION in
+	    h)
+		   usage
+		   exit 1
+		   ;;
+	    f)
+	           FORCE=yes
+	           ;;
+	    d)
+	           DECLARE=yes
+	           ;;
+	    ?)
+		   usage
+		   exit 1
+		   ;;
+	esac
+	shift $((OPTIND-1)); OPTIND=1
+done
+
+
 if [ $# -ne 1 -a $# -ne 2 ]; then
-	echo 
-	echo "Generate an EUPS package wrapper around NVIDIA CUDA Toolkit"
-	echo
-	echo "Usage: $(basename $0) <path_to_CUDA_Toolkit> [pkg_dir]";
-	echo
-	echo "If [pkg_dir] is not given, the package will be generated in"
-	echo "\"\$EUPS_PATH/<flavor>/cuda_toolkit/\$VERSION\"."
-	echo
-	exit 1;
+	usage
+	exit 1
 fi
 
 # Do no harm.
@@ -25,24 +58,24 @@ VERSION=$($NVCC --version | sed -n 's/^.*elease \(.*\),.*/\1/p')
 if [ -z "$2" ]; then
 	type eups 2>/dev/null 1>/dev/null || { echo "EUPS not found; have you sourced loadLSST.*?"; exit 1; }
 	PKG="$(eups path 0)/$(eups flavor)/cuda_toolkit/$VERSION"
-	DCL="eups declare --force cuda_toolkit $VERSION"
+	DCL="eups declare cuda_toolkit $VERSION"
 else
 	PKG="$2"
-	DCL="eups declare --force -r $PKG cuda_toolkit $VERSION"
+	DCL="eups declare -r $PKG cuda_toolkit $VERSION"
 fi
 
-if [ -e "$PKG" ]; then
-	echo "Directory $PKG exists. Aborting."
+if [ -e "$PKG" -a -z "$FORCE" ]; then
+	echo "Directory $PKG exists. Use -f to force overwrite."
 	exit 1;
 fi
 
 # Generate the EUPS wrapper
-mkdir -p "$PKG" && cd "$PKG"
+mkdir -p "$PKG" && pushd $PWD >/dev/null && cd "$PKG"
 for D in bin lib lib64 include; do
-	ln -s "$CUDA/$D"
+	ln -sf "$CUDA/$D"
 done
 
-mkdir ups
+mkdir -p ups
 cat > ups/cuda_toolkit.cfg <<-EOF
 	# -*- python -*-
 	
@@ -95,9 +128,11 @@ cat > README <<-EOF
 	in directory $CUDA.
 EOF
 
-echo "EUPS CUDA $VERSION package generated in $PKG."
-echo ""
-echo "Declare it to EUPS using:"
-echo "   $DCL"
-echo "and set it up with:"
+popd >/dev/null
+if [ ! -z "$DECLARE" ]; then
+	$DCL --force --nolock
+fi
+
+echo "EUPS CUDA $VERSION package created in $PKG. Make it known to EUPS using:" | fold -s
+test -z "$DECLARE" && echo "   $DCL"
 echo "   setup cuda_toolkit $VERSION"
