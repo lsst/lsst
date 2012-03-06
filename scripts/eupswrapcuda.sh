@@ -56,10 +56,17 @@ fi
 # Do no harm.
 set -e
 
-# Detect CUDA compiler and version
+# Verify CUDA toolkit is there
 CUDA="${1-$(which nvcc 2>/dev/null | xargs dirname 2>/dev/null | xargs dirname 2>/dev/null)}"
 NVCC="$CUDA/bin/nvcc"
-test -x $NVCC || { echo "Error: $NVCC does not exist or isn't executable."; exit 1; }
+test -x "$NVCC" ||
+  { echo "Error: $NVCC does not exist or isn't executable."; exit 1; }
+test -f "$CUDA/lib64/libcudart.so" -o -f "$CUDA/lib/libcudart.so" || 
+  { echo "Error: Cannot find libcudart.so in $CUDA/lib nor $CUDA/lib64"; exit 1; }
+test -f "$CUDA/include/cuda.h" ||
+  { echo "Error: Cannot find cuda.h in $CUDA/include"; exit 1; }
+
+# Detect toolkit version
 VERSION=$($NVCC --version | sed -n 's/^.*elease \(.*\),.*/\1/p')
 
 # Decide where to generate the EUPS wrapper package
