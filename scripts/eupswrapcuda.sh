@@ -81,18 +81,18 @@ cat > ups/cuda_toolkit.cfg <<-EOF
 EOF
 
 cat > ups/cuda_toolkit.table <<-EOF
-	envPrepend(PATH, ${PRODUCT_DIR}/bin)
+	envPrepend(PATH, \${PRODUCT_DIR}/bin)
 
-	envPrepend(LD_LIBRARY_PATH, ${PRODUCT_DIR}/lib)
-	envPrepend(LD_LIBRARY_PATH, ${PRODUCT_DIR}/lib64)
+	envPrepend(LD_LIBRARY_PATH, \${PRODUCT_DIR}/lib)
+	envPrepend(LD_LIBRARY_PATH, \${PRODUCT_DIR}/lib64)
 
-	envPrepend(DYLD_LIBRARY_PATH, ${PRODUCT_DIR}/lib)
-	envPrepend(DYLD_LIBRARY_PATH, ${PRODUCT_DIR}/lib64)
+	envPrepend(DYLD_LIBRARY_PATH, \${PRODUCT_DIR}/lib)
+	envPrepend(DYLD_LIBRARY_PATH, \${PRODUCT_DIR}/lib64)
 EOF
 
 cat > README <<-EOF
 	EUPS package wrapper for CUDA $VERSION, as found
-	in directory $CUDA
+	in directory $CUDA.
 EOF
 
 echo "EUPS CUDA $VERSION package generated in $PKG."
