@@ -41,7 +41,7 @@ This provides tools for building LSST products and installing them into
 the software distribution server.  This package relies on the eups capabilities.
 """)
 
-scripts.BasicSConstruct.finish(subDirList="bin doc etc python ups".split(),
+scripts.BasicSConstruct.finish(subDirList="bin doc etc ups".split(),
                                defaultTargets=["bin", "doc", "etc", "tests"])
 
 # this is not doing what I want it to do (removing bin and etc)
