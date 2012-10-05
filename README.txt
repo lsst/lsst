@@ -80,12 +80,3 @@ may be adding other setup commands.
 The loadLSST scripts can be installed into LSST_HOME by typing 
 "scons loadLSST"  
 
-Other Tools
-
-This package is also the home of these lesser used tools:
-
-  o  etc/newinstall.sh   this is used to install a package from
-     scratch.
-
-
-

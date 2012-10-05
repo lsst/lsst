@@ -17,11 +17,7 @@ if not lssthome and os.environ.has_key('EUPS_PATH'):
 
 if "lsst_home" not in env:
     env["lsst_home"] = lssthome
-if "pkgsurl" not in env:
-    log.warn("pkgsurl is not set; use of '--setenv pkgsurl=<value>' recommended")
-    env["pkgsurl"] = "http://sw.lsstcorp.org/pkgs"
 env["lsst_home"] = "".join(env["lsst_home"])
-env["pkgsurl"] = "".join(env["pkgsurl"])
 
 scripts.BasicSConstruct.initialize("lsst", versionModuleName=None)
 

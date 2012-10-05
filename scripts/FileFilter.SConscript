@@ -4,8 +4,7 @@ from lsst.sconsUtils.utils import memberOf
 from SCons.Script.SConscript import SConsEnvironment
 import os, sys, re
 
-flts = { 'lsst_home': re.compile(r"#LSST_HOME ?.*$"), 
-         'pkgsurl':   re.compile(r"#EUPS_PKGROOT ?.*$"), 
+flts = { 'lsst_home': re.compile(r"#LSST_HOME ?.*$"),  
          'version':   re.compile(r"svn\(unbuilt\)")      }
 
 def filter_files(target, source, env):
@@ -14,7 +13,6 @@ def filter_files(target, source, env):
     if len(target) > len(source):
         source.extend(map(os.path.basename, map(str, target[len(source):])))
     vals = { 'lsst_home': env['lsst_home'], 
-             'pkgsurl':   env['pkgsurl'],
              'version':   env['version']            }
     for i in xrange(len(target)):
         filter_file(target[i], source[i], flts, vals)
