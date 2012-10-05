@@ -4,11 +4,6 @@
 #  modifications. 
 #
 setenv LSST_HOME #LSST_HOME   #Replace with proper value
-setenv LSST_PKGROOT #EUPS_PKGROOT   #Replace with proper value
-
-if (! $?EUPS_PKGROOT) then
-    setenv EUPS_PKGROOT $LSST_PKGROOT
-endif
 
 # Load EUPS
 source $LSST_HOME/eups/default/bin/setups.csh

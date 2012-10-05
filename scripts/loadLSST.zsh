@@ -4,11 +4,6 @@
 #  modifications. 
 #
 export LSST_HOME=#LSST_HOME   #Replace with proper value
-export LSST_PKGROOT=#EUPS_PKGROOT   #Replace with proper value
-
-if [ -z "$EUPS_PKGROOT" ]; then
-    export EUPS_PKGROOT=$LSST_PKGROOT
-fi 
 
 # Load EUPS
 . $LSST_HOME/eups/default/bin/setups.zsh
