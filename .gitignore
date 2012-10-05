@@ -1,4 +1,6 @@
-
+bin/
+doc/README.txt
+etc/
 # /
 /autom4te.cache
 /configure
