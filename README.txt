@@ -15,7 +15,7 @@ run "setup lsst" instead.
 When this package is setup, it will:
 
   o  setup the lssteups package, which is required for downloading
-       packages from dev.lsstcorp.org.
+       packages from sw.lsstcorp.org.
 
   o  provides useful commands for managing packages:
      + switcheups:  a script that will switch the version of eups

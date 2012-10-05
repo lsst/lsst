@@ -19,7 +19,7 @@ if "lsst_home" not in env:
     env["lsst_home"] = lssthome
 if "pkgsurl" not in env:
     log.warn("pkgsurl is not set; use of '--setenv pkgsurl=<value>' recommended")
-    env["pkgsurl"] = "http://dev.lsstcorp.org/pkgs/prod"
+    env["pkgsurl"] = "http://sw.lsstcorp.org/pkgs"
 env["lsst_home"] = "".join(env["lsst_home"])
 env["pkgsurl"] = "".join(env["pkgsurl"])
 
