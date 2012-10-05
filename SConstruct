@@ -23,7 +23,7 @@ if "pkgsurl" not in env:
 env["lsst_home"] = "".join(env["lsst_home"])
 env["pkgsurl"] = "".join(env["pkgsurl"])
 
-scripts.BasicSConstruct.initialize("lsst")
+scripts.BasicSConstruct.initialize("lsst", versionModuleName=None)
 
 targets["doc"].extend(env.Command("doc/README.txt", "README.txt", [Copy('$TARGET', '$SOURCE')]))
 
