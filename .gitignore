@@ -7,3 +7,4 @@ etc/
 /config.log
 /.sconsign.dblite
 /.sconf_temp
+ups/*.cfgc
