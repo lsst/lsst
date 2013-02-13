@@ -169,8 +169,8 @@ In this section, you will make your first encounter with our primary
 product for managing LSST software: EUPS.  EUPS is to select and keep
 track of the different versions of our software packages and how they
 depend on other packages.  It includes the ability to download the
-packages from the <a href="http://dev.lsstcorp.org/pkgs">LSST
-development server, <code>dev.lsstcorp.org</code></a>
+packages from the <a href="http://sw.lsstcorp.org/pkgs">LSST
+development server, <code>sw.lsstcorp.org</code></a>
 and install them on your machine.  
 <!-- Details on how these tools work together are described further in 
 the "LSST Build and Operation Systems" manual. -->
@@ -221,7 +221,7 @@ this recipe:
   <li> <a name="lh_recipe2"><strong>Download and execute the
        installation setup script.</strong></a>
 
-<p class="code">% curl -o newinstall.sh http://dev.lsstcorp.org/dmspkgs/newinstall.sh
+<p class="code">% curl -o newinstall.sh http://sw.lsstcorp.org/pkgs/newinstall.sh
 % bash newinstall.sh LSSTPipe</p>
 
        <p>
@@ -233,9 +233,9 @@ this recipe:
 <strong>Note:</strong><br />
 If you do not have <code>curl</code> on your machine, you can use
 <code>wget</code> instead, as in:
-<p class="code">% curl -o newinstall.sh http://dev.lsstcorp.org/dmspkgs/newinstall.sh
+<p class="code">% curl -o newinstall.sh http://sw.lsstcorp.org/pkgs/newinstall.sh
 curl: Command not found.
-% <strong>wget http://dev.lsstcorp.org/dmspkgs/newinstall.sh</strong>
+% <strong>wget http://sw.lsstcorp.org/pkgs/newinstall.sh</strong>
 % bash newinstall.sh LSSTPipe</p>
 </blockquote>
 
@@ -398,7 +398,7 @@ Required product python 2.5.2 already installed
 now installing boost 1.35.0
 Version: svn
 Setting up environment (via ./eupssetups.sh)...
-/usr/bin/curl http://dev.lsstcorp.org/dmspkgs/external/boost/1.35.0/boost_1_35_0.tar.gz > boost_1_35_0.tar.gz
+/usr/bin/curl -L http://sw.lsstcorp.org/pkgs/external/boost/1.35.0/boost_1_35_0.tar.gz > boost_1_35_0.tar.gz
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
 100 27.2M  100 27.2M    0     0  7198k      0  0:00:03  0:00:03 --:--:-- 7257k
@@ -484,7 +484,7 @@ possible causes:
        <ul>
          <li> no space left on disk, </li>
          <li> problems connecting to
-              <code>dev.lsstcorp.org</code>, </li>
+              <code>sw.lsstcorp.org</code>, </li>
          <li> the LSST development environment improperly set
               (e.g. because <code>loadLSST.(c)sh</code> has not been
               sourced). </li>
@@ -493,7 +493,7 @@ possible causes:
               there by default.  
        </ul> </li>
   <li> problems with the configuration of the
-       <code>dev.lsstcorp.org</code> server
+       <code>sw.lsstcorp.org</code> server
        <ul>
          <li> most typically, a particular build script contains a
               bug or needs further modification to support your
@@ -848,7 +848,7 @@ available from the server, use can use <code>lsstpkg list</code>:
 
 <p class="code">% lsstpkg list afw
 eups distrib list afw
-Available products from primary server (http://dev.lsstcorp.org/dmspkgs):
+Available products from primary server (http://sw.lsstcorp.org/pkgs):
   afw                  generic    3.0
   afw                  generic    3.1
   afw                  generic    3.2
@@ -1440,7 +1440,7 @@ as it is done automatically when you load the LSST environment.
 </p>
 
 <p class="code">% echo $EUPS_PKGROOT 
-http://dev.lsstcorp.org/pkgs</p>
+http://sw.lsstcorp.org/pkgs</p>
 
 <a name="eupslist">
 <h4>5.1.2  Seeing What's Available</h4></a>
@@ -1707,7 +1707,7 @@ To run, type:
 </p>
 
 <p class="code">% cd $LSST_HOME
-% curl -o setallcurrent.sh  http://dev.lsstcorp.org/dmspkgs/setallcurrent.sh
+% curl -o setallcurrent.sh  http://sw.lsstcorp.org/pkgs/setallcurrent.sh
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
 100   297  100   297    0     0    842      0 --:--:-- --:--:-- --:--:--     0
@@ -1715,7 +1715,7 @@ To run, type:
 
 <p>
 This command sets the current versions by reading a file called
-<a href="http://dev.lsstcorp.org/dmspkgs/current.list">current.list</a>.
+<a href="http://sw.lsstcorp.org/pkgs/current.list">current.list</a>.
 <code>setallcurrent.sh</code> will run <code>eups declare
 --current</code> for each package listed there that you have
 installed.  Previous "current" declarations for those packages are
