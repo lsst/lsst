@@ -1,5 +1,4 @@
 setupRequired(sconsUtils)
-setupRequired(lssteups)
 
 envSet(GITROOT, "git@git.lsstcorp.org")
 envSet(LSST_GIT, "git@git.lsstcorp.org")
