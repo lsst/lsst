@@ -13,7 +13,7 @@ LSST_HOME="$PWD"
 
 ##########  1. Install EUPS
 
-if false; then
+if true; then
 	echo -n "Installing EUPS ... "
 	(
 		mkdir _build && cd _build
