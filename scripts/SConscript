@@ -4,7 +4,4 @@ import sys
 from lsst.sconsUtils import env, targets
 SConscript("FileFilter.SConscript")
 
-print >> sys.stderr, "lsst_home=%s" % env['lsst_home']
-
-targets["etc"] = env.FilterFilesInto("#etc", Split("loadLSST.sh loadLSST.zsh loadLSST.csh"))
 targets["bin"] = env.FilterFilesInto("#bin", Split("lsstpkg mksandbox switcheups tbl2man style.py noI.py ptest.sh"))
