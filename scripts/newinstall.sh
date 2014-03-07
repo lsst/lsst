@@ -9,9 +9,19 @@
 
 set -e
 
-EUPS_PKGROOT="http://lsst-web.ncsa.illinois.edu/~mjuric/pkgs"
-LSST_HOME="$PWD"
+#
+# Note to developers: change these when the EUPS version we use changes
+#
 
+EUPS_VERSION=${EUPS_VERSION:-1.3.0}
+
+EUPS_GITREV=${EUPS_GITREV:-""}
+EUPS_GITREPO=${EUPS_GITREPO:-"https://github.com/RobertLuptonTheGood/eups.git"}
+
+EUPS_PKGROOT=${EUPS_PKGROOT:-"http://lsst-web.ncsa.illinois.edu/~mjuric/pkgs"}
+
+
+LSST_HOME="$PWD"
 echo
 
 ##########  1. Refuse to run from a non-empty directory
@@ -32,15 +42,28 @@ if true; then
 		exit -1;
 	fi
 
-	echo -n "Installing EUPS ... "
-	(
+	if [[ -z $EUPS_GITREV ]]; then
+		echo -n "Installing EUPS (v$EUPS_VERSION)... "
+	else
+		echo -n "Installing EUPS (branch $EUPS_GITREV from $EUPS_GITREPO)..."
+	fi
 
+	(
 		mkdir _build && cd _build
-		git clone https://github.com/mjuric/eups.git
-		cd eups
-		git checkout eupspkg
+		if [[ -z $EUPS_GITREV ]]; then
+			# Download tarball from github
+			curl -L "https://github.com/mjuric/eups/archive/$EUPS_VERSION.tar.gz" | tar xzvf -
+			cd eups-$EUPS_VERSION
+		else
+			# Clone from git repository
+			git clone "$EUPS_GITREPO"
+			cd eups
+			git checkout $EUPS_GITREV
+		fi
+
 		./configure --prefix="$LSST_HOME"/eups --with-eups="$LSST_HOME" --with-python="$PYTHON"
 		make install
+
 	) > eupsbuild.log 2>&1 && echo " done." || { echo " FAILED."; echo "See log in eupsbuild.log"; exit -1; }
 
 fi
