@@ -18,7 +18,7 @@ EUPS_VERSION=${EUPS_VERSION:-1.3.0}
 EUPS_GITREV=${EUPS_GITREV:-""}
 EUPS_GITREPO=${EUPS_GITREPO:-"https://github.com/RobertLuptonTheGood/eups.git"}
 
-EUPS_PKGROOT=${EUPS_PKGROOT:-"http://lsst-web.ncsa.illinois.edu/~mjuric/pkgs"}
+EUPS_PKGROOT=${EUPS_PKGROOT:-"http://sw.lsstcorp.org/eupspkg"}
 
 
 LSST_HOME="$PWD"
