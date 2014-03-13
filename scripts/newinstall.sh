@@ -50,7 +50,7 @@ if true; then
 		Detected $(git --version).
 
 		The git version control system is frequently used with LSST software. While
-		the LSST stack should build and work even in absence of git, we don't
+		the LSST stack should build and work even in the absence of git, we don't
 		regularly run and test it in such environments. We therefore recommend you
 		have at least git 1.8.4 installed, or let this script install it for you.
 
