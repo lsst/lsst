@@ -4,4 +4,4 @@ import sys
 from lsst.sconsUtils import env, targets
 SConscript("FileFilter.SConscript")
 
-targets["bin"] = env.FilterFilesInto("#bin", Split("switcheups style.py noI.py ptest.sh"))
+targets["bin"] = env.FilterFilesInto("#bin", Split("switcheups style.py noI.py ptest.sh newinstall.sh"))
