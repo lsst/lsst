@@ -31,7 +31,7 @@ echo
 ##########  Refuse to run from a non-empty directory
 
 if true; then
-	if [[ ! -z "$(ls -A)" && ! "$(ls -A)" == "newinstall.sh" ]]; then
+	if [[ ! -z "$(ls)" && ! "$(ls)" == "newinstall.sh" ]]; then
 		echo "Please run this script from an empty directory. The LSST stack will be installed into it."
 		exit -1;
 	fi
