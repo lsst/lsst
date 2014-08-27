@@ -1,4 +1,5 @@
 #!/bin/bash
+
 #
 # Bootstrap lsst stack install by:
 #   * Installing EUPS
@@ -23,6 +24,42 @@ EUPS_PKGROOT=${EUPS_PKGROOT:-"http://sw.lsstcorp.org/eupspkg"}
 
 LSST_HOME="$PWD"
 
+force_flag=false
+batch_flag=false
+help_flag=false
+
+# Use system python to bootstrap unless otherwise specified
+PYTHON="${PYTHON:-/usr/bin/python}"
+
+while getopts fbhP: optflag; do
+	case $optflag in
+	f)
+		force_flag=true
+		;;
+	b)
+		batch_flag=true
+		;;
+	h)
+		help_flag=true
+		;;
+	P)
+		PYTHON=$OPTARG
+	esac
+done
+
+shift $((OPTIND - 1))
+
+if $help_flag; then
+	echo
+	echo "usage: newinstall.sh [-b] [-f] [-h]"
+	echo " -b -- Run in batch mode.  Don't ask any questions and install all extra packages."
+	echo " -f -- Force the script to run.  Don't warn and exit if the install directory is not empty."
+	echo " -P [PATH_TO_PYTHON -- Use a specific python to bootstrap the stack."
+	echo " -h -- Display this help message."
+	echo
+	exit 0
+fi
+
 echo
 echo "LSST Software Stack Builder"
 echo "======================================================================="
@@ -30,12 +67,13 @@ echo
 
 ##########  Refuse to run from a non-empty directory
 
-if true; then
+if ! $force_flag; then
 	if [[ ! -z "$(ls)" && ! "$(ls)" == "newinstall.sh" ]]; then
 		echo "Please run this script from an empty directory. The LSST stack will be installed into it."
 		exit -1;
 	fi
 fi
+
 
 ##########  Offer to get git if it's too old
 
@@ -46,34 +84,38 @@ if true; then
 	fi
 
 	if [[ $GITVER < "01-08-04" ]]; then
-		cat <<-EOF
-		Detected $(git --version).
+		if $batch_flag; then
+			WITH_GIT=1
+		else
+			cat <<-EOF
+			Detected $(git --version).
 
-		The git version control system is frequently used with LSST software. While
-		the LSST stack should build and work even in the absence of git, we don't
-		regularly run and test it in such environments. We therefore recommend you
-		have at least git 1.8.4 installed, or let this script install it for you.
+			The git version control system is frequently used with LSST software. While
+			the LSST stack should build and work even in the absence of git, we don't
+			regularly run and test it in such environments. We therefore recommend you
+			have at least git 1.8.4 installed, or let this script install it for you.
 
-		git installed by this installer will be managed by LSST's EUPS package manager,
-		and will not replace or modify any other version of git you may have installed
-		on your system.
+			git installed by this installer will be managed by LSST's EUPS package manager,
+			and will not replace or modify any other version of git you may have installed
+			on your system.
 
-		EOF
+			EOF
 
-		while true; do
-			read -p "Would you like us to install git for you (if unsure, say yes)? " yn
-			case $yn in
-				[Yy]* ) 
-					WITH_GIT=1
-					break
-					;;
-				[Nn]* )
-					echo "git will not be installed."
-					break;
-					;;
-				* ) echo "Please answer yes or no.";;
-			esac
-		done
+			while true; do
+				read -p "Would you like us to install git for you (if unsure, say yes)? " yn
+				case $yn in
+					[Yy]* ) 
+						WITH_GIT=1
+						break
+						;;
+					[Nn]* )
+						echo "git will not be installed."
+						break;
+						;;
+					* ) echo "Please answer yes or no.";;
+				esac
+			done
+		fi
 	else
 		echo "Detected $(git --version). OK."
 	fi
@@ -84,62 +126,66 @@ fi
 
 if true; then
 	PYVEROK=$(python -c 'import sys; print("%i" % (sys.hexversion >= 0x02070000 and sys.hexversion < 0x03000000))')
-	if [[ $PYVEROK != 1 ]]; then
+	if $batch_flag; then
+		WITH_ANACONDA=1
+	else
+		if [[ $PYVEROK != 1 ]]; then
+			cat <<-EOF
+			LSST stack requires Python 2.7; you seem to have $(python -V 2>&1) on your
+			path ($(which python)).  Please set up a compatible python interpreter,
+			prepend it to your PATH, and rerun this script.  Alternatively, we can set
+			up the Anaconda Python distribution for you.  
+			EOF
+		fi
+
 		cat <<-EOF
-		LSST stack requires Python 2.7; you seem to have $(python -V 2>&1) on your
-		path ($(which python)).  Please set up a compatible python interpreter,
-		prepend it to your PATH, and rerun this script.  Alternatively, we can set
-		up the Anaconda Python distribution for you.  
+
+		In addition to Python 2.7, some LSST packages depend on recent versions of numpy, 
+		matplotlib, and scipy. If you don't have all of these, the installation may fail.
+		Using the Anaconda Python distribution will ensure all these are set up.
+
+		Anaconda Python installed by this installer will be managed by LSST's EUPS
+		package manager, and will not replace or modify your system python.
+
 		EOF
-	fi
 
-	cat <<-EOF
-
-	In addition to Python 2.7, some LSST packages depend on recent versions of numpy, 
-	matplotlib, and scipy. If you don't have all of these, the installation may fail.
-	Using the Anaconda Python distribution will ensure all these are set up.
-
-	Anaconda Python installed by this installer will be managed by LSST's EUPS
-	package manager, and will not replace or modify your system python.
-
-	EOF
-
-	while true; do
-		read -p "Would you like us to install Anaconda Python distribution (if unsure, say yes)? " yn
-		case $yn in
-			[Yy]* ) 
-				WITH_ANACONDA=1
-				break
-				;;
-			[Nn]* )
-				if [[ $PYVEROK != 1 ]]; then
-					echo
-					echo "Thanks. After you install Python 2.7 and the required modules, rerun this script to"
-					echo "continue the installation."
-					echo
-					exit
-				fi
-				break;
-				;;
-			* ) echo "Please answer yes or no.";;
-		esac
-	done
+		while true; do
+			read -p "Would you like us to install Anaconda Python distribution (if unsure, say yes)? " yn
+			case $yn in
+				[Yy]* ) 
+					WITH_ANACONDA=1
+					break
+					;;
+				[Nn]* )
+					if [[ $PYVEROK != 1 ]]; then
+						echo
+						echo "Thanks. After you install Python 2.7 and the required modules, rerun this script to"
+						echo "continue the installation."
+						echo
+						exit
+					fi
+					break;
+					;;
+				* ) echo "Please answer yes or no.";;
+			esac
+		done
 	echo
+	fi
 fi
 
 ##########  Install EUPS
 
 if true; then
-	PYTHON="${PYTHON:-/usr/bin/python}"
 	if [[ ! -x "$PYTHON" ]]; then
-		echo "Cannot find or execute '$PYTHON'. Please set the PYTHON environment variable to point to system Python 2 interpreter and rerun."
+		echo -n "Cannot find or execute '$PYTHON'. Please set the PYTHON environment variable or use the -P"
+        echo " option to point to system Python 2 interpreter and rerun."
 		exit -1;
 	fi
 
 	if [[ -z $EUPS_GITREV ]]; then
-		echo -n "Installing EUPS (v$EUPS_VERSION)... "
+		echo -n "Installing EUPS (v$EUPS_VERSION) using Python at $PYTHON... "
 	else
-		echo -n "Installing EUPS (branch $EUPS_GITREV from $EUPS_GITREPO)..."
+		echo -n "Installing EUPS (branch $EUPS_GITREV from $EUPS_GITREPO) using Python at $PYTHON..."
 	fi
 
 	(
@@ -217,23 +263,23 @@ cat <<-EOF
 	Bootstrap complete. To continue installing (and to use) the LSST stack
 	type one of:
 
-	    source "$LSST_HOME/loadLSST.sh"    # for bash
-	    source "$LSST_HOME/loadLSST.csh"   # for csh
-	    source "$LSST_HOME/loadLSST.ksh"   # for ksh
+		source "$LSST_HOME/loadLSST.sh"    # for bash
+		source "$LSST_HOME/loadLSST.csh"   # for csh
+		source "$LSST_HOME/loadLSST.ksh"   # for ksh
 
 	Individual LSST packages may now be installed with the usual \`eups
 	distrib install' command.  For example, to install the science pipeline
 	elements of the LSST stack, use:
 
-	    eups distrib install lsst_apps
+		eups distrib install lsst_apps
 
 	Next, read the documentation at:
 	
-	    https://confluence.lsstcorp.org/display/LSWUG/LSST+Software+User+Guide
+		https://confluence.lsstcorp.org/display/LSWUG/LSST+Software+User+Guide
 
 	and feel free to ask any questions via our mailing list at:
 	
-	    http://listserv.lsstcorp.org/mailman/listinfo/lsst-dm-stack-users
+		http://listserv.lsstcorp.org/mailman/listinfo/lsst-dm-stack-users
 
 	                                   Thanks!
 	                                           -- The LSST Software Teams
