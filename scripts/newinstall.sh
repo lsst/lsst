@@ -24,17 +24,17 @@ EUPS_PKGROOT=${EUPS_PKGROOT:-"http://sw.lsstcorp.org/eupspkg"}
 
 LSST_HOME="$PWD"
 
-force_flag=false
+cont_flag=false
 batch_flag=false
 help_flag=false
 
 # Use system python to bootstrap unless otherwise specified
 PYTHON="${PYTHON:-/usr/bin/python}"
 
-while getopts fbhP: optflag; do
+while getopts cbhP: optflag; do
 	case $optflag in
-	f)
-		force_flag=true
+	c)
+		cont_flag=true
 		;;
 	b)
 		batch_flag=true
@@ -49,12 +49,12 @@ done
 
 shift $((OPTIND - 1))
 
-if $help_flag; then
+if [[ "$help_flag" = true ]]; then
 	echo
 	echo "usage: newinstall.sh [-b] [-f] [-h]"
 	echo " -b -- Run in batch mode.  Don't ask any questions and install all extra packages."
-	echo " -f -- Force the script to run.  Don't warn and exit if the install directory is not empty."
-	echo " -P [PATH_TO_PYTHON -- Use a specific python to bootstrap the stack."
+	echo " -c -- Attempt to continue a previosly failed install."
+	echo " -P [PATH_TO_PYTHON] -- Use a specific python to bootstrap the stack."
 	echo " -h -- Display this help message."
 	echo
 	exit 0
@@ -67,7 +67,7 @@ echo
 
 ##########  Refuse to run from a non-empty directory
 
-if ! $force_flag; then
+if [[ "$cont_flag" = false ]]; then
 	if [[ ! -z "$(ls)" && ! "$(ls)" == "newinstall.sh" ]]; then
 		echo "Please run this script from an empty directory. The LSST stack will be installed into it."
 		exit -1;
@@ -84,7 +84,7 @@ if true; then
 	fi
 
 	if [[ $GITVER < "01-08-04" ]]; then
-		if $batch_flag; then
+		if [[ "$batch_flag" = true ]]; then
 			WITH_GIT=1
 		else
 			cat <<-EOF
@@ -126,7 +126,7 @@ fi
 
 if true; then
 	PYVEROK=$(python -c 'import sys; print("%i" % (sys.hexversion >= 0x02070000 and sys.hexversion < 0x03000000))')
-	if $batch_flag; then
+	if [[ "$batch_flag" = true ]]; then
 		WITH_ANACONDA=1
 	else
 		if [[ $PYVEROK != 1 ]]; then
@@ -178,14 +178,18 @@ fi
 if true; then
 	if [[ ! -x "$PYTHON" ]]; then
 		echo -n "Cannot find or execute '$PYTHON'. Please set the PYTHON environment variable or use the -P"
-        echo " option to point to system Python 2 interpreter and rerun."
+		echo " option to point to system Python 2 interpreter and rerun."
 		exit -1;
 	fi
 
+	if [[ "$PYTHON" != "/usr/bin/python" ]]; then
+		echo "Using python at $PYTHON to install EUPS"
+	fi
+
 	if [[ -z $EUPS_GITREV ]]; then
-		echo -n "Installing EUPS (v$EUPS_VERSION) using Python at $PYTHON... "
+		echo -n "Installing EUPS (v$EUPS_VERSION)... "
 	else
-		echo -n "Installing EUPS (branch $EUPS_GITREV from $EUPS_GITREPO) using Python at $PYTHON..."
+		echo -n "Installing EUPS (branch $EUPS_GITREV from $EUPS_GITREPO)..."
 	fi
 
 	(
