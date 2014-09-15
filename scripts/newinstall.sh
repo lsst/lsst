@@ -60,7 +60,7 @@ if [[ "$help_flag" = true ]]; then
 	echo
 	echo "usage: newinstall.sh [-b] [-f] [-h]"
 	echo " -b -- Run in batch mode.  Don't ask any questions and install all extra packages."
-	echo " -c -- Attempt to continue a previosly failed install."
+	echo " -c -- Attempt to continue a previously failed install."
 	echo " -P [PATH_TO_PYTHON] -- Use a specific python to bootstrap the stack."
 	echo " -h -- Display this help message."
 	echo
