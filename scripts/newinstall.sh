@@ -111,7 +111,7 @@ if true; then
 			while true; do
 				read -p "Would you like us to install git for you (if unsure, say yes)? " yn
 				case $yn in
-					[Yy]* ) 
+					[Yy]* )
 						WITH_GIT=1
 						break
 						;;
@@ -141,13 +141,13 @@ if true; then
 			LSST stack requires Python 2.7; you seem to have $(python -V 2>&1) on your
 			path ($(which python)).  Please set up a compatible python interpreter,
 			prepend it to your PATH, and rerun this script.  Alternatively, we can set
-			up the Anaconda Python distribution for you.  
+			up the Anaconda Python distribution for you.
 			EOF
 		fi
 
 		cat <<-EOF
 
-		In addition to Python 2.7, some LSST packages depend on recent versions of numpy, 
+		In addition to Python 2.7, some LSST packages depend on recent versions of numpy,
 		matplotlib, and scipy. If you don't have all of these, the installation may fail.
 		Using the Anaconda Python distribution will ensure all these are set up.
 
@@ -159,7 +159,7 @@ if true; then
 		while true; do
 			read -p "Would you like us to install Anaconda Python distribution (if unsure, say yes)? " yn
 			case $yn in
-				[Yy]* ) 
+				[Yy]* )
 					WITH_ANACONDA=1
 					break
 					;;
