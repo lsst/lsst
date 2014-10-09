@@ -111,7 +111,7 @@ if true; then
 			while true; do
 				read -p "Would you like us to install git for you (if unsure, say yes)? " yn
 				case $yn in
-					[Yy]* ) 
+					[Yy]* )
 						WITH_GIT=1
 						break
 						;;
@@ -141,13 +141,13 @@ if true; then
 			LSST stack requires Python 2.7; you seem to have $(python -V 2>&1) on your
 			path ($(which python)).  Please set up a compatible python interpreter,
 			prepend it to your PATH, and rerun this script.  Alternatively, we can set
-			up the Anaconda Python distribution for you.  
+			up the Anaconda Python distribution for you.
 			EOF
 		fi
 
 		cat <<-EOF
 
-		In addition to Python 2.7, some LSST packages depend on recent versions of numpy, 
+		In addition to Python 2.7, some LSST packages depend on recent versions of numpy,
 		matplotlib, and scipy. If you don't have all of these, the installation may fail.
 		Using the Anaconda Python distribution will ensure all these are set up.
 
@@ -159,7 +159,7 @@ if true; then
 		while true; do
 			read -p "Would you like us to install Anaconda Python distribution (if unsure, say yes)? " yn
 			case $yn in
-				[Yy]* ) 
+				[Yy]* )
 					WITH_ANACONDA=1
 					break
 					;;
@@ -252,19 +252,115 @@ fi
 
 ##########  Create the environment loader scripts
 
-for sfx in sh csh ksh; do
-	echo -n "Creating startup scripts ($sfx) ... "
-	cat > "$LSST_HOME"/loadLSST.$sfx <<-EOF
-		# Source this script to load the minimal LSST environment
-		#
-		# You may edit it as needed to customize your system.
-		#
-		source "$LSST_HOME/eups/bin/setups.$sfx"
+function generate_loader_bash() {
+	file_name=$1
+	cat > $file_name <<-EOF
+		# This script is intended to be used with bash to load the minimal LSST environment
+		# Usage: source $(basename $file_name)
+
+		# If not already initialized, set LSST_HOME to the directory where this script is located
+		if [ "x\${LSST_HOME}" = "x" ]; then
+		   LSST_HOME="\$( cd "\$( dirname "\${BASH_SOURCE[0]}" )" && pwd )"
+		fi
+
+		# Bootstrap EUPS
+		EUPS_DIR="\${LSST_HOME}/eups"
+		source "\${EUPS_DIR}/bin/setups.sh"
+		EUPS_PATH="\${LSST_HOME}"
+
+		# Setup optional packages
 		$CMD_SETUP_ANACONDA
 		$CMD_SETUP_GIT
+
+		# Setup LSST minimal environment
 		setup lsst
-	EOF
-	echo " done."
+EOF
+}
+
+function generate_loader_csh() {
+	file_name=$1
+	cat > $file_name <<-EOF
+		# This script is intended to be used with (t)csh to load the minimal LSST environment
+		# Usage: source $(basename $file_name)
+
+		set sourced=(\$_)
+		if ("\${sourced}" != "") then
+		   # If not already initialized, set LSST_HOME to the directory where this script is located
+		   set this_script = \${sourced[2]}
+		   if ( ! \${?LSST_HOME} ) then
+		      set LSST_HOME = \`dirname \${this_script}\`
+		      set LSST_HOME = \`cd \${LSST_HOME} && pwd\`
+		   endif
+
+		   # Bootstrap EUPS
+		   set EUPS_DIR = "\${LSST_HOME}/eups"
+		   source "\${EUPS_DIR}/bin/setups.csh"
+		   set EUPS_PATH = "\${LSST_HOME}"
+
+		   # Setup optional packages
+		   $CMD_SETUP_ANACONDA
+		   $CMD_SETUP_GIT
+
+		   # Setup LSST minimal environment
+		   setup lsst
+		endif
+EOF
+}
+
+function generate_loader_ksh() {
+	file_name=$1
+	cat > $file_name <<-EOF
+		# This script is intended to be used with ksh to load the minimal LSST environment
+		# Usage: source $(basename $file_name)
+
+		# If not already initialized, set LSST_HOME to the directory where this script is located
+		if [ "x\${LSST_HOME}" = "x" ]; then
+		   LSST_HOME="\$( cd "\$( dirname "\${.sh.file}" )" && pwd )"
+		fi
+
+		# Bootstrap EUPS
+		EUPS_DIR="\${LSST_HOME}/eups"
+		source "\${EUPS_DIR}/bin/setups.sh"
+		EUPS_PATH="\${LSST_HOME}"
+
+		# Setup optional packages
+		$CMD_SETUP_ANACONDA
+		$CMD_SETUP_GIT
+
+		# Setup LSST minimal environment
+		setup lsst
+EOF
+}
+
+function generate_loader_zsh() {
+	file_name=$1
+	cat > $file_name <<-EOF
+		# This script is intended to be used with zsh to load the minimal LSST environment
+		# Usage: source $(basename $file_name)
+
+		# If not already initialized, set LSST_HOME to the directory where this script is located
+		if [[ -z \${LSST_HOME} ]]; then
+		   LSST_HOME="\$( cd "\$( dirname "\${0}" )" && pwd )"
+		fi
+
+		# Bootstrap EUPS
+		EUPS_DIR="\${LSST_HOME}/eups"
+		source "\${EUPS_DIR}/bin/setups.zsh"
+		EUPS_PATH="\${LSST_HOME}"
+
+		# Setup optional packages
+		$CMD_SETUP_ANACONDA
+		$CMD_SETUP_GIT
+
+		# Setup LSST minimal environment
+		setup lsst
+EOF
+}
+
+for sfx in bash ksh csh zsh; do
+	echo -n "Creating startup scripts ($sfx) ... "
+	generate_loader_$sfx $LSST_HOME/loadLSST.$sfx
+	echo "done."
 done
 
 ##########  Helpful message about what to do next
@@ -274,23 +370,24 @@ cat <<-EOF
 	Bootstrap complete. To continue installing (and to use) the LSST stack
 	type one of:
 
-		source "$LSST_HOME/loadLSST.sh"    # for bash
-		source "$LSST_HOME/loadLSST.csh"   # for csh
-		source "$LSST_HOME/loadLSST.ksh"   # for ksh
+	    source "$LSST_HOME/loadLSST.bash"  # for bash
+	    source "$LSST_HOME/loadLSST.csh"   # for csh
+	    source "$LSST_HOME/loadLSST.ksh"   # for ksh
+	    source "$LSST_HOME/loadLSST.zsh"   # for zsh
 
 	Individual LSST packages may now be installed with the usual \`eups
 	distrib install' command.  For example, to install the science pipeline
 	elements of the LSST stack, use:
 
-		eups distrib install lsst_apps
+	    eups distrib install lsst_apps
 
 	Next, read the documentation at:
 	
-		https://confluence.lsstcorp.org/display/LSWUG/LSST+Software+User+Guide
+	    https://confluence.lsstcorp.org/display/LSWUG/LSST+Software+User+Guide
 
 	and feel free to ask any questions via our mailing list at:
 	
-		http://listserv.lsstcorp.org/mailman/listinfo/lsst-dm-stack-users
+	    http://listserv.lsstcorp.org/mailman/listinfo/lsst-dm-stack-users
 
 	                                   Thanks!
 	                                           -- The LSST Software Teams
