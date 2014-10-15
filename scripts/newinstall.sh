@@ -25,7 +25,7 @@ EUPS_VERSION=${EUPS_VERSION:-1.3.0}
 
 EUPS_GITREV=${EUPS_GITREV:-""}
 EUPS_GITREPO=${EUPS_GITREPO:-"https://github.com/RobertLuptonTheGood/eups.git"}
-EUPS_TARURL=${EUPS_TARURL:-"https://github.com/mjuric/eups/archive/$EUPS_VERSION.tar.gz"}
+EUPS_TARURL=${EUPS_TARURL:-"https://github.com/RobertLuptonTheGood/eups/archive/$EUPS_VERSION.tar.gz"}
 
 EUPS_PKGROOT=${EUPS_PKGROOT:-"http://sw.lsstcorp.org/eupspkg"}
 
