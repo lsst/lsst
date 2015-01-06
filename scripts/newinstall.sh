@@ -35,6 +35,8 @@ EUPS_PKGROOT=${EUPS_PKGROOT:-"http://sw.lsstcorp.org/eupspkg"}
 
 LSST_HOME="$PWD"
 
+NEWINSTALL="newinstall.sh" # the canonical name of this file on the server
+
 cont_flag=false
 batch_flag=false
 help_flag=false
@@ -80,6 +82,22 @@ echo
 echo "LSST Software Stack Builder"
 echo "======================================================================="
 echo
+
+##########	Warn if there's a different version on the server
+
+# Don't make this fatal, it should still work for developers who are hacking their copy.
+
+set +e
+
+AMIDIFF=$(curl -L --silent $EUPS_PKGROOT/$NEWINSTALL | diff --brief - $0)
+
+if [[ $AMIDIFF = *differ ]]; then
+	echo "!!! This script differs from the official version on the distribution server."
+	echo "    If this is not intentional, get the current version from here:"
+	echo "    $EUPS_PKGROOT/$NEWINSTALL"
+fi
+
+set -e
 
 ##########	If no-op, prefix every install command with echo
 
