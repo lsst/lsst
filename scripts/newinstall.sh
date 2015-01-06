@@ -66,12 +66,12 @@ shift $((OPTIND - 1))
 
 if [[ "$help_flag" = true ]]; then
 	echo
-	echo "usage: newinstall.sh [-b] [-f] [-h]"
-	echo " -b -- Run in batch mode.	 Don't ask any questions and install all extra packages."
+	echo "usage: newinstall.sh [-b] [-f] [-h] [-n] [-P <path-to-python>]"
+	echo " -b -- Run in batch mode.	Don't ask any questions and install all extra packages."
 	echo " -c -- Attempt to continue a previously failed install."
-	echo " -n -- No-op: Go through the motions but echo commands instead of running them."
-	echo " -P [PATH_TO_PYTHON] -- Use a specific python to bootstrap the stack."
 	echo " -h -- Display this help message."
+	echo " -n -- No-op. Go through the motions but echo commands instead of running them."
+	echo " -P [PATH_TO_PYTHON] -- Use a specific python to bootstrap the stack."
 	echo
 	exit 0
 fi
