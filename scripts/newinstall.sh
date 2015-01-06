@@ -38,11 +38,12 @@ LSST_HOME="$PWD"
 cont_flag=false
 batch_flag=false
 help_flag=false
+noop_flag=false
 
 # Use system python to bootstrap unless otherwise specified
 PYTHON="${PYTHON:-/usr/bin/python}"
 
-while getopts cbhP: optflag; do
+while getopts cbhnP: optflag; do
 	case $optflag in
 		c)
 			cont_flag=true
@@ -52,6 +53,9 @@ while getopts cbhP: optflag; do
 			;;
 		h)
 			help_flag=true
+			;;
+		n)
+			noop_flag=true
 			;;
 		P)
 			PYTHON=$OPTARG
@@ -65,6 +69,7 @@ if [[ "$help_flag" = true ]]; then
 	echo "usage: newinstall.sh [-b] [-f] [-h]"
 	echo " -b -- Run in batch mode.	 Don't ask any questions and install all extra packages."
 	echo " -c -- Attempt to continue a previously failed install."
+	echo " -n -- No-op: Go through the motions but echo commands instead of running them."
 	echo " -P [PATH_TO_PYTHON] -- Use a specific python to bootstrap the stack."
 	echo " -h -- Display this help message."
 	echo
@@ -75,6 +80,15 @@ echo
 echo "LSST Software Stack Builder"
 echo "======================================================================="
 echo
+
+##########	If no-op, prefix every install command with echo
+
+if [[ "$noop_flag" = true ]]; then
+	cmd="echo"
+	echo "!!! -n flag specified, no install commands will be really executed"
+else
+	cmd=""
+fi
 
 ##########	Refuse to run from a non-empty directory
 
@@ -90,7 +104,7 @@ fi
 
 if true; then
 	if hash git 2>/dev/null; then
-		GITVERNUM=$(git --version | cut -d\	 -f 3)
+		GITVERNUM=$(git --version | cut -d" " -f 3)
 		GITVER=$(printf "%02d-%02d-%02d\n" $(echo "$GITVERNUM" | cut -d. -f1-3 | tr . ' '))
 	fi
 	
@@ -207,17 +221,17 @@ if true; then
 	mkdir _build && cd _build
 	if [[ -z $EUPS_GITREV ]]; then
 		# Download tarball from github
-		curl -L $EUPS_TARURL | tar xzvf -
-		cd eups-$EUPS_VERSION
+		$cmd curl -L $EUPS_TARURL | tar xzvf -
+		$cmd cd eups-$EUPS_VERSION
 	else
 		# Clone from git repository
-		git clone "$EUPS_GITREPO"
-		cd eups
-		git checkout $EUPS_GITREV
+		$cmd git clone "$EUPS_GITREPO"
+		$cmd cd eups
+		$cmd git checkout $EUPS_GITREV
 	fi
 	
-	./configure --prefix="$LSST_HOME"/eups --with-eups="$LSST_HOME" --with-python="$PYTHON"
-	make install
+	$cmd ./configure --prefix="$LSST_HOME"/eups --with-eups="$LSST_HOME" --with-python="$PYTHON"
+	$cmd make install
 	
 	) > eupsbuild.log 2>&1 && echo " done." || { echo " FAILED."; echo "See log in eupsbuild.log"; exit -1; }
 	
@@ -226,7 +240,7 @@ fi
 ##########	Source EUPS
 
 set +e
-source "$LSST_HOME/eups/bin/setups.sh"
+$cmd source "$LSST_HOME/eups/bin/setups.sh"
 set -e
 
 ##########	Download optional component (python, git, ...)
@@ -234,15 +248,15 @@ set -e
 if true; then
 	if [[ $WITH_GIT = 1 ]]; then
 		echo "Installing git ... "
-	eups distrib install --repository="$EUPS_PKGROOT" git
-	setup git
+	$cmd eups distrib install --repository="$EUPS_PKGROOT" git
+	$cmd setup git
 	CMD_SETUP_GIT='setup git'
 	fi
 	
 	if [[ $WITH_ANACONDA = 1 ]]; then
 		echo "Installing Anaconda Python Distribution ... "
-		eups distrib install --repository="$EUPS_PKGROOT" anaconda
-		setup anaconda
+		$cmd eups distrib install --repository="$EUPS_PKGROOT" anaconda
+		$cmd setup anaconda
 		CMD_SETUP_ANACONDA='setup anaconda'
 	fi
 fi
@@ -251,7 +265,7 @@ fi
 
 if true; then
 	echo "Installing the basic environment ... "
-	eups distrib install --repository="$EUPS_PKGROOT" lsst
+	$cmd eups distrib install --repository="$EUPS_PKGROOT" lsst
 fi
 
 ##########	Create the environment loader scripts
