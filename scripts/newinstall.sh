@@ -424,7 +424,7 @@ cat <<-EOF
 
 	and feel free to ask any questions via our mailing list at:
 
-	    https://lists.lsst.org/mailman/listinfo/dm-devel
+	    https://lists.lsst.org/mailman/listinfo/dm-users
 
 	                                       Thanks!
 	                                                -- The LSST Software Teams
