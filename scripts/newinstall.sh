@@ -7,7 +7,7 @@
 # **** This file should not be edited in place ****
 # It is maintained in a repository at
 # git@git.lsstcorp.org:LSST/DMS/devenv/lsst
-# 
+#
 # If the file must be modified, clone the repository
 # and edit there.
 # *************************************************
@@ -107,7 +107,7 @@ if true; then
 		GITVERNUM=$(git --version | cut -d" " -f 3)
 		GITVER=$(printf "%02d-%02d-%02d\n" $(echo "$GITVERNUM" | cut -d. -f1-3 | tr . ' '))
 	fi
-	
+
 	if [[ $GITVER < "01-08-04" ]]; then
 		if [[ "$batch_flag" = true ]]; then
 			WITH_GIT=1
@@ -125,7 +125,7 @@ if true; then
 			on your system.
 
 			EOF
-			
+
 			while true; do
 				read -p "Would you like us to install git for you (if unsure, say yes)? " yn
 				case $yn in
@@ -155,14 +155,15 @@ if true; then
 		WITH_ANACONDA=1
 	else
 		if [[ $PYVEROK != 1 ]]; then
-		cat <<-EOF
+			cat <<-EOF
+
 			LSST stack requires Python 2.7; you seem to have $(python -V 2>&1) on your
 			path ($(which python)).	 Please set up a compatible python interpreter,
 			prepend it to your PATH, and rerun this script.	 Alternatively, we can set
 			up the Anaconda Python distribution for you.
 			EOF
 		fi
-		
+
 		cat <<-EOF
 
 		In addition to Python 2.7, some LSST packages depend on recent versions of numpy,
@@ -173,7 +174,7 @@ if true; then
 		package manager, and will not replace or modify your system python.
 
 		EOF
-		
+
 		while true; do
 		read -p "Would you like us to install Anaconda Python distribution (if unsure, say yes)? " yn
 		case $yn in
@@ -206,35 +207,35 @@ if true; then
 		echo " option to point to system Python 2 interpreter and rerun."
 		exit -1;
 	fi
-	
+
 	if [[ "$PYTHON" != "/usr/bin/python" ]]; then
 		echo "Using python at $PYTHON to install EUPS"
 	fi
-	
+
 	if [[ -z $EUPS_GITREV ]]; then
 		echo -n "Installing EUPS (v$EUPS_VERSION)... "
 	else
 		echo -n "Installing EUPS (branch $EUPS_GITREV from $EUPS_GITREPO)..."
 	fi
-	
+
 	(
-	mkdir _build && cd _build
-	if [[ -z $EUPS_GITREV ]]; then
-		# Download tarball from github
-		$cmd curl -L $EUPS_TARURL | tar xzvf -
-		$cmd cd eups-$EUPS_VERSION
-	else
-		# Clone from git repository
-		$cmd git clone "$EUPS_GITREPO"
-		$cmd cd eups
-		$cmd git checkout $EUPS_GITREV
-	fi
-	
-	$cmd ./configure --prefix="$LSST_HOME"/eups --with-eups="$LSST_HOME" --with-python="$PYTHON"
-	$cmd make install
-	
+		mkdir _build && cd _build
+		if [[ -z $EUPS_GITREV ]]; then
+			# Download tarball from github
+			$cmd curl -L $EUPS_TARURL | tar xzvf -
+			$cmd cd eups-$EUPS_VERSION
+		else
+			# Clone from git repository
+			$cmd git clone "$EUPS_GITREPO"
+			$cmd cd eups
+			$cmd git checkout $EUPS_GITREV
+		fi
+
+		$cmd ./configure --prefix="$LSST_HOME"/eups --with-eups="$LSST_HOME" --with-python="$PYTHON"
+		$cmd make install
+
 	) > eupsbuild.log 2>&1 && echo " done." || { echo " FAILED."; echo "See log in eupsbuild.log"; exit -1; }
-	
+
 fi
 
 ##########	Source EUPS
@@ -248,11 +249,11 @@ set -e
 if true; then
 	if [[ $WITH_GIT = 1 ]]; then
 		echo "Installing git ... "
-	$cmd eups distrib install --repository="$EUPS_PKGROOT" git
-	$cmd setup git
-	CMD_SETUP_GIT='setup git'
+		$cmd eups distrib install --repository="$EUPS_PKGROOT" git
+		$cmd setup git
+		CMD_SETUP_GIT='setup git'
 	fi
-	
+
 	if [[ $WITH_ANACONDA = 1 ]]; then
 		echo "Installing Anaconda Python Distribution ... "
 		$cmd eups distrib install --repository="$EUPS_PKGROOT" anaconda
@@ -384,30 +385,30 @@ done
 ##########	Helpful message about what to do next
 
 cat <<-EOF
-	
+
 	Bootstrap complete. To continue installing (and to use) the LSST stack
 	type one of:
 
-	    source "$LSST_HOME/loadLSST.bash"  # for bash
-	    source "$LSST_HOME/loadLSST.csh"   # for csh
-	    source "$LSST_HOME/loadLSST.ksh"   # for ksh
-	    source "$LSST_HOME/loadLSST.zsh"   # for zsh
+		source "$LSST_HOME/loadLSST.bash"  # for bash
+		source "$LSST_HOME/loadLSST.csh"   # for csh
+		source "$LSST_HOME/loadLSST.ksh"   # for ksh
+		source "$LSST_HOME/loadLSST.zsh"   # for zsh
 
 	Individual LSST packages may now be installed with the usual \`eups
 	distrib install' command.  For example, to install the science pipeline
 	elements of the LSST stack, use:
 
-	    eups distrib install lsst_apps
+		eups distrib install lsst_apps
 
 	Next, read the documentation at:
-	
-	    https://confluence.lsstcorp.org/display/LSWUG/LSST+Software+User+Guide
+
+		https://confluence.lsstcorp.org/display/LSWUG/LSST+Software+User+Guide
 
 	and feel free to ask any questions via our mailing list at:
-	
-	    http://listserv.lsstcorp.org/mailman/listinfo/lsst-dm-stack-users
 
-	                    Thanks!
-	                      -- The LSST Software Teams
+		http://listserv.lsstcorp.org/mailman/listinfo/lsst-dm-stack-users
+
+						Thanks!
+						  -- The LSST Software Teams
 
 EOF
