@@ -117,12 +117,11 @@ if [[ "$cont_flag" = false ]]; then
 	fi
 fi
 
-
-##########	Offer to get git if it's too old
+##########  Discuss the state of Git.
 
 if true; then
 	if hash git 2>/dev/null; then
-		GITVERNUM=$(git --version | cut -d" " -f 3)
+		GITVERNUM=$(git --version | cut -d\  -f 3)
 		GITVER=$(printf "%02d-%02d-%02d\n" $(echo "$GITVERNUM" | cut -d. -f1-3 | tr . ' '))
 	fi
 
@@ -136,23 +135,21 @@ if true; then
 			The git version control system is frequently used with LSST software. While
 			the LSST stack should build and work even in the absence of git, we don't
 			regularly run and test it in such environments. We therefore recommend you
-			have at least git 1.8.4 installed, or let this script install it for you.
-
-			git installed by this installer will be managed by LSST's EUPS package manager,
-			and will not replace or modify any other version of git you may have installed
-			on your system.
+			have at least git 1.8.4 installed with you normal package manager.
 
 			EOF
 
 			while true; do
-				read -p "Would you like us to install git for you (if unsure, say yes)? " yn
+				read -p "Would you like to try continuiung without git? " yn
 				case $yn in
 					[Yy]* )
-						WITH_GIT=1
+						echo "Continuing without git"
+						WITH_GIT=0
 						break
 						;;
 					[Nn]* )
-						echo "git will not be installed."
+						echo "Okay install git and rerun the script."
+						exit;
 						break;
 						;;
 					* ) echo "Please answer yes or no.";;
@@ -164,6 +161,7 @@ if true; then
 	fi
 	echo
 fi
+
 
 ##########	Test/warn about Python versions, offer to get anaconda if too old
 
