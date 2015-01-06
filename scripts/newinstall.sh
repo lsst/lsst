@@ -402,13 +402,14 @@ cat <<-EOF
 
 	Next, read the documentation at:
 
-		https://confluence.lsstcorp.org/display/LSWUG/LSST+Software+User+Guide
+	    https://confluence.lsstcorp.org/display/LSWUG/LSST+Software+User+Guide
 
 	and feel free to ask any questions via our mailing list at:
 
-		http://listserv.lsstcorp.org/mailman/listinfo/lsst-dm-stack-users
+	    https://lists.lsst.org/mailman/listinfo/dm-devel
 
-						Thanks!
-						  -- The LSST Software Teams
+	                                       Thanks!
+	                                                -- The LSST Software Teams
+	                                                       http://dm.lsst.org/
 
 EOF
