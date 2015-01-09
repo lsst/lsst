@@ -22,7 +22,7 @@
 
 set -e
 set -o pipefail
-trap on_error ERR 
+trap on_error ERR
 
 function on_error {
 	echo "SIGERR: Rats! $OOPS ($?)"
@@ -93,7 +93,7 @@ echo "======================================================================="
 echo
 
 OOPS="Unable to reach $EUPS_SERVER"
-ping -q -c 1 -t 1 $EUPS_SERVER &> /dev/null 
+ping -q -c 1 -t 1 $EUPS_SERVER &> /dev/null
 unset OOPS
 
 ##########	Warn if there's a different version on the server
@@ -431,17 +431,14 @@ cat <<-EOF
 
 	Next, read the documentation at:
 
-	    https://confluence.lsstcorp.org/display/LSWUG/LSST+Software+User+Guide
+		https://confluence.lsstcorp.org/display/LSWUG/LSST+Software+User+Guide
 
 	and feel free to ask any questions via our mailing list at:
 
-	    https://lists.lsst.org/mailman/listinfo/dm-users
+		https://lists.lsst.org/mailman/listinfo/dm-users
 
-	                                       Thanks!
-	                                                -- The LSST Software Teams
-	                                                       http://dm.lsst.org/
+										   Thanks!
+													-- The LSST Software Teams
+														   http://dm.lsst.org/
 
 EOF
-
-
-
