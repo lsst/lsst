@@ -418,27 +418,27 @@ cat <<-EOF
 	Bootstrap complete. To continue installing (and to use) the LSST stack
 	type one of:
 
-		source "$LSST_HOME/loadLSST.bash"  # for bash
-		source "$LSST_HOME/loadLSST.csh"   # for csh
-		source "$LSST_HOME/loadLSST.ksh"   # for ksh
-		source "$LSST_HOME/loadLSST.zsh"   # for zsh
+	    source "$LSST_HOME/loadLSST.bash"  # for bash
+	    source "$LSST_HOME/loadLSST.csh"   # for csh
+	    source "$LSST_HOME/loadLSST.ksh"   # for ksh
+	    source "$LSST_HOME/loadLSST.zsh"   # for zsh
 
 	Individual LSST packages may now be installed with the usual \`eups
 	distrib install' command.  For example, to install the science pipeline
 	elements of the LSST stack, use:
 
-		eups distrib install lsst_apps
+	    eups distrib install lsst_apps
 
 	Next, read the documentation at:
 
-		https://confluence.lsstcorp.org/display/LSWUG/LSST+Software+User+Guide
+	    https://confluence.lsstcorp.org/display/LSWUG/LSST+Software+User+Guide
 
 	and feel free to ask any questions via our mailing list at:
 
-		https://lists.lsst.org/mailman/listinfo/dm-users
+	    https://lists.lsst.org/mailman/listinfo/dm-users
 
-										   Thanks!
-													-- The LSST Software Teams
-														   http://dm.lsst.org/
+	                                        Thanks!
+	                                                -- The LSST Software Teams
+	                                                       http://dm.lsst.org/
 
 EOF
