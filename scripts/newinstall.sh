@@ -19,7 +19,15 @@
 #	* Creating the loadLSST.xxx scripts
 #
 
+
 set -e
+set -o pipefail
+trap on_error ERR 
+
+function on_error {
+	echo "SIGERR: Rats! $OOPS ($?)"
+}
+
 
 #
 # Note to developers: change these when the EUPS version we use changes
@@ -31,7 +39,8 @@ EUPS_GITREV=${EUPS_GITREV:-""}
 EUPS_GITREPO=${EUPS_GITREPO:-"https://github.com/RobertLuptonTheGood/eups.git"}
 EUPS_TARURL=${EUPS_TARURL:-"https://github.com/RobertLuptonTheGood/eups/archive/$EUPS_VERSION.tar.gz"}
 
-EUPS_PKGROOT=${EUPS_PKGROOT:-"http://sw.lsstcorp.org/eupspkg"}
+EUPS_SERVER="sw.lsstcorp.org"
+EUPS_PKGROOT=${EUPS_PKGROOT:-"http://$EUPS_SERVER/eupspkg"}
 
 LSST_HOME="$PWD"
 
@@ -82,6 +91,10 @@ echo
 echo "LSST Software Stack Builder"
 echo "======================================================================="
 echo
+
+OOPS="Unable to reach $EUPS_SERVER"
+ping -q -c 1 -t 1 $EUPS_SERVER &> /dev/null 
+unset OOPS
 
 ##########	Warn if there's a different version on the server
 
@@ -429,3 +442,6 @@ cat <<-EOF
 	                                                       http://dm.lsst.org/
 
 EOF
+
+
+
