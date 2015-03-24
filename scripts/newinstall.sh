@@ -375,7 +375,7 @@ function generate_loader_zsh() {
 
 		# If not already initialized, set LSST_HOME to the directory where this script is located
 		if [[ -z \${LSST_HOME} ]]; then
-		   LSST_HOME="\$( cd "\$( dirname "\${0}" )" && pwd )"
+		   LSST_HOME=`dirname "$0:A"`
 		fi
 
 		# Bootstrap EUPS
