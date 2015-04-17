@@ -215,6 +215,42 @@ if true; then
 	fi
 fi
 
+##########	Check if the user has Anaconda with libm exposed (https://github.com/ContinuumIO/anaconda-issues/issues/182)
+
+if [[ $WITH_ANACONDA != "1" ]]; then					# Are we going to install our anaconda?
+	if python -V 2>&1 | grep -q Anaconda; then			# Is the user's python from Anaconda?
+		LIBM="$(dirname $(dirname $(which python)))/lib/libm.so"
+		if [[ -f "$LIBM" ]]; then				# Does it come with its own libm.so?
+
+			echo
+			echo
+			echo "========================================================================="
+			echo
+			echo "We've detected you're using a version of the Anaconda Python Distribution"
+			echo "that comes with its own instance of libm (the low-level math library):"
+			echo
+			echo "	$LIBM"
+			echo
+			echo "This will cause problems when compiling LSST (and other) codes (e.g.,"
+			echo "see https://github.com/ContinuumIO/anaconda-issues/issues/182)."
+			echo
+			echo "To resolve this issue, upgrade your 'system' package to version 5.8-2"
+			echo "or later by running:"
+			echo
+			echo "	conda update system"
+			echo
+			echo ", or upgrade Anaconda to 2.2.0 (or later)."
+			echo
+			echo "CAVEAT: If you decide to upgrade Anaconda, note that version 2.2.0 comes"
+			echo "with IPython 3.0 (now called Jupyter). Notebooks written by Jupyter"
+			echo "are not in a format that previous versions of IPython can read."
+			echo
+
+			exit -1
+		fi
+	fi
+fi
+
 ##########	Install EUPS
 
 if true; then
