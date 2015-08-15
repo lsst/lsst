@@ -6,7 +6,7 @@
 #
 # **** This file should not be edited in place ****
 # It is maintained in a repository at
-# git@git.lsstcorp.org:LSST/DMS/devenv/lsst
+# git@github.com:lsst/lsst.git
 #
 # If the file must be modified, clone the repository
 # and edit there.
