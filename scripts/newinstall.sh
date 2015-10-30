@@ -337,7 +337,6 @@ function generate_loader_bash() {
 		# Bootstrap EUPS
 		EUPS_DIR="\${LSST_HOME}/eups"
 		source "\${EUPS_DIR}/bin/setups.sh"
-		EUPS_PATH="\${LSST_HOME}"
 
 		# Setup optional packages
 		$CMD_SETUP_ANACONDA
@@ -366,7 +365,6 @@ function generate_loader_csh() {
 		   # Bootstrap EUPS
 		   set EUPS_DIR = "\${LSST_HOME}/eups"
 		   source "\${EUPS_DIR}/bin/setups.csh"
-		   set EUPS_PATH = "\${LSST_HOME}"
 
 		   # Setup optional packages
 		   $CMD_SETUP_ANACONDA
@@ -392,7 +390,6 @@ function generate_loader_ksh() {
 		# Bootstrap EUPS
 		EUPS_DIR="\${LSST_HOME}/eups"
 		source "\${EUPS_DIR}/bin/setups.sh"
-		EUPS_PATH="\${LSST_HOME}"
 
 		# Setup optional packages
 		$CMD_SETUP_ANACONDA
@@ -417,7 +414,6 @@ function generate_loader_zsh() {
 		# Bootstrap EUPS
 		EUPS_DIR="\${LSST_HOME}/eups"
 		source "\${EUPS_DIR}/bin/setups.zsh"
-		EUPS_PATH="\${LSST_HOME}"
 
 		# Setup optional packages
 		$CMD_SETUP_ANACONDA
