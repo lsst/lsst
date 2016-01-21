@@ -166,7 +166,7 @@ fi
 ##########	Test/warn about Python versions, offer to get anaconda if too old
 
 if true; then
-	PYVEROK=$(python -c 'import sys; print("%i" % (sys.hexversion >= 0x02070000 and sys.hexversion < 0x03000000))')
+	PYVEROK=$($PYTHON -c 'import sys; print("%i" % (sys.hexversion >= 0x02070000 and sys.hexversion < 0x03000000))')
 	if [[ "$batch_flag" = true ]]; then
 		WITH_ANACONDA=1
 	else
