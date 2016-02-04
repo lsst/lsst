@@ -14,7 +14,7 @@
 #
 # Bootstrap lsst stack install by:
 #	* Installing EUPS
-#	* Installing Anaconda Python distribution, if necessary
+#	* Installing Miniconda2 Python distribution, if necessary
 #	* Install everything up to the lsst package
 #	* Creating the loadLSST.xxx scripts
 #
@@ -32,6 +32,8 @@ EUPS_GITREPO=${EUPS_GITREPO:-"https://github.com/RobertLuptonTheGood/eups.git"}
 EUPS_TARURL=${EUPS_TARURL:-"https://github.com/RobertLuptonTheGood/eups/archive/$EUPS_VERSION.tar.gz"}
 
 EUPS_PKGROOT=${EUPS_PKGROOT:-"http://sw.lsstcorp.org/eupspkg"}
+
+MINICONDA2_VERSION=${MINICONDA2_VERSION:-3.19.0}
 
 LSST_HOME="$PWD"
 
@@ -163,12 +165,12 @@ if true; then
 fi
 
 
-##########	Test/warn about Python versions, offer to get anaconda if too old
+##########	Test/warn about Python versions, offer to get miniconda2 if too old
 
 if true; then
 	PYVEROK=$(python -c 'import sys; print("%i" % (sys.hexversion >= 0x02070000 and sys.hexversion < 0x03000000))')
 	if [[ "$batch_flag" = true ]]; then
-		WITH_ANACONDA=1
+		WITH_MINICONDA2=1
 	else
 		if [[ $PYVEROK != 1 ]]; then
 			cat <<-EOF
@@ -176,7 +178,7 @@ if true; then
 			LSST stack requires Python 2.7; you seem to have $(python -V 2>&1) on your
 			path ($(which python)).	 Please set up a compatible python interpreter,
 			prepend it to your PATH, and rerun this script.	 Alternatively, we can set
-			up the Anaconda Python distribution for you.
+			up the Miniconda2 Python distribution for you.
 			EOF
 		fi
 
@@ -184,18 +186,18 @@ if true; then
 
 		In addition to Python 2.7, some LSST packages depend on recent versions of numpy,
 		matplotlib, and scipy. If you don't have all of these, the installation may fail.
-		Using the Anaconda Python distribution will ensure all these are set up.
+		Using the Miniconda2 Python distribution will ensure all these are set up.
 
-		Anaconda Python installed by this installer will be managed by LSST's EUPS
+		Miniconda2 Python installed by this installer will be managed by LSST's EUPS
 		package manager, and will not replace or modify your system python.
 
 		EOF
 
 		while true; do
-		read -p "Would you like us to install Anaconda Python distribution (if unsure, say yes)? " yn
+		read -p "Would you like us to install the Miniconda2 ${MINICONDA2_VERSION} Python distribution (if unsure, say yes)? " yn
 		case $yn in
 			[Yy]* )
-				WITH_ANACONDA=1
+				WITH_MINICONDA2=1
 				break
 				;;
 			[Nn]* )
@@ -212,42 +214,6 @@ if true; then
 		esac
 		done
 		echo
-	fi
-fi
-
-##########	Check if the user has Anaconda with libm exposed (https://github.com/ContinuumIO/anaconda-issues/issues/182)
-
-if [[ $WITH_ANACONDA != "1" ]]; then					# Are we going to install our anaconda?
-	if python -V 2>&1 | grep -q Anaconda; then			# Is the user's python from Anaconda?
-		LIBM="$(dirname $(dirname $(which python)))/lib/libm.so"
-		if [[ -f "$LIBM" ]]; then				# Does it come with its own libm.so?
-
-			echo
-			echo
-			echo "========================================================================="
-			echo
-			echo "We've detected you're using a version of the Anaconda Python Distribution"
-			echo "that comes with its own instance of libm (the low-level math library):"
-			echo
-			echo "	$LIBM"
-			echo
-			echo "This will cause problems when compiling LSST (and other) codes (e.g.,"
-			echo "see https://github.com/ContinuumIO/anaconda-issues/issues/182)."
-			echo
-			echo "To resolve this issue, upgrade your 'system' package to version 5.8-2"
-			echo "or later by running:"
-			echo
-			echo "	conda update system"
-			echo
-			echo ", or upgrade Anaconda to 2.2.0 (or later)."
-			echo
-			echo "CAVEAT: If you decide to upgrade Anaconda, note that version 2.2.0 comes"
-			echo "with IPython 3.0 (now called Jupyter). Notebooks written by Jupyter"
-			echo "are not in a format that previous versions of IPython can read."
-			echo
-
-			exit -1
-		fi
 	fi
 fi
 
@@ -306,11 +272,11 @@ if true; then
 		CMD_SETUP_GIT='setup git'
 	fi
 
-	if [[ $WITH_ANACONDA = 1 ]]; then
-		echo "Installing Anaconda Python Distribution ... "
-		$cmd eups distrib install --repository="$EUPS_PKGROOT" anaconda
-		$cmd setup anaconda
-		CMD_SETUP_ANACONDA='setup anaconda'
+	if [[ $WITH_MINICONDA2 = 1 ]]; then
+		echo "Installing Miniconda2 Python Distribution ... "
+		$cmd eups distrib install --repository="$EUPS_PKGROOT" miniconda2 "$MINICONDA2_VERSION"
+		$cmd setup miniconda2
+		CMD_SETUP_MINICONDA2='setup miniconda2'
 	fi
 fi
 
@@ -339,7 +305,7 @@ function generate_loader_bash() {
 		source "\${EUPS_DIR}/bin/setups.sh"
 
 		# Setup optional packages
-		$CMD_SETUP_ANACONDA
+		$CMD_SETUP_MINICONDA2
 		$CMD_SETUP_GIT
 
 		# Setup LSST minimal environment
@@ -367,7 +333,7 @@ function generate_loader_csh() {
 		   source "\${EUPS_DIR}/bin/setups.csh"
 
 		   # Setup optional packages
-		   $CMD_SETUP_ANACONDA
+		   $CMD_SETUP_MINICONDA2
 		   $CMD_SETUP_GIT
 
 		   # Setup LSST minimal environment
@@ -392,7 +358,7 @@ function generate_loader_ksh() {
 		source "\${EUPS_DIR}/bin/setups.sh"
 
 		# Setup optional packages
-		$CMD_SETUP_ANACONDA
+		$CMD_SETUP_MINICONDA2
 		$CMD_SETUP_GIT
 
 		# Setup LSST minimal environment
@@ -416,7 +382,7 @@ function generate_loader_zsh() {
 		source "\${EUPS_DIR}/bin/setups.zsh"
 
 		# Setup optional packages
-		$CMD_SETUP_ANACONDA
+		$CMD_SETUP_MINICONDA2
 		$CMD_SETUP_GIT
 
 		# Setup LSST minimal environment
