@@ -128,9 +128,7 @@ if true; then
 	fi
 
 	if [[ $GITVER < "01-08-04" ]]; then
-		if [[ "$batch_flag" = true ]]; then
-			WITH_GIT=1
-		else
+		if [[ "$batch_flag" != true ]]; then
 			cat <<-EOF
 			Detected $(git --version).
 
@@ -146,7 +144,6 @@ if true; then
 				case $yn in
 					[Yy]* )
 						echo "Continuing without git"
-						WITH_GIT=0
 						break
 						;;
 					[Nn]* )
@@ -265,13 +262,6 @@ set -e
 ##########	Download optional component (python, git, ...)
 
 if true; then
-	if [[ $WITH_GIT = 1 ]]; then
-		echo "Installing git ... "
-		$cmd eups distrib install --repository="$EUPS_PKGROOT" git
-		$cmd setup git
-		CMD_SETUP_GIT='setup git'
-	fi
-
 	if [[ $WITH_MINICONDA2 = 1 ]]; then
 		echo "Installing Miniconda2 Python Distribution ... "
 		$cmd eups distrib install --repository="$EUPS_PKGROOT" miniconda2 "$MINICONDA2_VERSION"
