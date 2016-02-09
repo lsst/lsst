@@ -214,6 +214,43 @@ if true; then
 	fi
 fi
 
+##########	Test/warn about the existence of ~/.eups
+
+if true; then
+	if [[ -e ~/.eups ]]; then
+		TIMESTAMP=$(date +%Y%m%d%S)
+		cat <<-EOF
+
+		Problems have been observed when re-installing or upgrading EUPS while
+		preserving a pre-existing ~/.eups directory.  This directory primarily
+		contains cache data and is safe to remove when EUPS is not actively
+		preforming an operation.  It is recommended that the existing ~/.eups
+		directory be renamed before continuing. Eg.
+
+		    mv ~/.eups ~/.eups-${TIMESTAMP}
+
+		EOF
+
+		if [[ "$batch_flag" != true ]]; then
+			while true; do
+				read -p "Would you like to continue (not recommended)? " yn
+				case $yn in
+					[Yy]* )
+						echo "Continuing (at your own risk)..."
+						break
+						;;
+					[Nn]* )
+						echo "Okay -- relocate ~/.eups and rerun the script."
+						exit;
+						;;
+					* ) echo "Please answer yes or no."
+						;;
+				esac
+			done
+		fi
+	fi
+fi
+
 ##########	Install EUPS
 
 if true; then
