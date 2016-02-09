@@ -140,7 +140,7 @@ if true; then
 			EOF
 
 			while true; do
-				read -p "Would you like to try continuiung without git? " yn
+				read -p "Would you like to try continuing without git? " yn
 				case $yn in
 					[Yy]* )
 						echo "Continuing without git"
