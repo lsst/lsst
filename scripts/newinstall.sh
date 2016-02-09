@@ -135,7 +135,7 @@ if true; then
 			The git version control system is frequently used with LSST software. While
 			the LSST stack should build and work even in the absence of git, we don't
 			regularly run and test it in such environments. We therefore recommend you
-			have at least git 1.8.4 installed with you normal package manager.
+			have at least git 1.8.4 installed with your normal package manager.
 
 			EOF
 
