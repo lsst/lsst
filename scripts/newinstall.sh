@@ -128,25 +128,22 @@ if true; then
 	fi
 
 	if [[ $GITVER < "01-08-04" ]]; then
-		if [[ "$batch_flag" = true ]]; then
-			WITH_GIT=1
-		else
+		if [[ "$batch_flag" != true ]]; then
 			cat <<-EOF
 			Detected $(git --version).
 
 			The git version control system is frequently used with LSST software. While
 			the LSST stack should build and work even in the absence of git, we don't
 			regularly run and test it in such environments. We therefore recommend you
-			have at least git 1.8.4 installed with you normal package manager.
+			have at least git 1.8.4 installed with your normal package manager.
 
 			EOF
 
 			while true; do
-				read -p "Would you like to try continuiung without git? " yn
+				read -p "Would you like to try continuing without git? " yn
 				case $yn in
 					[Yy]* )
 						echo "Continuing without git"
-						WITH_GIT=0
 						break
 						;;
 					[Nn]* )
@@ -265,13 +262,6 @@ set -e
 ##########	Download optional component (python, git, ...)
 
 if true; then
-	if [[ $WITH_GIT = 1 ]]; then
-		echo "Installing git ... "
-		$cmd eups distrib install --repository="$EUPS_PKGROOT" git
-		$cmd setup git
-		CMD_SETUP_GIT='setup git'
-	fi
-
 	if [[ $WITH_MINICONDA2 = 1 ]]; then
 		echo "Installing Miniconda2 Python Distribution ... "
 		$cmd eups distrib install --repository="$EUPS_PKGROOT" miniconda2 "$MINICONDA2_VERSION"
