@@ -1,6 +1,8 @@
 lsst
 ====
 
+[![Build Status](https://travis-ci.org/lsst/lsst.png)](https://travis-ci.org/lsst/lsst)
+
 This package sets up a basic environment needed to:
 
   1.  install packages from the LSST software server
