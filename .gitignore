@@ -1,5 +1,5 @@
 bin/
-doc/README.txt
+doc/README.md
 etc/
 # /
 /autom4te.cache

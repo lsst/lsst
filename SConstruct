@@ -9,7 +9,7 @@ from lsst.sconsUtils import scripts, env, targets, log
 
 scripts.BasicSConstruct.initialize("lsst", versionModuleName=None)
 
-targets["doc"].extend(env.Command("doc/README.txt", "README.txt", [Copy('$TARGET', '$SOURCE')]))
+targets["doc"].extend(env.Command("doc/README.md", "README.md", [Copy('$TARGET', '$SOURCE')]))
 
 if "check" in BUILD_TARGETS:
     env.Command("configure", "configure.ac", ["autoconf"])
