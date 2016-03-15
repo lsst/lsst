@@ -33,7 +33,7 @@ EUPS_TARURL=${EUPS_TARURL:-"https://github.com/RobertLuptonTheGood/eups/archive/
 
 EUPS_PKGROOT=${EUPS_PKGROOT:-"http://sw.lsstcorp.org/eupspkg"}
 
-MINICONDA2_VERSION=${MINICONDA2_VERSION:-3.19.0.lsst3}
+MINICONDA2_VERSION=${MINICONDA2_VERSION:-3.19.0.lsst4}
 
 LSST_HOME="$PWD"
 
