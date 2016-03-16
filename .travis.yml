@@ -1,5 +1,14 @@
 sudo: false
-language: python
+language: cpp
+os:
+  - linux
+  - osx
+# the default precise linux container has gcc 4.6
+sudo: required
+dist: trusty
+compiler:
+  - clang
+  - gcc
 script: |
   if [[ $BATCH == true ]]; then
     ./scripts/newinstall.sh -cb
@@ -9,6 +18,11 @@ script: |
 env:
   - BATCH=true
   - BATCH=false
+matrix:
+  # osx builds are often very slow to start due to high demand
+  fast_finish: true
+  allow_failures:
+    - os: osx
 notifications:
   email: false
   hipchat:
