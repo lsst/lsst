@@ -45,6 +45,8 @@ help_flag=false
 noop_flag=false
 
 # Use system python to bootstrap unless otherwise specified
+# This is used to install and run EUPS and will not necessarily
+# be the python in the path being used to build the stack itself.
 PYTHON="${PYTHON:-/usr/bin/python}"
 
 while getopts cbhnP: optflag; do
@@ -163,9 +165,12 @@ fi
 
 
 ##########	Test/warn about Python versions, offer to get miniconda2 if too old
+##########	LSST currently mandates Python 2.7 and no other.
+##########	We assume that the python in PATH is the python that will be used to
+##########	build the stack if miniconda2 is not installed.
 
 if true; then
-	PYVEROK=$($PYTHON -c 'import sys; print("%i" % (sys.hexversion >= 0x02070000 and sys.hexversion < 0x03000000))')
+	PYVEROK=$(python -c 'import sys; print("%i" % (sys.hexversion >= 0x02070000 and sys.hexversion < 0x03000000))')
 	if [[ "$batch_flag" = true ]]; then
 		WITH_MINICONDA2=1
 	else
@@ -216,11 +221,25 @@ fi
 
 ##########	Install EUPS
 
+##########	$PYTHON is the Python used to install/run EUPS.
+##########	It can be any Python >= v2.6
+
 if true; then
 	if [[ ! -x "$PYTHON" ]]; then
 		echo -n "Cannot find or execute '$PYTHON'. Please set the PYTHON environment variable or use the -P"
-		echo " option to point to system Python 2 interpreter and rerun."
+		echo " option to point to a functioning Python >= 2.6 interpreter and rerun."
 		exit -1;
+	fi
+
+	PYVEROK=$($PYTHON -c 'import sys; print("%i" % (sys.hexversion >= 0x02060000))')
+	if [[ $PYVEROK != 1 ]]; then
+		cat <<-EOF
+
+    EUPS requires Python 2.6 or newer; we are using $($PYTHON -V 2>&1) from
+    $PYTHON.  Please set up a compatible python interpreter using the PYTHON
+    environment variable or the -P command line option.
+		EOF
+		exit -1
 	fi
 
 	if [[ "$PYTHON" != "/usr/bin/python" ]]; then
