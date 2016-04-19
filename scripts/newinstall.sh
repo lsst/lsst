@@ -44,10 +44,11 @@ batch_flag=false
 help_flag=false
 noop_flag=false
 
-# Use system python to bootstrap unless otherwise specified
-# This is used to install and run EUPS and will not necessarily
+# By default we use the PATH Python to bootstrap EUPS.
+# Set $PYTHON to override this or use the -P command line option.
+# $PYTHON is used to install and run EUPS and will not necessarily
 # be the python in the path being used to build the stack itself.
-PYTHON="${PYTHON:-/usr/bin/python}"
+PYTHON="${PYTHON:-$(which python)}"
 
 while getopts cbhnP: optflag; do
 	case $optflag in
