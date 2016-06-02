@@ -426,11 +426,15 @@ cat <<-EOF
 
 	Next, read the documentation at:
 
-	    https://confluence.lsstcorp.org/display/LSWUG/LSST+Software+User+Guide
+		https://confluence.lsstcorp.org/display/LSWUG/LSST+Software+User+Guide
 
-	and feel free to ask any questions via our mailing list at:
+	and feel free to ask any questions via the LSST Community forum:
 
-	    https://lists.lsst.org/mailman/listinfo/dm-users
+		https://community.lsst.org/c/support
+
+	Also look out for our new, in development, documentation site at:
+
+		https://pipelines.lsst.io
 
 	                                       Thanks!
 	                                                -- The LSST Software Teams
