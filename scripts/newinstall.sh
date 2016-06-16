@@ -21,6 +21,9 @@
 
 set -e
 
+# We want to pin this so that people can stay stable
+# SET FOR OFFICIAL RELEASES OTHERWISE BLANK
+LSST_STACK_VERSION='12.0'
 #
 # Note to developers: change these when the EUPS version we use changes
 #
@@ -36,8 +39,8 @@ EUPS_PKGROOT=${EUPS_PKGROOT:-"http://sw.lsstcorp.org/eupspkg"}
 MINICONDA2_VERSION=${MINICONDA2_VERSION:-3.19.0.lsst4}
 
 LSST_HOME="$PWD"
-
-NEWINSTALL="newinstall.sh" # the canonical name of this file on the server
+# canonical source for this file
+NEWINSTALL="https://raw.githubusercontent.com/lsst/lsst/${LSST_STACK_VERSION}/scripts/newinstall.sh"
 
 cont_flag=false
 batch_flag=false
@@ -94,12 +97,12 @@ echo
 
 set +e
 
-AMIDIFF=$(curl -L --silent $EUPS_PKGROOT/$NEWINSTALL | diff --brief - $0)
+AMIDIFF=$(curl -L --silent $NEWINSTALL | diff --brief - $0)
 
 if [[ $AMIDIFF = *differ ]]; then
-	echo "!!! This script differs from the official version on the distribution server."
-	echo "    If this is not intentional, get the current version from here:"
-	echo "    $EUPS_PKGROOT/$NEWINSTALL"
+    echo "!!! This script differs from the recommended version for $LSST_STACK_VERSION on the distribution server."
+    echo "    If this is not intentional, get the current version from here:"
+    echo "    $NEWINSTALL"
 fi
 
 set -e
