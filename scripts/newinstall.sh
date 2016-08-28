@@ -34,6 +34,7 @@ EUPS_TARURL=${EUPS_TARURL:-"https://github.com/RobertLuptonTheGood/eups/archive/
 EUPS_PKGROOT=${EUPS_PKGROOT:-"http://sw.lsstcorp.org/eupspkg"}
 
 MINICONDA2_VERSION=${MINICONDA2_VERSION:-3.19.0.lsst4}
+MINICONDA3_VERSION=${MINICONDA3_VERSION:-4.0.5}
 
 LSST_HOME="$PWD"
 
@@ -50,7 +51,12 @@ noop_flag=false
 # be the python in the path being used to build the stack itself.
 PYTHON="${PYTHON:-$(which python)}"
 
-while getopts cbhnP: optflag; do
+# At the moment, we default to the -2 option and install Python 2 miniconda
+# if we are asked to install a Python. Once the Python 3 port is stable
+# we can switch the default or insist that the user specifies a version.
+USE_PYTHON2=true
+
+while getopts cbhnP32: optflag; do
 	case $optflag in
 		c)
 			cont_flag=true
@@ -66,6 +72,13 @@ while getopts cbhnP: optflag; do
 			;;
 		P)
 			PYTHON=$OPTARG
+			;;
+		3)
+			USE_PYTHON2=false
+			;;
+		2)
+			USE_PYTHON2=true
+			;;
 	esac
 done
 
@@ -73,11 +86,13 @@ shift $((OPTIND - 1))
 
 if [[ "$help_flag" = true ]]; then
 	echo
-	echo "usage: newinstall.sh [-b] [-f] [-h] [-n] [-P <path-to-python>]"
+	echo "usage: newinstall.sh [-b] [-f] [-h] [-n] [-3|-2] [-P <path-to-python>]"
 	echo " -b -- Run in batch mode.	Don't ask any questions and install all extra packages."
 	echo " -c -- Attempt to continue a previously failed install."
 	echo " -h -- Display this help message."
 	echo " -n -- No-op. Go through the motions but echo commands instead of running them."
+	echo " -3 -- Use Python 3 if the script is installing its own Python."
+	echo " -2 -- Use Python 2 if the script is installing its own Python."
 	echo " -P [PATH_TO_PYTHON] -- Use a specific python to bootstrap the stack."
 	echo
 	exit 0
@@ -165,48 +180,57 @@ if true; then
 fi
 
 
-##########	Test/warn about Python versions, offer to get miniconda2 if too old
-##########	LSST currently mandates Python 2.7 and no other.
+##########	Test/warn about Python versions, offer to get miniconda if not supported.
+##########	LSST currently mandates Python 3.5 and, optionally, 2.7.
 ##########	We assume that the python in PATH is the python that will be used to
-##########	build the stack if miniconda2 is not installed.
+##########	build the stack if miniconda(2/3) is not installed.
 
 if true; then
-	PYVEROK=$(python -c 'import sys; print("%i" % (sys.hexversion >= 0x02070000 and sys.hexversion < 0x03000000))')
+	# Check the version by running a small Python program (taken from the Python EUPS package)
+	PYVEROK=$(python -c 'import sys
+minver2=7
+minver3=5
+vmaj = sys.version_info.major
+vmin = sys.version_info.minor
+if (vmaj == 2 and vmin >= minver2) or (vmaj == 3 and vmin >= minver3):
+    print(1)
+else:
+    print(0)')
 	if [[ "$batch_flag" = true ]]; then
-		WITH_MINICONDA2=1
+		WITH_MINICONDA=1
 	else
 		if [[ $PYVEROK != 1 ]]; then
 			cat <<-EOF
 
-			LSST stack requires Python 2.7; you seem to have $(python -V 2>&1) on your
+			LSST stack requires Python 2 (>=2.7) or 3 (>=3.5); you seem to have $(python -V 2>&1) on your
 			path ($(which python)).	 Please set up a compatible python interpreter,
 			prepend it to your PATH, and rerun this script.	 Alternatively, we can set
-			up the Miniconda2 Python distribution for you.
+			up the Miniconda Python distribution for you.
 			EOF
 		fi
 
 		cat <<-EOF
 
-		In addition to Python 2.7, some LSST packages depend on recent versions of numpy,
+		In addition to Python 2 (>=2.7) or 3 (>=3.5), some LSST packages depend on recent versions of numpy,
 		matplotlib, and scipy. If you don't have all of these, the installation may fail.
-		Using the Miniconda2 Python distribution will ensure all these are set up.
+		Using the Miniconda Python distribution will ensure all these are set up.
 
-		Miniconda2 Python installed by this installer will be managed by LSST's EUPS
+		Miniconda Python installed by this installer will be managed by LSST's EUPS
 		package manager, and will not replace or modify your system python.
 
 		EOF
 
 		while true; do
-		read -p "Would you like us to install the Miniconda2 ${MINICONDA2_VERSION} Python distribution (if unsure, say yes)? " yn
+		read -p "Would you like us to install the Miniconda Python distribution (if unsure, say yes)? " yn
 		case $yn in
 			[Yy]* )
-				WITH_MINICONDA2=1
+				WITH_MINICONDA=1
 				break
 				;;
 			[Nn]* )
 				if [[ $PYVEROK != 1 ]]; then
 			echo
-			echo "Thanks. After you install Python 2.7 and the required modules, rerun this script to"
+			echo "Thanks. After you install Python 2.7 or 3.5 and the required modules, rerun this script to"
 			echo "continue the installation."
 			echo
 			exit
@@ -282,11 +306,18 @@ set -e
 ##########	Download optional component (python, git, ...)
 
 if true; then
-	if [[ $WITH_MINICONDA2 = 1 ]]; then
-		echo "Installing Miniconda2 Python Distribution ... "
-		$cmd eups distrib install --repository="$EUPS_PKGROOT" miniconda2 "$MINICONDA2_VERSION"
-		$cmd setup miniconda2
-		CMD_SETUP_MINICONDA2='setup miniconda2'
+	if [[ $WITH_MINICONDA == 1 ]]; then
+		if [[ $USE_PYTHON2 == false ]]; then
+			PYVER_SUFFIX=3
+			MINICONDA_VERSION=${MINICONDA3_VERSION}
+		else
+			PYVER_SUFFIX=2
+			MINICONDA_VERSION=${MINICONDA2_VERSION}
+		fi
+		echo "Installing Miniconda${PYVER_SUFFIX} Python Distribution ... "
+		$cmd eups distrib install --repository="$EUPS_PKGROOT" "miniconda${PYVER_SUFFIX}" "$MINICONDA_VERSION"
+		$cmd setup "miniconda${PYVER_SUFFIX}"
+		CMD_SETUP_MINICONDA="setup miniconda${PYVER_SUFFIX}"
 	fi
 fi
 
@@ -315,7 +346,7 @@ function generate_loader_bash() {
 		source "\${EUPS_DIR}/bin/setups.sh"
 
 		# Setup optional packages
-		$CMD_SETUP_MINICONDA2
+		$CMD_SETUP_MINICONDA
 		$CMD_SETUP_GIT
 
 		# Setup LSST minimal environment
@@ -343,7 +374,7 @@ function generate_loader_csh() {
 		   source "\${EUPS_DIR}/bin/setups.csh"
 
 		   # Setup optional packages
-		   $CMD_SETUP_MINICONDA2
+		   $CMD_SETUP_MINICONDA
 		   $CMD_SETUP_GIT
 
 		   # Setup LSST minimal environment
@@ -368,7 +399,7 @@ function generate_loader_ksh() {
 		source "\${EUPS_DIR}/bin/setups.sh"
 
 		# Setup optional packages
-		$CMD_SETUP_MINICONDA2
+		$CMD_SETUP_MINICONDA
 		$CMD_SETUP_GIT
 
 		# Setup LSST minimal environment
@@ -392,7 +423,7 @@ function generate_loader_zsh() {
 		source "\${EUPS_DIR}/bin/setups.zsh"
 
 		# Setup optional packages
-		$CMD_SETUP_MINICONDA2
+		$CMD_SETUP_MINICONDA
 		$CMD_SETUP_GIT
 
 		# Setup LSST minimal environment
