@@ -11,13 +11,19 @@ compiler:
   - gcc
 script: |
   if [[ $BATCH == true ]]; then
-    ./scripts/newinstall.sh -cb
+    echo -e "*** testing batch mode in Python version $PYVER ***\n"
+    ./scripts/newinstall.sh -cb -${PYVER}
   else
-    echo -e "yes\nyes" | ./scripts/newinstall.sh -c
+    echo -e "*** testing interactive mode in Python version $PYVER ***\n"
+    echo -e "yes\nyes" | ./scripts/newinstall.sh -c -${PYVER}
   fi
+  echo -e "*** Initialising bash environment **\n"
+  source loadLSST.bash
 env:
-  - BATCH=true
-  - BATCH=false
+  - BATCH=true PYVER="2"
+  - BATCH=true PYVER="3"
+  - BATCH=false PYVER="2"
+  - BATCH=false PYVER="3"
 matrix:
   # osx builds are often very slow to start due to high demand
   fast_finish: true
