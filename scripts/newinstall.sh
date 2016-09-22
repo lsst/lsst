@@ -56,7 +56,7 @@ PYTHON="${PYTHON:-$(which python)}"
 # we can switch the default or insist that the user specifies a version.
 USE_PYTHON2=true
 
-while getopts cbhnP32: optflag; do
+while getopts cbhnP:32 optflag; do
 	case $optflag in
 		c)
 			cont_flag=true
