@@ -56,7 +56,7 @@ PYTHON="${PYTHON:-$(which python)}"
 # we can switch the default or insist that the user specifies a version.
 USE_PYTHON2=true
 
-while getopts cbhnP32: optflag; do
+while getopts cbhnP:32 optflag; do
 	case $optflag in
 		c)
 			cont_flag=true
@@ -92,7 +92,7 @@ if [[ "$help_flag" = true ]]; then
 	echo " -h -- Display this help message."
 	echo " -n -- No-op. Go through the motions but echo commands instead of running them."
 	echo " -3 -- Use Python 3 if the script is installing its own Python."
-	echo " -2 -- Use Python 2 if the script is installing its own Python."
+	echo " -2 -- Use Python 2 if the script is installing its own Python. (default)"
 	echo " -P [PATH_TO_PYTHON] -- Use a specific python to bootstrap the stack."
 	echo
 	exit 0
