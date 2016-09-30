@@ -187,11 +187,12 @@ fi
 
 if true; then
 	# Check the version by running a small Python program (taken from the Python EUPS package)
+	# XXX this will break if python is not in $PATH
 	PYVEROK=$(python -c 'import sys
 minver2=7
 minver3=5
-vmaj = sys.version_info.major
-vmin = sys.version_info.minor
+vmaj = sys.version_info[0]
+vmin = sys.version_info[1]
 if (vmaj == 2 and vmin >= minver2) or (vmaj == 3 and vmin >= minver3):
     print(1)
 else:
