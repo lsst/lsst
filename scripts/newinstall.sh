@@ -116,7 +116,7 @@ echo
 
 set +e
 
-AMIDIFF=$($CURL -L --silent $EUPS_PKGROOT/$NEWINSTALL | diff --brief - $0)
+AMIDIFF=$($CURL -L --silent "$EUPS_PKGROOT/$NEWINSTALL" | diff --brief - "$0")
 
 if [[ $AMIDIFF = *differ ]]; then
 	echo "!!! This script differs from the official version on the distribution server."
@@ -149,6 +149,7 @@ fi
 if true; then
 	if hash git 2>/dev/null; then
 		GITVERNUM=$(git --version | cut -d\  -f 3)
+        # shellcheck disable=SC2046
 		GITVER=$(printf "%02d-%02d-%02d\n" $(echo "$GITVERNUM" | cut -d. -f1-3 | tr . ' '))
 	fi
 
@@ -289,19 +290,24 @@ if true; then
 		mkdir _build && cd _build
 		if [[ -z $EUPS_GITREV ]]; then
 			# Download tarball from github
-			$cmd $CURL -L $EUPS_TARURL | tar xzvf -
-			$cmd cd eups-$EUPS_VERSION
+			$cmd "$CURL" -L "$EUPS_TARURL" | tar xzvf -
+			$cmd cd "eups-$EUPS_VERSION"
 		else
 			# Clone from git repository
 			$cmd git clone "$EUPS_GITREPO"
 			$cmd cd eups
-			$cmd git checkout $EUPS_GITREV
+			$cmd git checkout "$EUPS_GITREV"
 		fi
 
 		$cmd ./configure --prefix="$LSST_HOME"/eups --with-eups="$LSST_HOME" --with-python="$PYTHON"
 		$cmd make install
 
-	) > eupsbuild.log 2>&1 && echo " done." || { echo " FAILED."; echo "See log in eupsbuild.log"; exit -1; }
+	) > eupsbuild.log 2>&1
+    if [[ $? == 0 ]]; then
+        echo " done."
+    else
+        { echo " FAILED."; echo "See log in eupsbuild.log"; exit -1; }
+    fi
 
 fi
 
@@ -340,9 +346,10 @@ fi
 
 function generate_loader_bash() {
 	file_name=$1
-	cat > $file_name <<-EOF
+    # shellcheck disable=SC2094
+	cat > "$file_name" <<-EOF
 		# This script is intended to be used with bash to load the minimal LSST environment
-		# Usage: source $(basename $file_name)
+		# Usage: source $(basename "$file_name")
 
 		# If not already initialized, set LSST_HOME to the directory where this script is located
 		if [ "x\${LSST_HOME}" = "x" ]; then
@@ -364,9 +371,10 @@ EOF
 
 function generate_loader_csh() {
 	file_name=$1
-	cat > $file_name <<-EOF
+    # shellcheck disable=SC2094
+	cat > "$file_name" <<-EOF
 		# This script is intended to be used with (t)csh to load the minimal LSST environment
-		# Usage: source $(basename $file_name)
+		# Usage: source $(basename "$file_name")
 
 		set sourced=(\$_)
 		if ("\${sourced}" != "") then
@@ -393,9 +401,10 @@ EOF
 
 function generate_loader_ksh() {
 	file_name=$1
-	cat > $file_name <<-EOF
+    # shellcheck disable=SC2094
+	cat > "$file_name" <<-EOF
 		# This script is intended to be used with ksh to load the minimal LSST environment
-		# Usage: source $(basename $file_name)
+		# Usage: source $(basename "$file_name")
 
 		# If not already initialized, set LSST_HOME to the directory where this script is located
 		if [ "x\${LSST_HOME}" = "x" ]; then
@@ -417,9 +426,10 @@ EOF
 
 function generate_loader_zsh() {
 	file_name=$1
-	cat > $file_name <<-EOF
+    # shellcheck disable=SC2094
+	cat > "$file_name" <<-EOF
 		# This script is intended to be used with zsh to load the minimal LSST environment
-		# Usage: source $(basename $file_name)
+		# Usage: source $(basename "$file_name")
 
 		# If not already initialized, set LSST_HOME to the directory where this script is located
 		if [[ -z \${LSST_HOME} ]]; then
@@ -441,7 +451,7 @@ EOF
 
 for sfx in bash ksh csh zsh; do
 	echo -n "Creating startup scripts ($sfx) ... "
-	generate_loader_$sfx $LSST_HOME/loadLSST.$sfx
+	generate_loader_$sfx "$LSST_HOME/loadLSST.$sfx"
 	echo "done."
 done
 
