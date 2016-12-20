@@ -40,6 +40,13 @@ LSST_HOME="$PWD"
 
 NEWINSTALL="newinstall.sh" # the canonical name of this file on the server
 
+# Prefer system curl; user-installed ones sometimes behave oddly
+if [[ -x /usr/bin/curl ]]; then
+	CURL=${CURL:-/usr/bin/curl}
+else
+	CURL=${CURL:-curl}
+fi
+
 cont_flag=false
 batch_flag=false
 help_flag=false
@@ -109,7 +116,7 @@ echo
 
 set +e
 
-AMIDIFF=$(curl -L --silent $EUPS_PKGROOT/$NEWINSTALL | diff --brief - $0)
+AMIDIFF=$($CURL -L --silent $EUPS_PKGROOT/$NEWINSTALL | diff --brief - $0)
 
 if [[ $AMIDIFF = *differ ]]; then
 	echo "!!! This script differs from the official version on the distribution server."
@@ -282,7 +289,7 @@ if true; then
 		mkdir _build && cd _build
 		if [[ -z $EUPS_GITREV ]]; then
 			# Download tarball from github
-			$cmd curl -L $EUPS_TARURL | tar xzvf -
+			$cmd $CURL -L $EUPS_TARURL | tar xzvf -
 			$cmd cd eups-$EUPS_VERSION
 		else
 			# Clone from git repository
