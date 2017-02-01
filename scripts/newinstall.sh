@@ -33,8 +33,8 @@ EUPS_TARURL=${EUPS_TARURL:-"https://github.com/RobertLuptonTheGood/eups/archive/
 
 EUPS_PKGROOT=${EUPS_PKGROOT:-"http://sw.lsstcorp.org/eupspkg"}
 
-MINICONDA2_VERSION=${MINICONDA2_VERSION:-4.2.12}
-MINICONDA3_VERSION=${MINICONDA3_VERSION:-4.2.12}
+MINICONDA2_VERSION=${MINICONDA2_VERSION:-4.2.12.lsst1}
+MINICONDA3_VERSION=${MINICONDA3_VERSION:-4.2.12.lsst1}
 
 LSST_HOME="$PWD"
 
@@ -149,7 +149,7 @@ fi
 if true; then
 	if hash git 2>/dev/null; then
 		GITVERNUM=$(git --version | cut -d\  -f 3)
-        # shellcheck disable=SC2046
+		# shellcheck disable=SC2046 disable=SC2183
 		GITVER=$(printf "%02d-%02d-%02d\n" $(echo "$GITVERNUM" | cut -d. -f1-3 | tr . ' '))
 	fi
 
@@ -166,7 +166,7 @@ if true; then
 			EOF
 
 			while true; do
-				read -p "Would you like to try continuing without git? " yn
+				read -r -p "Would you like to try continuing without git? " yn
 				case $yn in
 					[Yy]* )
 						echo "Continuing without git"
@@ -230,7 +230,7 @@ else:
 		EOF
 
 		while true; do
-		read -p "Would you like us to install the Miniconda Python distribution (if unsure, say yes)? " yn
+		read -r -p "Would you like us to install the Miniconda Python distribution (if unsure, say yes)? " yn
 		case $yn in
 			[Yy]* )
 				WITH_MINICONDA=1
@@ -303,6 +303,7 @@ if true; then
 		$cmd make install
 
 	) > eupsbuild.log 2>&1
+    # shellcheck disable=SC2181
     if [[ $? == 0 ]]; then
         echo " done."
     else
