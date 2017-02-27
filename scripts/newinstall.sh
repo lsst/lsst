@@ -38,7 +38,10 @@ MINICONDA3_VERSION=${MINICONDA3_VERSION:-4.2.12.lsst1}
 
 LSST_HOME="$PWD"
 
-NEWINSTALL="newinstall.sh" # the canonical name of this file on the server
+# phone home to check for updates against this (master)
+# change to a branch reference for branched releases eg.
+# https://raw.githubusercontent.com/lsst/lsst/12.1/scripts/newinstall.sh
+NEWINSTALL="https://raw.githubusercontent.com/lsst/lsst/u/fe/test/scripts/newinstall.sh"
 
 # Prefer system curl; user-installed ones sometimes behave oddly
 if [[ -x /usr/bin/curl ]]; then
@@ -116,12 +119,12 @@ echo
 
 set +e
 
-AMIDIFF=$($CURL -L --silent "$EUPS_PKGROOT/$NEWINSTALL" | diff --brief - "$0")
+AMIDIFF=$($CURL -L --silent "$NEWINSTALL" | diff --brief - "$0")
 
 if [[ $AMIDIFF = *differ ]]; then
 	echo "!!! This script differs from the official version on the distribution server."
 	echo "    If this is not intentional, get the current version from here:"
-	echo "    $EUPS_PKGROOT/$NEWINSTALL"
+	echo "    $NEWINSTALL"
 fi
 
 set -e
