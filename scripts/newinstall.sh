@@ -41,7 +41,7 @@ LSST_HOME="$PWD"
 # phone home to check for updates against this (master)
 # change to a branch reference for branched releases eg.
 # https://raw.githubusercontent.com/lsst/lsst/12.1/scripts/newinstall.sh
-NEWINSTALL="https://raw.githubusercontent.com/lsst/lsst/u/fe/test/scripts/newinstall.sh"
+NEWINSTALL="https://raw.githubusercontent.com/lsst/lsst/13.0/scripts/newinstall.sh"
 
 # Prefer system curl; user-installed ones sometimes behave oddly
 if [[ -x /usr/bin/curl ]]; then
