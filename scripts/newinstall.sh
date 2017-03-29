@@ -31,8 +31,12 @@ EUPS_GITREV=${EUPS_GITREV:-}
 EUPS_GITREPO=${EUPS_GITREPO:-https://github.com/RobertLuptonTheGood/eups.git}
 EUPS_TARURL=${EUPS_TARURL:-https://github.com/RobertLuptonTheGood/eups/archive/$EUPS_VERSION.tar.gz}
 
-EUPS_PKGROOT=${EUPS_PKGROOT:-http://sw.lsstcorp.org/eupspkg}
+EUPS_PKGROOT_BASE_URL=${EUPS_PKGROOT_BASE_URL:-https://eups.lsst.codes/stack}
 
+# At the moment, we default to the -2 option and install Python 2 miniconda
+# if we are asked to install a Python. Once the Python 3 port is stable
+# we can switch the default or insist that the user specifies a version.
+PYTHON_VERSION=${PYTHON_VERSION:-2}
 MINICONDA_VERSION=${MINICONDA_VERSION:-4.2.12}
 # this git ref controls which set of conda packages are used to initialize the
 # the default conda env.
@@ -45,12 +49,19 @@ LSST_HOME="$PWD"
 # the canonical source of this script
 NEWINSTALL_URL="https://raw.githubusercontent.com/lsst/lsst/master/scripts/newinstall.sh"
 
-# Prefer system curl; user-installed ones sometimes behave oddly
-if [[ -x /usr/bin/curl ]]; then
-	CURL=${CURL:-/usr/bin/curl}
-else
-	CURL=${CURL:-curl}
-fi
+#
+# removing leading/trailing whitespace from a string
+#
+#http://stackoverflow.com/questions/369758/how-to-trim-whitespace-from-a-bash-variable#12973694
+#
+trim() {
+	local var="$*"
+	# remove leading whitespace characters
+	var="${var#"${var%%[![:space:]]*}"}"
+	# remove trailing whitespace characters
+	var="${var%"${var##*[![:space:]]}"}"
+	echo -n "$var"
+}
 
 print_error() {
 	>&2 echo -e "$@"
@@ -63,15 +74,208 @@ fail() {
 	exit $code
 }
 
-miniconda::install() {
-	local python_version=$1
-	local version=$2
-	local prefix=$3
-	local miniconda_base_url=${4:-https://repo.continuum.io/miniconda}
+usage() {
+	fail "$(cat <<-EOF
 
-	[[ -z $python_version ]] && fail "python_version param is required"
-	[[ -z $version ]] && fail "version param is required"
-	[[ -z $prefix ]] && fail "prefix param is required"
+		usage: newinstall.sh [-b] [-f] [-h] [-n] [-3|-2] [-P <path-to-python>]
+		 -b -- Run in batch mode. Don\'t ask any questions and install all extra
+		       packages.
+		 -c -- Attempt to continue a previously failed install.
+		 -n -- No-op. Go through the motions but echo commands instead of running
+		       them.
+		 -P [PATH_TO_PYTHON] -- Use a specific python interpreter for EUPS.
+		 -2 -- Use Python 2 if the script is installing its own Python. (default)
+		 -3 -- Use Python 3 if the script is installing its own Python.
+		 -h -- Display this help message.
+
+		EOF
+	)"
+}
+
+cont_flag=false
+batch_flag=false
+noop_flag=false
+
+while getopts cbhnP:32 opt; do
+	case $opt in
+		b)
+			batch_flag=true
+			;;
+		c)
+			cont_flag=true
+			;;
+		n)
+			noop_flag=true
+			;;
+		P)
+			EUPS_PYTHON=$OPTARG
+			;;
+		2)
+			PYTHON_VERSION=2
+			;;
+		3)
+			PYTHON_VERSION=3
+			;;
+		h|*)
+			usage
+			;;
+	esac
+done
+shift $((OPTIND - 1))
+
+#
+# determine the osfamily and release string
+#
+# where osfamily is one of:
+#   - redhat (includes centos & fedora)
+#   - osx (Darwin)
+#
+# where release is:
+#   - on osx, the release string is the complete version (Eg. 10.11.6)
+#   - on redhat, the release string is only the major version number (Eg. 7)
+#
+# osfamily string is returned in the variable name passed as $1
+# release string is returned in the variable name passed as $2
+#
+sys::osfamily() {
+	local __osfamily_result=${1?osfamily result variable is required}
+	local __release_result=${2?release result variable is required}
+	local __debug=$3
+
+	local __osfamily
+	local __release
+
+	case $(uname -s) in
+		Linux*)
+			local release_file='/etc/redhat-release'
+			if [[ ! -e $release_file ]]; then
+				[[ $__debug == true ]] && print_error "unknown osfamily"
+			fi
+			__osfamily="redhat"
+
+			# capture only major version number because "posix character classes"
+			if [[ ! $(<"$release_file") =~ release[[:space:]]*([[:digit:]]+) ]]; then
+				[[ $__debug == true ]] && print_error "unable to find release string"
+			fi
+			__release="${BASH_REMATCH[1]}"
+			;;
+		Darwin*)
+			__osfamily="osx"
+
+			if ! release=$(sw_vers -productVersion); then
+				[[ $__debug == true ]] && print_error "unable to find release string"
+			fi
+			__release=$(trim "$release")
+			;;
+		*)
+			print_error "unknown osfamily"
+			;;
+	esac
+
+	eval "$__osfamily_result=$__osfamily"
+	eval "$__release_result=$__release"
+}
+
+#
+# return a single string representation of a platform.
+# Eg. el7
+#
+# XXX cc lookup should be a seperate function if/when there is more than one #
+# compiler option per platform.
+#
+sys::platform() {
+	local __osfamily=${1?osfamily is required}
+	local __release=${2?release is required}
+	local __platform_result=${3?platform result variable is required}
+	local __target_cc_result=${4?target_cc result variable is required}
+	local __debug=$5
+
+	local __platform
+	local __target_cc
+
+	case $__osfamily in
+		redhat)
+			case $__release in
+				6)
+					__platform=el6
+					__target_cc=devtoolset-3
+					;;
+				7)
+					__platform=el7
+					__target_cc=gcc-system
+					;;
+				*)
+					[[ $__debug == true ]] && print_error "unsupported release: $__release"
+					;;
+			esac
+			;;
+		osx)
+			case $__release in
+				# XXX bash 3.2 on osx does not support case fall-through
+				10.9.* | 10.1?.*)
+					__platform=10.9
+					__target_cc=clang-800.0.42.1
+					;;
+				*)
+					[[ $__debug == true ]] && print_error "unsupported release: $__release"
+					;;
+			esac
+			;;
+		*)
+			[[ $__debug == true ]] && print_error "unsupported osfamily: $__osfamily"
+			;;
+	esac
+
+	eval "$__platform_result=$__platform"
+	eval "$__target_cc_result=$__target_cc"
+}
+
+# http://stackoverflow.com/questions/1527049/join-elements-of-an-array#17841619
+join() { local IFS="$1"; shift; echo "$*"; }
+
+default_eups_pkgroot() {
+	local osfamily
+	local release
+	local platform
+	local target_cc
+	declare -a roots
+
+	local pyslug="miniconda${PYTHON_VERSION}-${MINICONDA_VERSION}-${LSSTSW_REF}"
+
+	sys::osfamily osfamily release
+
+	if [[ -n $osfamily && -n $release ]]; then
+		sys::platform "$osfamily" "$release" platform target_cc
+	fi
+
+	if [[ -n $EUPS_PKGROOT_BASE_URL ]]; then
+		if [[ -n $platform && -n $target_cc ]]; then
+			# binary "tarball" pkgroot
+			roots+=( "${EUPS_PKGROOT_BASE_URL}/${osfamily}/${platform}/${target_cc}/${pyslug}" )
+		fi
+
+		roots+=( "${EUPS_PKGROOT_BASE_URL}/src" )
+	fi
+
+	echo -n "$(join '|' "${roots[@]}")"
+}
+
+EUPS_PKGROOT=${EUPS_PKGROOT:-$(default_eups_pkgroot)}
+
+print_error "Configured EUPS_PKGROOT: ${EUPS_PKGROOT}"
+
+# Prefer system curl; user-installed ones sometimes behave oddly
+if [[ -x /usr/bin/curl ]]; then
+	CURL=${CURL:-/usr/bin/curl}
+else
+	CURL=${CURL:-curl}
+fi
+
+miniconda::install() {
+	local python_version=${1?python version is required}
+	local version=${2?miniconda version is required}
+	local prefix=${3?prefix is required}
+	local miniconda_base_url=${4:-https://repo.continuum.io/miniconda}
 
 	case $(uname -s) in
 		Linux*)
@@ -116,11 +320,8 @@ miniconda::config_channels() {
 
 # Install packages on which the stack is known to depend
 miniconda::lsst_env() {
-	local python_version=$1
-	local ref=$2
-
-	[[ -z $python_version ]] && fail "python_version param is required"
-	[[ -z $ref ]] && fail "ref param is required"
+	local python_version=${1?python version is required}
+	local ref=${2?lsstsw git ref is required}
 
 	case $(uname -s) in
 		Linux*)
@@ -151,60 +352,6 @@ miniconda::lsst_env() {
 		$cmd conda install --yes --file "$tmpfile"
 	)
 }
-
-usage() {
-	fail "$(cat <<-EOF
-
-		usage: newinstall.sh [-b] [-f] [-h] [-n] [-3|-2] [-P <path-to-python>]
-		 -b -- Run in batch mode. Don\'t ask any questions and install all extra
-		       packages.
-		 -c -- Attempt to continue a previously failed install.
-		 -n -- No-op. Go through the motions but echo commands instead of running
-		       them.
-		 -P [PATH_TO_PYTHON] -- Use a specific python interpreter for EUPS.
-		 -2 -- Use Python 2 if the script is installing its own Python. (default)
-		 -3 -- Use Python 3 if the script is installing its own Python.
-		 -h -- Display this help message.
-
-		EOF
-	)"
-}
-
-cont_flag=false
-batch_flag=false
-noop_flag=false
-
-# At the moment, we default to the -2 option and install Python 2 miniconda if
-# we are asked to install a Python. Once the Python 3 port is stable we can
-# switch the default or insist that the user specifies a version.
-PYTHON_VERSION=2
-
-while getopts cbhnP:32 opt; do
-	case $opt in
-		b)
-			batch_flag=true
-			;;
-		c)
-			cont_flag=true
-			;;
-		n)
-			noop_flag=true
-			;;
-		P)
-			EUPS_PYTHON=$OPTARG
-			;;
-		2)
-			PYTHON_VERSION=2
-			;;
-		3)
-			PYTHON_VERSION=3
-			;;
-		h|*)
-			usage
-			;;
-	esac
-done
-shift $((OPTIND - 1))
 
 echo
 echo "LSST Software Stack Builder"
