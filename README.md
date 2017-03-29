@@ -11,13 +11,6 @@ This package sets up a basic environment needed to:
 
 For building products, this package provides the following:
 
-  *  it sets two useful environment variables that saves typing when
-     checking out packages from the SVN repository:
-
-     + LSST_GIT     The Git repository's base URL, git@git.lsstcorp.org
-     + LSST_DMS     The base Git URL to the directory containing
-                       LSST products
-
   *  it setups up the base package, which is necessary for properly
      loading LSST python modules.
 

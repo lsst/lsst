@@ -1,8 +1,5 @@
 setupRequired(sconsUtils)
 
-envSet(GITROOT, "git@git.lsstcorp.org")
-envSet(LSST_GIT, "git@git.lsstcorp.org")
-envSet(LSST_DMS, "git@git.lsstcorp.org:LSST/DMS")
 envPrepend(PATH, ${PRODUCT_DIR}/bin)
 envPrepend(EUPS_PKGROOT, http://sw.lsstcorp.org/eupspkg, |)
 
