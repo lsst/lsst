@@ -659,6 +659,8 @@ function generate_loader_bash() {
 		EUPS_DIR="\${LSST_HOME}/eups"
 		source "\${EUPS_DIR}/bin/setups.sh"
 
+		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$EUPS_PKGROOT}
+
 		# Setup LSST minimal environment
 		setup lsst
 EOF
@@ -681,13 +683,17 @@ function generate_loader_csh() {
 			 # script is located
 		   set this_script = \${sourced[2]}
 		   if ( ! \${?LSST_HOME} ) then
-			  set LSST_HOME = \`dirname \${this_script}\`
-			  set LSST_HOME = \`cd \${LSST_HOME} && pwd\`
+		     set LSST_HOME = \`dirname \${this_script}\`
+		     set LSST_HOME = \`cd \${LSST_HOME} && pwd\`
 		   endif
 
 		   # Bootstrap EUPS
 		   set EUPS_DIR = "\${LSST_HOME}/eups"
 		   source "\${EUPS_DIR}/bin/setups.csh"
+
+		   if ( ! \${?EUPS_PKGROOT} ) then
+		     set EUPS_PKGROOT = "$EUPS_PKGROOT"
+		   endif
 
 		   # Setup LSST minimal environment
 		   setup lsst
@@ -716,6 +722,8 @@ function generate_loader_ksh() {
 		EUPS_DIR="\${LSST_HOME}/eups"
 		source "\${EUPS_DIR}/bin/setups.sh"
 
+		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$EUPS_PKGROOT}
+
 		# Setup LSST minimal environment
 		setup lsst
 EOF
@@ -741,6 +749,8 @@ function generate_loader_zsh() {
 		# Bootstrap EUPS
 		EUPS_DIR="\${LSST_HOME}/eups"
 		source "\${EUPS_DIR}/bin/setups.zsh"
+
+		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$EUPS_PKGROOT}
 
 		# Setup LSST minimal environment
 		setup lsst
