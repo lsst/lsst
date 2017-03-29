@@ -26,9 +26,6 @@ For managing products, this package provides the following:
         software stack.  This is the directory where the loadLSST scripts are
         found.
 
-     *  sets the LSST_PKGS environment variable to the platform-specific
-        subdirectory of $LSST_HOME where LSST packages are installed.
-
      *  if $LSST_DEVEL is set, it is added the the start of the
         EUPS_PATH environment variable.  $EUPS_PATH has a list of of
         colon-delimited directories that EUPS uses to look for software
