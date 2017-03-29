@@ -629,13 +629,6 @@ set -e
 ##########	Download optional component (python, git, ...)
 
 
-##########	Install the Basic Environment
-
-if true; then
-	echo "Installing the basic environment ... "
-	$cmd eups distrib install --repository="$EUPS_PKGROOT" lsst
-fi
-
 ##########	Create the environment loader scripts
 
 function generate_loader_bash() {
@@ -660,9 +653,6 @@ function generate_loader_bash() {
 		source "\${EUPS_DIR}/bin/setups.sh"
 
 		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$EUPS_PKGROOT}
-
-		# Setup LSST minimal environment
-		setup lsst
 EOF
 }
 
@@ -694,9 +684,6 @@ function generate_loader_csh() {
 		   if ( ! \${?EUPS_PKGROOT} ) then
 		     set EUPS_PKGROOT = "$EUPS_PKGROOT"
 		   endif
-
-		   # Setup LSST minimal environment
-		   setup lsst
 		endif
 EOF
 }
@@ -723,9 +710,6 @@ function generate_loader_ksh() {
 		source "\${EUPS_DIR}/bin/setups.sh"
 
 		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$EUPS_PKGROOT}
-
-		# Setup LSST minimal environment
-		setup lsst
 EOF
 }
 
@@ -751,9 +735,6 @@ function generate_loader_zsh() {
 		source "\${EUPS_DIR}/bin/setups.zsh"
 
 		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$EUPS_PKGROOT}
-
-		# Setup LSST minimal environment
-		setup lsst
 EOF
 }
 
