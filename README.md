@@ -26,11 +26,6 @@ For managing products, this package provides the following:
         software stack.  This is the directory where the loadLSST scripts are
         found.
 
-     *  sets the LSST_PKGROOT and (if not already set) the EUPS_PKGROOT
-        environment variables.  The latter is used by "eups distrib" for
-        retrieving and installing new product packages.  If EUPS_PKGROOT is not
-        already set, it is set to the value of $LSST_PKGROOT
-
      *  sets the LSST_PKGS environment variable to the platform-specific
         subdirectory of $LSST_HOME where LSST packages are installed.
 
