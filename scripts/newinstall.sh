@@ -363,7 +363,6 @@ function generate_loader_bash() {
 
 		# Setup optional packages
 		$CMD_SETUP_MINICONDA
-		$CMD_SETUP_GIT
 
 		# Setup LSST minimal environment
 		setup lsst
@@ -392,7 +391,6 @@ function generate_loader_csh() {
 
 		   # Setup optional packages
 		   $CMD_SETUP_MINICONDA
-		   $CMD_SETUP_GIT
 
 		   # Setup LSST minimal environment
 		   setup lsst
@@ -418,7 +416,6 @@ function generate_loader_ksh() {
 
 		# Setup optional packages
 		$CMD_SETUP_MINICONDA
-		$CMD_SETUP_GIT
 
 		# Setup LSST minimal environment
 		setup lsst
@@ -443,7 +440,6 @@ function generate_loader_zsh() {
 
 		# Setup optional packages
 		$CMD_SETUP_MINICONDA
-		$CMD_SETUP_GIT
 
 		# Setup LSST minimal environment
 		setup lsst

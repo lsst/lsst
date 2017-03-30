@@ -1,8 +1,6 @@
+setupRequired(scons)
 setupRequired(sconsUtils)
 
-envSet(GITROOT, "git@git.lsstcorp.org")
-envSet(LSST_GIT, "git@git.lsstcorp.org")
-envSet(LSST_DMS, "git@git.lsstcorp.org:LSST/DMS")
 envPrepend(PATH, ${PRODUCT_DIR}/bin)
 envPrepend(EUPS_PKGROOT, http://sw.lsstcorp.org/eupspkg, |)
 
@@ -10,7 +8,3 @@ envPrepend(EUPS_PKGROOT, http://sw.lsstcorp.org/eupspkg, |)
 # in future code. Will be removed at a later date.
 envSet(LSST_HOME, ${EUPS_PATH[0]})
 envPrepend(EUPS_PATH, $?{LSST_DEVEL})
-
-if( not ${LSST_PKGS:-False} ) {
-    envSet(LSST_PKGS, ${LSST_HOME}/${PRODUCT_FLAVOR})
-}
