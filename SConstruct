@@ -1,9 +1,5 @@
 # -*- python -*-
-#
-# Setup our environment
-#
-import glob, os.path, re, os, sys
-from lsst.sconsUtils import scripts, env, targets, log
+from lsst.sconsUtils import scripts, env, targets
 
 # okay start the standard stuff
 
