@@ -11,10 +11,6 @@ scripts.BasicSConstruct.initialize("lsst", versionModuleName=None)
 
 targets["doc"].extend(env.Command("doc/README.md", "README.md", [Copy('$TARGET', '$SOURCE')]))
 
-if "check" in BUILD_TARGETS:
-    env.Command("configure", "configure.ac", ["autoconf"])
-    env.Command("check", "configure", ["configure"])
-
 env.Help("""
 deploy/lsst:  LSST Build Environment Tools
 
