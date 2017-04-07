@@ -13,8 +13,8 @@
 # *************************************************
 #
 # Bootstrap lsst stack install by:
-#	* Installing EUPS
 #	* Installing Miniconda2 Python distribution, if necessary
+#	* Installing EUPS
 #	* Install everything up to the lsst package
 #	* Creating the loadLSST.xxx scripts
 #
@@ -33,8 +33,12 @@ EUPS_TARURL=${EUPS_TARURL:-"https://github.com/RobertLuptonTheGood/eups/archive/
 
 EUPS_PKGROOT=${EUPS_PKGROOT:-"http://sw.lsstcorp.org/eupspkg"}
 
-MINICONDA2_VERSION=${MINICONDA2_VERSION:-4.2.12.lsst2}
-MINICONDA3_VERSION=${MINICONDA3_VERSION:-4.2.12.lsst2}
+MINICONDA_VERSION=${MINICONDA_VERSION:-4.2.12}
+# this git ref controls which set of conda packages are used to initialize the
+# the default conda env.
+LSSTSW_REF=${LSSTSW_REF:-7c8e67}
+MINICONDA_BASE_URL=${MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
+CONDA_CHANNELS=${CONDA_CHANNELS:-}
 
 LSST_HOME="$PWD"
 
@@ -47,44 +51,135 @@ else
 	CURL=${CURL:-curl}
 fi
 
+print_error() {
+	>&2 echo -e "$@"
+}
+
+fail() {
+	code=${2:1}
+	print_error "$1"
+	# shellcheck disable=SC2086
+	exit $code
+}
+
+miniconda::install() {
+	local python_version=$1
+	local version=$2
+	local prefix=$3
+	local miniconda_base_url=${4:-https://repo.continuum.io/miniconda}
+
+	[[ -z $python_version ]] && fail "python_version param is required"
+	[[ -z $version ]] && fail "version param is required"
+	[[ -z $prefix ]] && fail "prefix param is required"
+
+	case $(uname -s) in
+		Linux*)
+			ana_platform="Linux-x86_64"
+			;;
+		Darwin*)
+			ana_platform="MacOSX-x86_64"
+			;;
+		*)
+			fail "Cannot install miniconda: unsupported platform $(uname -s)"
+			;;
+	esac
+
+	miniconda_file_name="Miniconda${python_version}-${version}-${ana_platform}.sh"
+	echo "::: Deploying ${miniconda_file_name}"
+	$cmd "$CURL" -# -L -O "${miniconda_base_url}/${miniconda_file_name}"
+
+	$cmd bash "$miniconda_file_name" -b -p "$prefix"
+}
+
+# configure alt conda channel(s)
+miniconda::config_channels() {
+	local channels=$1
+
+	[[ -z $channels ]] && fail "channels param is required"
+
+	# remove any previously configured non-default channels
+	# XXX allowed to fail
+	set +e
+	$cmd conda config --remove-key channels
+	set -e
+
+	for c in $channels; do
+		$cmd conda config --add channels "$c"
+	done
+
+	# remove the default channels
+	$cmd conda config --remove channels defaults
+
+	$cmd conda config --show
+}
+
+# Install packages on which the stack is known to depend
+miniconda::lsst_env() {
+	local python_version=$1
+	local ref=$2
+
+	[[ -z $python_version ]] && fail "python_version param is required"
+	[[ -z $ref ]] && fail "ref param is required"
+
+	case $(uname -s) in
+		Linux*)
+			conda_packages="conda${python_version}_packages-linux-64.txt"
+			;;
+		Darwin*)
+			conda_packages="conda${python_version}_packages-osx-64.txt"
+			;;
+		*)
+			fail "Cannot configure miniconda env: unsupported platform $(uname -s)"
+			;;
+	esac
+
+	local baseurl="https://raw.githubusercontent.com/lsst/lsstsw/${ref}/etc/"
+	local tmpfile
+
+	(
+		tmpfile=$(mktemp -t "${conda_packages}.XXXXXXXX")
+		# attempt to be a good citizen and not leave tmp files laying around
+		# after either a normal exit or an error condition
+		# shellcheck disable=SC2064
+		trap "{ rm -rf $tmpfile; }" EXIT
+		$cmd "$CURL" -# -L --silent "${baseurl}/${conda_packages}" --output "$tmpfile"
+
+		$cmd conda install --yes --file "$tmpfile"
+	)
+}
+
 cont_flag=false
 batch_flag=false
 help_flag=false
 noop_flag=false
 
-# By default we use the PATH Python to bootstrap EUPS.
-# Set $PYTHON to override this or use the -P command line option.
-# $PYTHON is used to install and run EUPS and will not necessarily
-# be the python in the path being used to build the stack itself.
-PYTHON="${PYTHON:-$(which python)}"
-
 # At the moment, we default to the -2 option and install Python 2 miniconda
 # if we are asked to install a Python. Once the Python 3 port is stable
 # we can switch the default or insist that the user specifies a version.
-USE_PYTHON2=true
+PYTHON_VERSION=2
 
 while getopts cbhnP:32 optflag; do
 	case $optflag in
-		c)
-			cont_flag=true
-			;;
 		b)
 			batch_flag=true
 			;;
-		h)
-			help_flag=true
+		c)
+			cont_flag=true
 			;;
 		n)
 			noop_flag=true
 			;;
 		P)
-			PYTHON=$OPTARG
-			;;
-		3)
-			USE_PYTHON2=false
+			EUPS_PYTHON=$OPTARG
 			;;
 		2)
-			USE_PYTHON2=true
+			PYTHON_VERSION=2
+			;;
+		3)
+			PYTHON_VERSION=3
+			;;
+		h)
+			help_flag=true
 			;;
 	esac
 done
@@ -96,11 +191,11 @@ if [[ "$help_flag" = true ]]; then
 	echo "usage: newinstall.sh [-b] [-f] [-h] [-n] [-3|-2] [-P <path-to-python>]"
 	echo " -b -- Run in batch mode.	Don't ask any questions and install all extra packages."
 	echo " -c -- Attempt to continue a previously failed install."
-	echo " -h -- Display this help message."
 	echo " -n -- No-op. Go through the motions but echo commands instead of running them."
-	echo " -3 -- Use Python 3 if the script is installing its own Python."
+	echo " -P [PATH_TO_PYTHON] -- Use a specific python interpreter for EUPS."
 	echo " -2 -- Use Python 2 if the script is installing its own Python. (default)"
-	echo " -P [PATH_TO_PYTHON] -- Use a specific python to bootstrap the stack."
+	echo " -3 -- Use Python 3 if the script is installing its own Python."
+	echo " -h -- Display this help message."
 	echo
 	exit 0
 fi
@@ -206,7 +301,7 @@ if (vmaj == 2 and vmin >= minver2) or (vmaj == 3 and vmin >= minver3):
 else:
     print(0)')
 	if [[ "$batch_flag" = true ]]; then
-		WITH_MINICONDA=1
+		WITH_MINICONDA=true
 	else
 		if [[ $PYVEROK != 1 ]]; then
 			cat <<-EOF
@@ -233,7 +328,7 @@ else:
 		read -r -p "Would you like us to install the Miniconda Python distribution (if unsure, say yes)? " yn
 		case $yn in
 			[Yy]* )
-				WITH_MINICONDA=1
+				WITH_MINICONDA=true
 				break
 				;;
 			[Nn]* )
@@ -253,31 +348,63 @@ else:
 	fi
 fi
 
+##########	Bootstrap miniconda (optional)
+
+if true; then
+	if [[ $WITH_MINICONDA == true ]]; then
+		miniconda_path="${LSST_HOME}/miniconda${PYTHON_VERSION}-${MINICONDA_VERSION}"
+		if [[ ! -e $miniconda_path ]]; then
+			miniconda::install \
+				"$PYTHON_VERSION" \
+				"$MINICONDA_VERSION" \
+				"$miniconda_path" \
+				"$MINICONDA_BASE_URL"
+		fi
+
+		export PATH="${miniconda_path}/bin:${PATH}"
+
+		if [[ -n $CONDA_CHANNELS ]]; then
+			miniconda::config_channels "$CONDA_CHANNELS"
+		fi
+		miniconda::lsst_env "${PYTHON_VERSION}" "${LSSTSW_REF}"
+
+		CMD_SETUP_MINICONDA_SH="export PATH=\"${miniconda_path}/bin:\${PATH}\""
+		CMD_SETUP_MINICONDA_CSH="setenv PATH ${miniconda_path}/bin:\$PATH)"
+	fi
+fi
+
+# By default we use the PATH Python to bootstrap EUPS.
+# Set $EUPS_PYTHON to override this or use the -P command line option.
+# $EUPS_PYTHON is used to install and run EUPS and will not necessarily
+# be the python in the path being used to build the stack itself.
+EUPS_PYTHON="${EUPS_PYTHON:-$(which python)}"
+
+
 ##########	Install EUPS
 
-##########	$PYTHON is the Python used to install/run EUPS.
+##########	$EUPS_PYTHON is the Python used to install/run EUPS.
 ##########	It can be any Python >= v2.6
 
 if true; then
-	if [[ ! -x "$PYTHON" ]]; then
-		echo -n "Cannot find or execute '$PYTHON'. Please set the PYTHON environment variable or use the -P"
+	if [[ ! -x "$EUPS_PYTHON" ]]; then
+		echo -n "Cannot find or execute '$EUPS_PYTHON'. Please set the EUPS_PYTHON environment variable or use the -P"
 		echo " option to point to a functioning Python >= 2.6 interpreter and rerun."
 		exit -1;
 	fi
 
-	PYVEROK=$($PYTHON -c 'import sys; print("%i" % (sys.hexversion >= 0x02060000))')
+	PYVEROK=$($EUPS_PYTHON -c 'import sys; print("%i" % (sys.hexversion >= 0x02060000))')
 	if [[ $PYVEROK != 1 ]]; then
 		cat <<-EOF
 
-    EUPS requires Python 2.6 or newer; we are using $($PYTHON -V 2>&1) from
-    $PYTHON.  Please set up a compatible python interpreter using the PYTHON
+    EUPS requires Python 2.6 or newer; we are using $($EUPS_PYTHON -V 2>&1) from
+    $EUPS_PYTHON.  Please set up a compatible python interpreter using the EUPS_PYTHON
     environment variable or the -P command line option.
 		EOF
 		exit -1
 	fi
 
-	if [[ "$PYTHON" != "/usr/bin/python" ]]; then
-		echo "Using python at $PYTHON to install EUPS"
+	if [[ $EUPS_PYTHON != /usr/bin/python ]]; then
+		echo "Using python at ${EUPS_PYTHON} to install EUPS"
 	fi
 
 	if [[ -z $EUPS_GITREV ]]; then
@@ -286,7 +413,7 @@ if true; then
 		echo -n "Installing EUPS (branch $EUPS_GITREV from $EUPS_GITREPO)..."
 	fi
 
-	(
+	if ! (
 		mkdir _build && cd _build
 		if [[ -z $EUPS_GITREV ]]; then
 			# Download tarball from github
@@ -299,16 +426,13 @@ if true; then
 			$cmd git checkout "$EUPS_GITREV"
 		fi
 
-		$cmd ./configure --prefix="$LSST_HOME"/eups --with-eups="$LSST_HOME" --with-python="$PYTHON"
+		$cmd ./configure --prefix="$LSST_HOME"/eups --with-eups="$LSST_HOME" --with-python="$EUPS_PYTHON"
 		$cmd make install
-
-	) > eupsbuild.log 2>&1
-    # shellcheck disable=SC2181
-    if [[ $? == 0 ]]; then
-        echo " done."
-    else
-        { echo " FAILED."; echo "See log in eupsbuild.log"; exit -1; }
-    fi
+	) > eupsbuild.log 2>&1 ; then
+		print_error "FAILED."
+		fail "See log in eupsbuild.log"
+	fi
+	echo " done."
 
 fi
 
@@ -320,21 +444,6 @@ set -e
 
 ##########	Download optional component (python, git, ...)
 
-if true; then
-	if [[ $WITH_MINICONDA == 1 ]]; then
-		if [[ $USE_PYTHON2 == false ]]; then
-			PYVER_SUFFIX=3
-			MINICONDA_VERSION=${MINICONDA3_VERSION}
-		else
-			PYVER_SUFFIX=2
-			MINICONDA_VERSION=${MINICONDA2_VERSION}
-		fi
-		echo "Installing Miniconda${PYVER_SUFFIX} Python Distribution ... "
-		$cmd eups distrib install --repository="$EUPS_PKGROOT" "miniconda${PYVER_SUFFIX}" "$MINICONDA_VERSION"
-		$cmd setup "miniconda${PYVER_SUFFIX}"
-		CMD_SETUP_MINICONDA="setup miniconda${PYVER_SUFFIX}"
-	fi
-fi
 
 ##########	Install the Basic Environment
 
@@ -352,6 +461,9 @@ function generate_loader_bash() {
 		# This script is intended to be used with bash to load the minimal LSST environment
 		# Usage: source $(basename "$file_name")
 
+		# Setup optional packages
+		$CMD_SETUP_MINICONDA_SH
+
 		# If not already initialized, set LSST_HOME to the directory where this script is located
 		if [ "x\${LSST_HOME}" = "x" ]; then
 		   LSST_HOME="\$( cd "\$( dirname "\${BASH_SOURCE[0]}" )" && pwd )"
@@ -360,9 +472,6 @@ function generate_loader_bash() {
 		# Bootstrap EUPS
 		EUPS_DIR="\${LSST_HOME}/eups"
 		source "\${EUPS_DIR}/bin/setups.sh"
-
-		# Setup optional packages
-		$CMD_SETUP_MINICONDA
 
 		# Setup LSST minimal environment
 		setup lsst
@@ -375,6 +484,9 @@ function generate_loader_csh() {
 	cat > "$file_name" <<-EOF
 		# This script is intended to be used with (t)csh to load the minimal LSST environment
 		# Usage: source $(basename "$file_name")
+
+		# Setup optional packages
+		$CMD_SETUP_MINICONDA_CSH
 
 		set sourced=(\$_)
 		if ("\${sourced}" != "") then
@@ -389,9 +501,6 @@ function generate_loader_csh() {
 		   set EUPS_DIR = "\${LSST_HOME}/eups"
 		   source "\${EUPS_DIR}/bin/setups.csh"
 
-		   # Setup optional packages
-		   $CMD_SETUP_MINICONDA
-
 		   # Setup LSST minimal environment
 		   setup lsst
 		endif
@@ -405,6 +514,9 @@ function generate_loader_ksh() {
 		# This script is intended to be used with ksh to load the minimal LSST environment
 		# Usage: source $(basename "$file_name")
 
+		# Setup optional packages
+		$CMD_SETUP_MINICONDA_SH
+
 		# If not already initialized, set LSST_HOME to the directory where this script is located
 		if [ "x\${LSST_HOME}" = "x" ]; then
 		   LSST_HOME="\$( cd "\$( dirname "\${.sh.file}" )" && pwd )"
@@ -413,9 +525,6 @@ function generate_loader_ksh() {
 		# Bootstrap EUPS
 		EUPS_DIR="\${LSST_HOME}/eups"
 		source "\${EUPS_DIR}/bin/setups.sh"
-
-		# Setup optional packages
-		$CMD_SETUP_MINICONDA
 
 		# Setup LSST minimal environment
 		setup lsst
@@ -429,6 +538,9 @@ function generate_loader_zsh() {
 		# This script is intended to be used with zsh to load the minimal LSST environment
 		# Usage: source $(basename "$file_name")
 
+		# Setup optional packages
+		$CMD_SETUP_MINICONDA_SH
+
 		# If not already initialized, set LSST_HOME to the directory where this script is located
 		if [[ -z \${LSST_HOME} ]]; then
 		   LSST_HOME=\`dirname "\$0:A"\`
@@ -437,9 +549,6 @@ function generate_loader_zsh() {
 		# Bootstrap EUPS
 		EUPS_DIR="\${LSST_HOME}/eups"
 		source "\${EUPS_DIR}/bin/setups.zsh"
-
-		# Setup optional packages
-		$CMD_SETUP_MINICONDA
 
 		# Setup LSST minimal environment
 		setup lsst
