@@ -205,23 +205,27 @@ echo
 
 ##########	Warn if there's a different version on the server
 
-# Don't make this fatal, it should still work for developers who are hacking their copy.
+# Don't make this fatal, it should still work for developers who are hacking
+# their copy.
 
-set +e
+# Don't attempt to run diff when the script has been piped into the shell
+if [[ -n $0 && $0 == bash ]]; then
+	set +e
 
-AMIDIFF=$($CURL -L --silent "$EUPS_PKGROOT/$NEWINSTALL" | diff --brief - "$0")
+	AMIDIFF=$($CURL -L --silent "$EUPS_PKGROOT/$NEWINSTALL" | diff --brief - "$0")
 
-if [[ $AMIDIFF = *differ ]]; then
-	print_error "!!! This script differs from the official version on the distribution server."
-	print_error "    If this is not intentional, get the current version from here:"
-	print_error "    $EUPS_PKGROOT/$NEWINSTALL"
+	if [[ $AMIDIFF == *differ ]]; then
+		print_error "!!! This script differs from the official version on the distribution server."
+		print_error "    If this is not intentional, get the current version from here:"
+		print_error "    $EUPS_PKGROOT/$NEWINSTALL"
+	fi
+
+	set -e
 fi
-
-set -e
 
 ##########	If no-op, prefix every install command with echo
 
-if [[ "$noop_flag" = true ]]; then
+if [[ $noop_flag == true ]]; then
 	cmd="echo"
 	echo "!!! -n flag specified, no install commands will be really executed"
 else
@@ -230,8 +234,8 @@ fi
 
 ##########	Refuse to run from a non-empty directory
 
-if [[ "$cont_flag" = false ]]; then
-	if [[ ! -z "$(ls)" && ! "$(ls)" == "newinstall.sh" ]]; then
+if [[ $cont_flag == false ]]; then
+	if [[ ! -z $(ls) && ! $(ls) == newinstall.sh ]]; then
 		fail "Please run this script from an empty directory. The LSST stack will be installed into it."
 	fi
 fi
@@ -245,8 +249,8 @@ if true; then
 		GITVER=$(printf "%02d-%02d-%02d\n" $(echo "$GITVERNUM" | cut -d. -f1-3 | tr . ' '))
 	fi
 
-	if [[ $GITVER < "01-08-04" ]]; then
-		if [[ "$batch_flag" != true ]]; then
+	if [[ $GITVER < 01-08-04 ]]; then
+		if [[ $batch_flag != true ]]; then
 			cat <<-EOF
 			Detected $(git --version).
 
@@ -297,7 +301,7 @@ if (vmaj == 2 and vmin >= minver2) or (vmaj == 3 and vmin >= minver3):
     print(1)
 else:
     print(0)')
-	if [[ "$batch_flag" = true ]]; then
+	if [[ $batch_flag = true ]]; then
 		WITH_MINICONDA=true
 	else
 		if [[ $PYVEROK != 1 ]]; then
@@ -370,11 +374,11 @@ if true; then
 	fi
 fi
 
-# By default we use the PATH Python to bootstrap EUPS.
-# Set $EUPS_PYTHON to override this or use the -P command line option.
-# $EUPS_PYTHON is used to install and run EUPS and will not necessarily
-# be the python in the path being used to build the stack itself.
-EUPS_PYTHON="${EUPS_PYTHON:-$(which python)}"
+# By default we use the PATH Python to bootstrap EUPS.  Set $EUPS_PYTHON to
+# override this or use the -P command line option.  $EUPS_PYTHON is used to
+# install and run EUPS and will not necessarily be the python in the path being
+# used to build the stack itself.
+EUPS_PYTHON=${EUPS_PYTHON:-$(which python)}
 
 
 ##########	Install EUPS
@@ -383,7 +387,7 @@ EUPS_PYTHON="${EUPS_PYTHON:-$(which python)}"
 ##########	It can be any Python >= v2.6
 
 if true; then
-	if [[ ! -x "$EUPS_PYTHON" ]]; then
+	if [[ ! -x $EUPS_PYTHON ]]; then
 		fail "$(cat <<-EOF
 			Cannot find or execute '$EUPS_PYTHON'.  Please set the EUPS_PYTHON
 			environment variable or use the -P option to point to a functioning
