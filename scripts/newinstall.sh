@@ -460,7 +460,7 @@ fi
 
 function generate_loader_bash() {
 	file_name=$1
-    # shellcheck disable=SC2094
+	# shellcheck disable=SC2094
 	cat > "$file_name" <<-EOF
 		# This script is intended to be used with bash to load the minimal LSST environment
 		# Usage: source $(basename "$file_name")
@@ -484,7 +484,7 @@ EOF
 
 function generate_loader_csh() {
 	file_name=$1
-    # shellcheck disable=SC2094
+	# shellcheck disable=SC2094
 	cat > "$file_name" <<-EOF
 		# This script is intended to be used with (t)csh to load the minimal LSST environment
 		# Usage: source $(basename "$file_name")
@@ -513,7 +513,7 @@ EOF
 
 function generate_loader_ksh() {
 	file_name=$1
-    # shellcheck disable=SC2094
+	# shellcheck disable=SC2094
 	cat > "$file_name" <<-EOF
 		# This script is intended to be used with ksh to load the minimal LSST environment
 		# Usage: source $(basename "$file_name")
@@ -537,7 +537,7 @@ EOF
 
 function generate_loader_zsh() {
 	file_name=$1
-    # shellcheck disable=SC2094
+	# shellcheck disable=SC2094
 	cat > "$file_name" <<-EOF
 		# This script is intended to be used with zsh to load the minimal LSST environment
 		# Usage: source $(basename "$file_name")
