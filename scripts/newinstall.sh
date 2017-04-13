@@ -596,3 +596,5 @@ cat <<-EOF
 	                                                       http://dm.lsst.org/
 
 EOF
+
+# vim: tabstop=2 shiftwidth=2 noexpandtab
