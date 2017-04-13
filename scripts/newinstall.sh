@@ -42,7 +42,8 @@ CONDA_CHANNELS=${CONDA_CHANNELS:-}
 
 LSST_HOME="$PWD"
 
-NEWINSTALL="newinstall.sh" # the canonical name of this file on the server
+# the canonical source of this script
+NEWINSTALL_URL="https://raw.githubusercontent.com/lsst/lsst/master/scripts/newinstall.sh"
 
 # Prefer system curl; user-installed ones sometimes behave oddly
 if [[ -x /usr/bin/curl ]]; then
@@ -212,12 +213,12 @@ echo
 if [[ -n $0 && $0 != bash ]]; then
 	set +e
 
-	AMIDIFF=$($CURL -L --silent "$EUPS_PKGROOT/$NEWINSTALL" | diff --brief - "$0")
+	AMIDIFF=$($CURL -L --silent "$NEWINSTALL_URL" | diff --brief - "$0")
 
 	if [[ $AMIDIFF == *differ ]]; then
 		print_error "!!! This script differs from the official version on the distribution server."
 		print_error "    If this is not intentional, get the current version from here:"
-		print_error "    $EUPS_PKGROOT/$NEWINSTALL"
+		print_error "    $NEWINSTALL_URL"
 	fi
 
 	set -e
