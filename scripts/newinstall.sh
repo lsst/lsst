@@ -209,7 +209,7 @@ echo
 # their copy.
 
 # Don't attempt to run diff when the script has been piped into the shell
-if [[ -n $0 && $0 == bash ]]; then
+if [[ -n $0 && $0 != bash ]]; then
 	set +e
 
 	AMIDIFF=$($CURL -L --silent "$EUPS_PKGROOT/$NEWINSTALL" | diff --brief - "$0")
