@@ -187,17 +187,17 @@ done
 shift $((OPTIND - 1))
 
 if [[ "$help_flag" = true ]]; then
-	echo
-	echo "usage: newinstall.sh [-b] [-f] [-h] [-n] [-3|-2] [-P <path-to-python>]"
-	echo " -b -- Run in batch mode.	Don't ask any questions and install all extra packages."
-	echo " -c -- Attempt to continue a previously failed install."
-	echo " -n -- No-op. Go through the motions but echo commands instead of running them."
-	echo " -P [PATH_TO_PYTHON] -- Use a specific python interpreter for EUPS."
-	echo " -2 -- Use Python 2 if the script is installing its own Python. (default)"
-	echo " -3 -- Use Python 3 if the script is installing its own Python."
-	echo " -h -- Display this help message."
-	echo
-	exit 0
+	print_error
+	print_error "usage: newinstall.sh [-b] [-f] [-h] [-n] [-3|-2] [-P <path-to-python>]"
+	print_error " -b -- Run in batch mode.	Don't ask any questions and install all extra packages."
+	print_error " -c -- Attempt to continue a previously failed install."
+	print_error " -n -- No-op. Go through the motions but echo commands instead of running them."
+	print_error " -P [PATH_TO_PYTHON] -- Use a specific python interpreter for EUPS."
+	print_error " -2 -- Use Python 2 if the script is installing its own Python. (default)"
+	print_error " -3 -- Use Python 3 if the script is installing its own Python."
+	print_error " -h -- Display this help message."
+	print_error
+	fail
 fi
 
 echo
@@ -214,9 +214,9 @@ set +e
 AMIDIFF=$($CURL -L --silent "$EUPS_PKGROOT/$NEWINSTALL" | diff --brief - "$0")
 
 if [[ $AMIDIFF = *differ ]]; then
-	echo "!!! This script differs from the official version on the distribution server."
-	echo "    If this is not intentional, get the current version from here:"
-	echo "    $EUPS_PKGROOT/$NEWINSTALL"
+	print_error "!!! This script differs from the official version on the distribution server."
+	print_error "    If this is not intentional, get the current version from here:"
+	print_error "    $EUPS_PKGROOT/$NEWINSTALL"
 fi
 
 set -e
@@ -234,8 +234,7 @@ fi
 
 if [[ "$cont_flag" = false ]]; then
 	if [[ ! -z "$(ls)" && ! "$(ls)" == "newinstall.sh" ]]; then
-		echo "Please run this script from an empty directory. The LSST stack will be installed into it."
-		exit -1;
+		fail "Please run this script from an empty directory. The LSST stack will be installed into it."
 	fi
 fi
 
@@ -269,7 +268,7 @@ if true; then
 						;;
 					[Nn]* )
 						echo "Okay install git and rerun the script."
-						exit;
+						exit
 						break;
 						;;
 					* ) echo "Please answer yes or no.";;
@@ -387,20 +386,22 @@ EUPS_PYTHON="${EUPS_PYTHON:-$(which python)}"
 
 if true; then
 	if [[ ! -x "$EUPS_PYTHON" ]]; then
-		echo -n "Cannot find or execute '$EUPS_PYTHON'. Please set the EUPS_PYTHON environment variable or use the -P"
-		echo " option to point to a functioning Python >= 2.6 interpreter and rerun."
-		exit -1;
+		fail "$(cat <<-EOF
+			Cannot find or execute '$EUPS_PYTHON'.  Please set the EUPS_PYTHON
+			environment variable or use the -P option to point to a functioning
+			Python >= 2.6 interpreter and rerun.
+			EOF
+		)"
 	fi
 
 	PYVEROK=$($EUPS_PYTHON -c 'import sys; print("%i" % (sys.hexversion >= 0x02060000))')
 	if [[ $PYVEROK != 1 ]]; then
-		cat <<-EOF
-
-    EUPS requires Python 2.6 or newer; we are using $($EUPS_PYTHON -V 2>&1) from
-    $EUPS_PYTHON.  Please set up a compatible python interpreter using the EUPS_PYTHON
-    environment variable or the -P command line option.
-		EOF
-		exit -1
+		fail "$(cat <<-EOF
+			EUPS requires Python 2.6 or newer; we are using $($EUPS_PYTHON -V 2>&1)
+			from $EUPS_PYTHON.  Please set up a compatible python interpreter using
+			the EUPS_PYTHON environment variable or the -P command line option.
+			EOF
+		)"
 	fi
 
 	if [[ $EUPS_PYTHON != /usr/bin/python ]]; then
@@ -429,8 +430,11 @@ if true; then
 		$cmd ./configure --prefix="$LSST_HOME"/eups --with-eups="$LSST_HOME" --with-python="$EUPS_PYTHON"
 		$cmd make install
 	) > eupsbuild.log 2>&1 ; then
-		print_error "FAILED."
-		fail "See log in eupsbuild.log"
+		fail "$(cat <<-EOF
+			FAILED.
+			fail "See log in eupsbuild.log"
+			EOF
+		)"
 	fi
 	echo " done."
 
@@ -574,7 +578,7 @@ cat <<-EOF
 		source "$LSST_HOME/loadLSST.zsh"   # for zsh
 
 	Individual LSST packages may now be installed with the usual \`eups
-	distrib install' command.  For example, to install the science pipeline
+	distrib install\` command.  For example, to install the science pipeline
 	elements of the LSST stack, use:
 
 		eups distrib install lsst_apps
