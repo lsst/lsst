@@ -332,11 +332,11 @@ else:
 				;;
 			[Nn]* )
 				if [[ $PYVEROK != 1 ]]; then
-			echo
-			echo "Thanks. After you install Python 2.7 or 3.5 and the required modules, rerun this script to"
-			echo "continue the installation."
-			echo
-			exit
+					echo
+					echo "Thanks. After you install Python 2.7 or 3.5 and the required modules, rerun this script to"
+					echo "continue the installation."
+					echo
+					exit
 				fi
 				break;
 				;;
