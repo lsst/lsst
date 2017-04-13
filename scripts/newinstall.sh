@@ -143,33 +143,40 @@ miniconda::lsst_env() {
 		# after either a normal exit or an error condition
 		# shellcheck disable=SC2064
 		trap "{ rm -rf $tmpfile; }" EXIT
-		$cmd "$CURL" -# -L --silent "${baseurl}/${conda_packages}" --output "$tmpfile"
+		$cmd "$CURL" \
+			-# -L --silent \
+			"${baseurl}/${conda_packages}" \
+			--output "$tmpfile"
 
 		$cmd conda install --yes --file "$tmpfile"
 	)
 }
 
 usage() {
-	print_error
-	print_error "usage: newinstall.sh [-b] [-f] [-h] [-n] [-3|-2] [-P <path-to-python>]"
-	print_error " -b -- Run in batch mode.	Don't ask any questions and install all extra packages."
-	print_error " -c -- Attempt to continue a previously failed install."
-	print_error " -n -- No-op. Go through the motions but echo commands instead of running them."
-	print_error " -P [PATH_TO_PYTHON] -- Use a specific python interpreter for EUPS."
-	print_error " -2 -- Use Python 2 if the script is installing its own Python. (default)"
-	print_error " -3 -- Use Python 3 if the script is installing its own Python."
-	print_error " -h -- Display this help message."
-	print_error
-	fail
+	fail "$(cat <<-EOF
+
+		usage: newinstall.sh [-b] [-f] [-h] [-n] [-3|-2] [-P <path-to-python>]
+		 -b -- Run in batch mode. Don't ask any questions and install all extra
+		       packages.
+		 -c -- Attempt to continue a previously failed install.
+		 -n -- No-op. Go through the motions but echo commands instead of running
+		       them.
+		 -P [PATH_TO_PYTHON] -- Use a specific python interpreter for EUPS.
+		 -2 -- Use Python 2 if the script is installing its own Python. (default)
+		 -3 -- Use Python 3 if the script is installing its own Python.
+		 -h -- Display this help message.
+
+		EOF
+	)"
 }
 
 cont_flag=false
 batch_flag=false
 noop_flag=false
 
-# At the moment, we default to the -2 option and install Python 2 miniconda
-# if we are asked to install a Python. Once the Python 3 port is stable
-# we can switch the default or insist that the user specifies a version.
+# At the moment, we default to the -2 option and install Python 2 miniconda if
+# we are asked to install a Python. Once the Python 3 port is stable we can
+# switch the default or insist that the user specifies a version.
 PYTHON_VERSION=2
 
 while getopts cbhnP:32 opt; do
@@ -216,9 +223,12 @@ if [[ -n $0 && $0 != bash ]]; then
 	AMIDIFF=$($CURL -L --silent "$NEWINSTALL_URL" | diff --brief - "$0")
 
 	if [[ $AMIDIFF == *differ ]]; then
-		print_error "!!! This script differs from the official version on the distribution server."
-		print_error "    If this is not intentional, get the current version from here:"
-		print_error "    $NEWINSTALL_URL"
+		print_error "$(cat <<-EOF
+			!!! This script differs from the official version on the distribution
+			server.  If this is not intentional, get the current version from here:
+			$NEWINSTALL_URL
+			EOF
+		)"
 	fi
 
 	set -e
@@ -237,7 +247,11 @@ fi
 
 if [[ $cont_flag == false ]]; then
 	if [[ ! -z $(ls) && ! $(ls) == newinstall.sh ]]; then
-		fail "Please run this script from an empty directory. The LSST stack will be installed into it."
+		fail "$(cat <<-EOF
+			Please run this script from an empty directory. The LSST stack will be
+			installed into it.
+			EOF
+		)"
 	fi
 fi
 
@@ -247,7 +261,8 @@ if true; then
 	if hash git 2>/dev/null; then
 		GITVERNUM=$(git --version | cut -d\  -f 3)
 		# shellcheck disable=SC2046 disable=SC2183
-		GITVER=$(printf "%02d-%02d-%02d\n" $(echo "$GITVERNUM" | cut -d. -f1-3 | tr . ' '))
+		GITVER=$(printf "%02d-%02d-%02d\n" \
+			$(echo "$GITVERNUM" | cut -d. -f1-3 | tr . ' '))
 	fi
 
 	if [[ $GITVER < 01-08-04 ]]; then
@@ -255,10 +270,11 @@ if true; then
 			cat <<-EOF
 			Detected $(git --version).
 
-			The git version control system is frequently used with LSST software. While
-			the LSST stack should build and work even in the absence of git, we don't
-			regularly run and test it in such environments. We therefore recommend you
-			have at least git 1.8.4 installed with your normal package manager.
+			The git version control system is frequently used with LSST software.
+			While the LSST stack should build and work even in the absence of git, we
+			don't regularly run and test it in such environments. We therefore
+			recommend you have at least git 1.8.4 installed with your normal
+			package manager.
 
 			EOF
 
@@ -285,14 +301,14 @@ if true; then
 fi
 
 
-##########	Test/warn about Python versions, offer to get miniconda if not supported.
-##########	LSST currently mandates Python 3.5 and, optionally, 2.7.
-##########	We assume that the python in PATH is the python that will be used to
-##########	build the stack if miniconda(2/3) is not installed.
+#	Test/warn about Python versions, offer to get miniconda if not supported.
+#	LSST currently mandates Python 3.5 and, optionally, 2.7.  We assume that the
+#	python in PATH is the python that will be used to build the stack if
+#	miniconda(2/3) is not installed.
 
 if true; then
-	# Check the version by running a small Python program (taken from the Python EUPS package)
-	# XXX this will break if python is not in $PATH
+	# Check the version by running a small Python program (taken from the Python
+	# EUPS package) XXX this will break if python is not in $PATH
 	PYVEROK=$(python -c 'import sys
 minver2=7
 minver3=5
@@ -308,18 +324,21 @@ else:
 		if [[ $PYVEROK != 1 ]]; then
 			cat <<-EOF
 
-			LSST stack requires Python 2 (>=2.7) or 3 (>=3.5); you seem to have $(python -V 2>&1) on your
-			path ($(which python)).	 Please set up a compatible python interpreter,
-			prepend it to your PATH, and rerun this script.	 Alternatively, we can set
-			up the Miniconda Python distribution for you.
+			LSST stack requires Python 2 (>=2.7) or 3 (>=3.5); you seem to have
+			$(python -V 2>&1) on your path ($(which python)).  Please set up a
+			compatible python interpreter, prepend it to your PATH, and rerun this
+			script.  Alternatively, we can set up the Miniconda Python distribution
+
+			for you.
 			EOF
 		fi
 
 		cat <<-EOF
 
-		In addition to Python 2 (>=2.7) or 3 (>=3.5), some LSST packages depend on recent versions of numpy,
-		matplotlib, and scipy. If you don't have all of these, the installation may fail.
-		Using the Miniconda Python distribution will ensure all these are set up.
+		In addition to Python 2 (>=2.7) or 3 (>=3.5), some LSST packages depend on
+		recent versions of numpy, matplotlib, and scipy.  If you do not have all of
+		these, the installation may fail.  Using the Miniconda Python distribution
+		will ensure all these are set up.
 
 		Miniconda Python installed by this installer will be managed by LSST's EUPS
 		package manager, and will not replace or modify your system python.
@@ -327,7 +346,12 @@ else:
 		EOF
 
 		while true; do
-		read -r -p "Would you like us to install the Miniconda Python distribution (if unsure, say yes)? " yn
+		read -r -p "$(cat <<-EOF
+			Would you like us to install the Miniconda Python distribution (if
+			unsure, say yes)? 
+			EOF
+		)" yn
+
 		case $yn in
 			[Yy]* )
 				WITH_MINICONDA=true
@@ -335,10 +359,12 @@ else:
 				;;
 			[Nn]* )
 				if [[ $PYVEROK != 1 ]]; then
-					echo
-					echo "Thanks. After you install Python 2.7 or 3.5 and the required modules, rerun this script to"
-					echo "continue the installation."
-					echo
+					cat <<-EOF
+
+					Thanks. After you install Python 2.7 or 3.5 and the required modules,
+					rerun this script to continue the installation.
+
+					EOF
 					exit
 				fi
 				break;
@@ -354,7 +380,8 @@ fi
 
 if true; then
 	if [[ $WITH_MINICONDA == true ]]; then
-		miniconda_path="${LSST_HOME}/miniconda${PYTHON_VERSION}-${MINICONDA_VERSION}"
+		miniconda_slug="miniconda${PYTHON_VERSION}-${MINICONDA_VERSION}"
+		miniconda_path="${LSST_HOME}/${miniconda_slug}"
 		if [[ ! -e $miniconda_path ]]; then
 			miniconda::install \
 				"$PYTHON_VERSION" \
@@ -430,7 +457,10 @@ if true; then
 			$cmd git checkout "$EUPS_GITREV"
 		fi
 
-		$cmd ./configure --prefix="$LSST_HOME"/eups --with-eups="$LSST_HOME" --with-python="$EUPS_PYTHON"
+		$cmd ./configure \
+			--prefix="$LSST_HOME"/eups \
+			--with-eups="$LSST_HOME" \
+			--with-python="$EUPS_PYTHON"
 		$cmd make install
 	) > eupsbuild.log 2>&1 ; then
 		fail "$(cat <<-EOF
@@ -465,13 +495,15 @@ function generate_loader_bash() {
 	file_name=$1
 	# shellcheck disable=SC2094
 	cat > "$file_name" <<-EOF
-		# This script is intended to be used with bash to load the minimal LSST environment
+		# This script is intended to be used with bash to load the minimal LSST
+		# environment
 		# Usage: source $(basename "$file_name")
 
 		# Setup optional packages
 		$CMD_SETUP_MINICONDA_SH
 
-		# If not already initialized, set LSST_HOME to the directory where this script is located
+		# If not already initialized, set LSST_HOME to the directory where this
+		# script is located
 		if [ "x\${LSST_HOME}" = "x" ]; then
 		   LSST_HOME="\$( cd "\$( dirname "\${BASH_SOURCE[0]}" )" && pwd )"
 		fi
@@ -489,7 +521,8 @@ function generate_loader_csh() {
 	file_name=$1
 	# shellcheck disable=SC2094
 	cat > "$file_name" <<-EOF
-		# This script is intended to be used with (t)csh to load the minimal LSST environment
+		# This script is intended to be used with (t)csh to load the minimal LSST
+		# environment
 		# Usage: source $(basename "$file_name")
 
 		# Setup optional packages
@@ -497,7 +530,8 @@ function generate_loader_csh() {
 
 		set sourced=(\$_)
 		if ("\${sourced}" != "") then
-		   # If not already initialized, set LSST_HOME to the directory where this script is located
+			 # If not already initialized, set LSST_HOME to the directory where this
+			 # script is located
 		   set this_script = \${sourced[2]}
 		   if ( ! \${?LSST_HOME} ) then
 			  set LSST_HOME = \`dirname \${this_script}\`
@@ -518,13 +552,15 @@ function generate_loader_ksh() {
 	file_name=$1
 	# shellcheck disable=SC2094
 	cat > "$file_name" <<-EOF
-		# This script is intended to be used with ksh to load the minimal LSST environment
+		# This script is intended to be used with ksh to load the minimal LSST
+		# environment
 		# Usage: source $(basename "$file_name")
 
 		# Setup optional packages
 		$CMD_SETUP_MINICONDA_SH
 
-		# If not already initialized, set LSST_HOME to the directory where this script is located
+		# If not already initialized, set LSST_HOME to the directory where this
+		# script is located
 		if [ "x\${LSST_HOME}" = "x" ]; then
 		   LSST_HOME="\$( cd "\$( dirname "\${.sh.file}" )" && pwd )"
 		fi
@@ -542,13 +578,15 @@ function generate_loader_zsh() {
 	file_name=$1
 	# shellcheck disable=SC2094
 	cat > "$file_name" <<-EOF
-		# This script is intended to be used with zsh to load the minimal LSST environment
+		# This script is intended to be used with zsh to load the minimal LSST
+		# environment
 		# Usage: source $(basename "$file_name")
 
 		# Setup optional packages
 		$CMD_SETUP_MINICONDA_SH
 
-		# If not already initialized, set LSST_HOME to the directory where this script is located
+		# If not already initialized, set LSST_HOME to the directory where this
+		# script is located
 		if [[ -z \${LSST_HOME} ]]; then
 		   LSST_HOME=\`dirname "\$0:A"\`
 		fi
@@ -572,17 +610,17 @@ done
 
 cat <<-EOF
 
-	Bootstrap complete. To continue installing (and to use) the LSST stack
-	type one of:
+	Bootstrap complete. To continue installing (and to use) the LSST stack type
+	one of:
 
 		source "$LSST_HOME/loadLSST.bash"  # for bash
 		source "$LSST_HOME/loadLSST.csh"   # for csh
 		source "$LSST_HOME/loadLSST.ksh"   # for ksh
 		source "$LSST_HOME/loadLSST.zsh"   # for zsh
 
-	Individual LSST packages may now be installed with the usual \`eups
-	distrib install\` command.  For example, to install the science pipeline
-	elements of the LSST stack, use:
+	Individual LSST packages may now be installed with the usual \`eups distrib
+	install\` command.  For example, to install the science pipeline elements of
+	the LSST stack, use:
 
 		eups distrib install lsst_apps
 
