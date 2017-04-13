@@ -148,9 +148,22 @@ miniconda::lsst_env() {
 	)
 }
 
+usage() {
+	print_error
+	print_error "usage: newinstall.sh [-b] [-f] [-h] [-n] [-3|-2] [-P <path-to-python>]"
+	print_error " -b -- Run in batch mode.	Don't ask any questions and install all extra packages."
+	print_error " -c -- Attempt to continue a previously failed install."
+	print_error " -n -- No-op. Go through the motions but echo commands instead of running them."
+	print_error " -P [PATH_TO_PYTHON] -- Use a specific python interpreter for EUPS."
+	print_error " -2 -- Use Python 2 if the script is installing its own Python. (default)"
+	print_error " -3 -- Use Python 3 if the script is installing its own Python."
+	print_error " -h -- Display this help message."
+	print_error
+	fail
+}
+
 cont_flag=false
 batch_flag=false
-help_flag=false
 noop_flag=false
 
 # At the moment, we default to the -2 option and install Python 2 miniconda
@@ -158,8 +171,8 @@ noop_flag=false
 # we can switch the default or insist that the user specifies a version.
 PYTHON_VERSION=2
 
-while getopts cbhnP:32 optflag; do
-	case $optflag in
+while getopts cbhnP:32 opt; do
+	case $opt in
 		b)
 			batch_flag=true
 			;;
@@ -178,27 +191,12 @@ while getopts cbhnP:32 optflag; do
 		3)
 			PYTHON_VERSION=3
 			;;
-		h)
-			help_flag=true
+		h|*)
+			usage
 			;;
 	esac
 done
-
 shift $((OPTIND - 1))
-
-if [[ "$help_flag" = true ]]; then
-	print_error
-	print_error "usage: newinstall.sh [-b] [-f] [-h] [-n] [-3|-2] [-P <path-to-python>]"
-	print_error " -b -- Run in batch mode.	Don't ask any questions and install all extra packages."
-	print_error " -c -- Attempt to continue a previously failed install."
-	print_error " -n -- No-op. Go through the motions but echo commands instead of running them."
-	print_error " -P [PATH_TO_PYTHON] -- Use a specific python interpreter for EUPS."
-	print_error " -2 -- Use Python 2 if the script is installing its own Python. (default)"
-	print_error " -3 -- Use Python 3 if the script is installing its own Python."
-	print_error " -h -- Display this help message."
-	print_error
-	fail
-fi
 
 echo
 echo "LSST Software Stack Builder"
