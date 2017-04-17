@@ -10,12 +10,13 @@ compiler:
   - clang
   - gcc
 script: |
+  set -e
   if [[ $BATCH == true ]]; then
     echo -e "*** testing batch mode in Python version $PYVER ***\n"
-    ./scripts/newinstall.sh -cb -${PYVER}
+    bash -x ./scripts/newinstall.sh -cb -${PYVER}
   else
     echo -e "*** testing interactive mode in Python version $PYVER ***\n"
-    echo -e "yes\nyes" | ./scripts/newinstall.sh -c -${PYVER}
+    echo -e "yes\nyes" | bash -x ./scripts/newinstall.sh -c -${PYVER}
   fi
   echo -e "*** Initialising bash environment **\n"
   source loadLSST.bash
