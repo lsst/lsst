@@ -36,7 +36,7 @@ EUPS_PKGROOT_BASE_URL=${EUPS_PKGROOT_BASE_URL:-https://eups.lsst.codes/stack}
 # At the moment, we default to the -2 option and install Python 2 miniconda
 # if we are asked to install a Python. Once the Python 3 port is stable
 # we can switch the default or insist that the user specifies a version.
-PYTHON_VERSION=${PYTHON_VERSION:-2}
+LSST_PYTHON_VERSION=${LSST_PYTHON_VERSION:-2}
 MINICONDA_VERSION=${MINICONDA_VERSION:-4.2.12}
 # this git ref controls which set of conda packages are used to initialize the
 # the default conda env.
@@ -111,10 +111,10 @@ while getopts cbhnP:32 opt; do
 			EUPS_PYTHON=$OPTARG
 			;;
 		2)
-			PYTHON_VERSION=2
+			LSST_PYTHON_VERSION=2
 			;;
 		3)
-			PYTHON_VERSION=3
+			LSST_PYTHON_VERSION=3
 			;;
 		h|*)
 			usage
@@ -240,7 +240,7 @@ default_eups_pkgroot() {
 	local target_cc
 	declare -a roots
 
-	local pyslug="miniconda${PYTHON_VERSION}-${MINICONDA_VERSION}-${LSSTSW_REF}"
+	local pyslug="miniconda${LSST_PYTHON_VERSION}-${MINICONDA_VERSION}-${LSSTSW_REF}"
 
 	sys::osfamily osfamily release
 
@@ -272,7 +272,7 @@ else
 fi
 
 miniconda::install() {
-	local python_version=${1?python version is required}
+	local LSST_PYTHON_VERSION=${1?python version is required}
 	local version=${2?miniconda version is required}
 	local prefix=${3?prefix is required}
 	local miniconda_base_url=${4:-https://repo.continuum.io/miniconda}
@@ -289,7 +289,7 @@ miniconda::install() {
 			;;
 	esac
 
-	miniconda_file_name="Miniconda${python_version}-${version}-${ana_platform}.sh"
+	miniconda_file_name="Miniconda${LSST_PYTHON_VERSION}-${version}-${ana_platform}.sh"
 	echo "::: Deploying ${miniconda_file_name}"
 	$cmd "$CURL" -# -L -O "${miniconda_base_url}/${miniconda_file_name}"
 
@@ -320,15 +320,15 @@ miniconda::config_channels() {
 
 # Install packages on which the stack is known to depend
 miniconda::lsst_env() {
-	local python_version=${1?python version is required}
+	local LSST_PYTHON_VERSION=${1?python version is required}
 	local ref=${2?lsstsw git ref is required}
 
 	case $(uname -s) in
 		Linux*)
-			conda_packages="conda${python_version}_packages-linux-64.txt"
+			conda_packages="conda${LSST_PYTHON_VERSION}_packages-linux-64.txt"
 			;;
 		Darwin*)
-			conda_packages="conda${python_version}_packages-osx-64.txt"
+			conda_packages="conda${LSST_PYTHON_VERSION}_packages-osx-64.txt"
 			;;
 		*)
 			fail "Cannot configure miniconda env: unsupported platform $(uname -s)"
@@ -527,11 +527,11 @@ fi
 
 if true; then
 	if [[ $WITH_MINICONDA == true ]]; then
-		miniconda_slug="miniconda${PYTHON_VERSION}-${MINICONDA_VERSION}"
+		miniconda_slug="miniconda${LSST_PYTHON_VERSION}-${MINICONDA_VERSION}"
 		miniconda_path="${LSST_HOME}/${miniconda_slug}"
 		if [[ ! -e $miniconda_path ]]; then
 			miniconda::install \
-				"$PYTHON_VERSION" \
+				"$LSST_PYTHON_VERSION" \
 				"$MINICONDA_VERSION" \
 				"$miniconda_path" \
 				"$MINICONDA_BASE_URL"
@@ -542,7 +542,7 @@ if true; then
 		if [[ -n $CONDA_CHANNELS ]]; then
 			miniconda::config_channels "$CONDA_CHANNELS"
 		fi
-		miniconda::lsst_env "$PYTHON_VERSION" "$LSSTSW_REF"
+		miniconda::lsst_env "$LSST_PYTHON_VERSION" "$LSSTSW_REF"
 
 		CMD_SETUP_MINICONDA_SH="export PATH=\"${miniconda_path}/bin:\${PATH}\""
 		CMD_SETUP_MINICONDA_CSH="setenv PATH ${miniconda_path}/bin:\$PATH)"
