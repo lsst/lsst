@@ -156,7 +156,7 @@ usage() {
 	fail "$(cat <<-EOF
 
 		usage: newinstall.sh [-b] [-f] [-h] [-n] [-3|-2] [-P <path-to-python>]
-		 -b -- Run in batch mode. Don't ask any questions and install all extra
+		 -b -- Run in batch mode. Don\'t ask any questions and install all extra
 		       packages.
 		 -c -- Attempt to continue a previously failed install.
 		 -n -- No-op. Go through the motions but echo commands instead of running
@@ -272,7 +272,7 @@ if true; then
 
 			The git version control system is frequently used with LSST software.
 			While the LSST stack should build and work even in the absence of git, we
-			don't regularly run and test it in such environments. We therefore
+			don\'t regularly run and test it in such environments. We therefore
 			recommend you have at least git 1.8.4 installed with your normal
 			package manager.
 
@@ -340,7 +340,7 @@ else:
 		these, the installation may fail.  Using the Miniconda Python distribution
 		will ensure all these are set up.
 
-		Miniconda Python installed by this installer will be managed by LSST's EUPS
+		Miniconda Python installed by this installer will be managed by LSST\'s EUPS
 		package manager, and will not replace or modify your system python.
 
 		EOF
@@ -417,7 +417,7 @@ EUPS_PYTHON=${EUPS_PYTHON:-$(which python)}
 if true; then
 	if [[ ! -x $EUPS_PYTHON ]]; then
 		fail "$(cat <<-EOF
-			Cannot find or execute '${EUPS_PYTHON}'.  Please set the EUPS_PYTHON
+			Cannot find or execute \'${EUPS_PYTHON}\'.  Please set the EUPS_PYTHON
 			environment variable or use the -P option to point to a functioning
 			Python >= 2.6 interpreter and rerun.
 			EOF
