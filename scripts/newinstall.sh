@@ -27,11 +27,11 @@ set -e
 
 EUPS_VERSION=${EUPS_VERSION:-2.1.2}
 
-EUPS_GITREV=${EUPS_GITREV:-""}
-EUPS_GITREPO=${EUPS_GITREPO:-"https://github.com/RobertLuptonTheGood/eups.git"}
-EUPS_TARURL=${EUPS_TARURL:-"https://github.com/RobertLuptonTheGood/eups/archive/$EUPS_VERSION.tar.gz"}
+EUPS_GITREV=${EUPS_GITREV:-}
+EUPS_GITREPO=${EUPS_GITREPO:-https://github.com/RobertLuptonTheGood/eups.git}
+EUPS_TARURL=${EUPS_TARURL:-https://github.com/RobertLuptonTheGood/eups/archive/$EUPS_VERSION.tar.gz}
 
-EUPS_PKGROOT=${EUPS_PKGROOT:-"http://sw.lsstcorp.org/eupspkg"}
+EUPS_PKGROOT=${EUPS_PKGROOT:-http://sw.lsstcorp.org/eupspkg}
 
 MINICONDA_VERSION=${MINICONDA_VERSION:-4.2.12}
 # this git ref controls which set of conda packages are used to initialize the
@@ -226,7 +226,7 @@ if [[ -n $0 && $0 != bash ]]; then
 		print_error "$(cat <<-EOF
 			!!! This script differs from the official version on the distribution
 			server.  If this is not intentional, get the current version from here:
-			$NEWINSTALL_URL
+			${NEWINSTALL_URL}
 			EOF
 		)"
 	fi
@@ -395,7 +395,7 @@ if true; then
 		if [[ -n $CONDA_CHANNELS ]]; then
 			miniconda::config_channels "$CONDA_CHANNELS"
 		fi
-		miniconda::lsst_env "${PYTHON_VERSION}" "${LSSTSW_REF}"
+		miniconda::lsst_env "$PYTHON_VERSION" "$LSSTSW_REF"
 
 		CMD_SETUP_MINICONDA_SH="export PATH=\"${miniconda_path}/bin:\${PATH}\""
 		CMD_SETUP_MINICONDA_CSH="setenv PATH ${miniconda_path}/bin:\$PATH)"
@@ -417,7 +417,7 @@ EUPS_PYTHON=${EUPS_PYTHON:-$(which python)}
 if true; then
 	if [[ ! -x $EUPS_PYTHON ]]; then
 		fail "$(cat <<-EOF
-			Cannot find or execute '$EUPS_PYTHON'.  Please set the EUPS_PYTHON
+			Cannot find or execute '${EUPS_PYTHON}'.  Please set the EUPS_PYTHON
 			environment variable or use the -P option to point to a functioning
 			Python >= 2.6 interpreter and rerun.
 			EOF
@@ -427,8 +427,8 @@ if true; then
 	PYVEROK=$($EUPS_PYTHON -c 'import sys; print("%i" % (sys.hexversion >= 0x02060000))')
 	if [[ $PYVEROK != 1 ]]; then
 		fail "$(cat <<-EOF
-			EUPS requires Python 2.6 or newer; we are using $($EUPS_PYTHON -V 2>&1)
-			from $EUPS_PYTHON.  Please set up a compatible python interpreter using
+			EUPS requires Python 2.6 or newer; we are using $("$EUPS_PYTHON" -V 2>&1)
+			from ${EUPS_PYTHON}.  Please set up a compatible python interpreter using
 			the EUPS_PYTHON environment variable or the -P command line option.
 			EOF
 		)"
@@ -439,9 +439,9 @@ if true; then
 	fi
 
 	if [[ -z $EUPS_GITREV ]]; then
-		echo -n "Installing EUPS (v$EUPS_VERSION)... "
+		echo -n "Installing EUPS (v${EUPS_VERSION})... "
 	else
-		echo -n "Installing EUPS (branch $EUPS_GITREV from $EUPS_GITREPO)..."
+		echo -n "Installing EUPS (branch ${EUPS_GITREV} from ${EUPS_GITREPO})..."
 	fi
 
 	if ! (
@@ -449,7 +449,7 @@ if true; then
 		if [[ -z $EUPS_GITREV ]]; then
 			# Download tarball from github
 			$cmd "$CURL" -L "$EUPS_TARURL" | tar xzvf -
-			$cmd cd "eups-$EUPS_VERSION"
+			$cmd cd "eups-${EUPS_VERSION}"
 		else
 			# Clone from git repository
 			$cmd git clone "$EUPS_GITREPO"
@@ -476,7 +476,7 @@ fi
 ##########	Source EUPS
 
 set +e
-$cmd source "$LSST_HOME/eups/bin/setups.sh"
+$cmd source "${LSST_HOME}/eups/bin/setups.sh"
 set -e
 
 ##########	Download optional component (python, git, ...)
@@ -500,7 +500,7 @@ function generate_loader_bash() {
 		# Usage: source $(basename "$file_name")
 
 		# Setup optional packages
-		$CMD_SETUP_MINICONDA_SH
+		${CMD_SETUP_MINICONDA_SH}
 
 		# If not already initialized, set LSST_HOME to the directory where this
 		# script is located
@@ -526,7 +526,7 @@ function generate_loader_csh() {
 		# Usage: source $(basename "$file_name")
 
 		# Setup optional packages
-		$CMD_SETUP_MINICONDA_CSH
+		${CMD_SETUP_MINICONDA_CSH}
 
 		set sourced=(\$_)
 		if ("\${sourced}" != "") then
@@ -557,7 +557,7 @@ function generate_loader_ksh() {
 		# Usage: source $(basename "$file_name")
 
 		# Setup optional packages
-		$CMD_SETUP_MINICONDA_SH
+		${CMD_SETUP_MINICONDA_SH}
 
 		# If not already initialized, set LSST_HOME to the directory where this
 		# script is located
@@ -583,7 +583,7 @@ function generate_loader_zsh() {
 		# Usage: source $(basename "$file_name")
 
 		# Setup optional packages
-		$CMD_SETUP_MINICONDA_SH
+		${CMD_SETUP_MINICONDA_SH}
 
 		# If not already initialized, set LSST_HOME to the directory where this
 		# script is located
@@ -601,8 +601,8 @@ EOF
 }
 
 for sfx in bash ksh csh zsh; do
-	echo -n "Creating startup scripts ($sfx) ... "
-	generate_loader_$sfx "$LSST_HOME/loadLSST.$sfx"
+	echo -n "Creating startup scripts (${sfx}) ... "
+	generate_loader_$sfx "${LSST_HOME}/loadLSST.${sfx}"
 	echo "done."
 done
 
@@ -613,10 +613,10 @@ cat <<-EOF
 	Bootstrap complete. To continue installing (and to use) the LSST stack type
 	one of:
 
-		source "$LSST_HOME/loadLSST.bash"  # for bash
-		source "$LSST_HOME/loadLSST.csh"   # for csh
-		source "$LSST_HOME/loadLSST.ksh"   # for ksh
-		source "$LSST_HOME/loadLSST.zsh"   # for zsh
+		source "${LSST_HOME}/loadLSST.bash"  # for bash
+		source "${LSST_HOME}/loadLSST.csh"   # for csh
+		source "${LSST_HOME}/loadLSST.ksh"   # for ksh
+		source "${LSST_HOME}/loadLSST.zsh"   # for zsh
 
 	Individual LSST packages may now be installed with the usual \`eups distrib
 	install\` command.  For example, to install the science pipeline elements of
