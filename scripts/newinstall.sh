@@ -271,6 +271,13 @@ else
 	CURL=${CURL:-curl}
 fi
 
+# disable curl progress meter unless running under a tty -- this is intended to
+# reduce the amount of console output when running under CI
+CURL_OPTS='-#'
+if [[ ! -t 1 ]]; then
+	CURL_OPTS='-sS'
+fi
+
 miniconda::install() {
 	local LSST_PYTHON_VERSION=${1?python version is required}
 	local version=${2?miniconda version is required}
@@ -291,7 +298,7 @@ miniconda::install() {
 
 	miniconda_file_name="Miniconda${LSST_PYTHON_VERSION}-${version}-${ana_platform}.sh"
 	echo "::: Deploying ${miniconda_file_name}"
-	$cmd "$CURL" -sSL -O "${miniconda_base_url}/${miniconda_file_name}"
+	$cmd "$CURL" "$CURL_OPTS" -L -O "${miniconda_base_url}/${miniconda_file_name}"
 
 	$cmd bash "$miniconda_file_name" -b -p "$prefix"
 }
@@ -349,8 +356,8 @@ miniconda::lsst_env() {
 		# after either a normal exit or an error condition
 		# shellcheck disable=SC2064
 		trap "{ rm -rf $tmpfile; }" EXIT
-		$cmd "$CURL" \
-			-sSL \
+		$cmd "$CURL" "$CURL_OPTS" \
+			-L \
 			"${baseurl}/${conda_packages}" \
 			--output "$tmpfile"
 
@@ -372,7 +379,7 @@ echo
 if [[ -n $0 && $0 != bash ]]; then
 	set +e
 
-	AMIDIFF=$($CURL -sSL "$NEWINSTALL_URL" | diff --brief - "$0")
+	AMIDIFF=$($CURL $CURL_OPTS -L "$NEWINSTALL_URL" | diff --brief - "$0")
 
 	if [[ $AMIDIFF == *differ ]]; then
 		print_error "$(cat <<-EOF
@@ -600,7 +607,7 @@ if true; then
 		mkdir _build && cd _build
 		if [[ -z $EUPS_GITREV ]]; then
 			# Download tarball from github
-			$cmd "$CURL" -sSL "$EUPS_TARURL" | tar xzvf -
+			$cmd "$CURL" "$CURL_OPTS" -L "$EUPS_TARURL" | tar xzvf -
 			$cmd cd "eups-${EUPS_VERSION}"
 		else
 			# Clone from git repository
