@@ -351,6 +351,14 @@ miniconda::lsst_env() {
 	$cmd conda clean --lock
 
 	(
+		set -e
+
+		# disable conda progress meter unless running under a tty -- this is
+		# intended to reduce the amount of console output when running under CI
+		if [[ ! -t 1 ]]; then
+			conda_opts='--quiet'
+	  fi
+
 		tmpfile=$(mktemp -t "${conda_packages}.XXXXXXXX")
 		# attempt to be a good citizen and not leave tmp files laying around
 		# after either a normal exit or an error condition
@@ -361,7 +369,7 @@ miniconda::lsst_env() {
 			"${baseurl}/${conda_packages}" \
 			--output "$tmpfile"
 
-		$cmd conda install --yes --file "$tmpfile"
+		$cmd conda install --yes --file "$tmpfile" $conda_opts
 	)
 }
 
