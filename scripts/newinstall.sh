@@ -291,7 +291,7 @@ miniconda::install() {
 
 	miniconda_file_name="Miniconda${LSST_PYTHON_VERSION}-${version}-${ana_platform}.sh"
 	echo "::: Deploying ${miniconda_file_name}"
-	$cmd "$CURL" -# -L -O "${miniconda_base_url}/${miniconda_file_name}"
+	$cmd "$CURL" -sSL -O "${miniconda_base_url}/${miniconda_file_name}"
 
 	$cmd bash "$miniconda_file_name" -b -p "$prefix"
 }
@@ -350,7 +350,7 @@ miniconda::lsst_env() {
 		# shellcheck disable=SC2064
 		trap "{ rm -rf $tmpfile; }" EXIT
 		$cmd "$CURL" \
-			-# -L --silent \
+			-sSL \
 			"${baseurl}/${conda_packages}" \
 			--output "$tmpfile"
 
@@ -372,7 +372,7 @@ echo
 if [[ -n $0 && $0 != bash ]]; then
 	set +e
 
-	AMIDIFF=$($CURL -L --silent "$NEWINSTALL_URL" | diff --brief - "$0")
+	AMIDIFF=$($CURL -sSL "$NEWINSTALL_URL" | diff --brief - "$0")
 
 	if [[ $AMIDIFF == *differ ]]; then
 		print_error "$(cat <<-EOF
@@ -600,7 +600,7 @@ if true; then
 		mkdir _build && cd _build
 		if [[ -z $EUPS_GITREV ]]; then
 			# Download tarball from github
-			$cmd "$CURL" -L "$EUPS_TARURL" | tar xzvf -
+			$cmd "$CURL" -sSL "$EUPS_TARURL" | tar xzvf -
 			$cmd cd "eups-${EUPS_VERSION}"
 		else
 			# Clone from git repository
