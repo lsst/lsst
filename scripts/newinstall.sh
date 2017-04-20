@@ -338,6 +338,11 @@ miniconda::lsst_env() {
 	local baseurl="https://raw.githubusercontent.com/lsst/lsstsw/${ref}/etc/"
 	local tmpfile
 
+	# conda may leave behind lock files from an uncompleted package installation
+	# attempt.  These need to be cleaned up before [re]attempting to install
+	# packages.
+	$cmd conda clean --lock
+
 	(
 		tmpfile=$(mktemp -t "${conda_packages}.XXXXXXXX")
 		# attempt to be a good citizen and not leave tmp files laying around
