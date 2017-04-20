@@ -57,7 +57,7 @@ print_error() {
 }
 
 fail() {
-	code=${2:1}
+	local code=${2:-1}
 	[[ -n $1 ]] && print_error "$1"
 	# shellcheck disable=SC2086
 	exit $code
