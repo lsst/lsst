@@ -640,14 +640,6 @@ if true; then
 
 fi
 
-##########	Source EUPS
-
-set +e
-$cmd source "${LSST_HOME}/eups/bin/setups.sh"
-set -e
-
-##########	Download optional component (python, git, ...)
-
 
 ##########	Create the environment loader scripts
 
