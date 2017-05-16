@@ -15,7 +15,6 @@
 # Bootstrap lsst stack install by:
 #	* Installing Miniconda2 Python distribution, if necessary
 #	* Installing EUPS
-#	* Install everything up to the lsst package
 #	* Creating the loadLSST.xxx scripts
 #
 
@@ -92,36 +91,37 @@ usage() {
 	)"
 }
 
-cont_flag=false
-batch_flag=false
-noop_flag=false
+parse_args() {
+	local OPTIND
+	local opt
 
-while getopts cbhnP:32 opt; do
-	case $opt in
-		b)
-			batch_flag=true
-			;;
-		c)
-			cont_flag=true
-			;;
-		n)
-			noop_flag=true
-			;;
-		P)
-			EUPS_PYTHON=$OPTARG
-			;;
-		2)
-			LSST_PYTHON_VERSION=2
-			;;
-		3)
-			LSST_PYTHON_VERSION=3
-			;;
-		h|*)
-			usage
-			;;
-	esac
-done
-shift $((OPTIND - 1))
+	while getopts cbhnP:32 opt; do
+		case $opt in
+			b)
+				batch_flag=true
+				;;
+			c)
+				cont_flag=true
+				;;
+			n)
+				noop_flag=true
+				;;
+			P)
+				EUPS_PYTHON=$OPTARG
+				;;
+			2)
+				LSST_PYTHON_VERSION=2
+				;;
+			3)
+				LSST_PYTHON_VERSION=3
+				;;
+			h|*)
+				usage
+				;;
+		esac
+	done
+	shift $((OPTIND - 1))
+}
 
 #
 # determine the osfamily and release string
@@ -260,23 +260,21 @@ default_eups_pkgroot() {
 	echo -n "$(join '|' "${roots[@]}")"
 }
 
-EUPS_PKGROOT=${EUPS_PKGROOT:-$(default_eups_pkgroot)}
+config_curl() {
+	# Prefer system curl; user-installed ones sometimes behave oddly
+	if [[ -x /usr/bin/curl ]]; then
+		CURL=${CURL:-/usr/bin/curl}
+	else
+		CURL=${CURL:-curl}
+	fi
 
-print_error "Configured EUPS_PKGROOT: ${EUPS_PKGROOT}"
-
-# Prefer system curl; user-installed ones sometimes behave oddly
-if [[ -x /usr/bin/curl ]]; then
-	CURL=${CURL:-/usr/bin/curl}
-else
-	CURL=${CURL:-curl}
-fi
-
-# disable curl progress meter unless running under a tty -- this is intended to
-# reduce the amount of console output when running under CI
-CURL_OPTS='-#'
-if [[ ! -t 1 ]]; then
-	CURL_OPTS='-sS'
-fi
+	# disable curl progress meter unless running under a tty -- this is intended to
+	# reduce the amount of console output when running under CI
+	CURL_OPTS='-#'
+	if [[ ! -t 1 ]]; then
+		CURL_OPTS='-sS'
+	fi
+}
 
 miniconda::install() {
 	local LSST_PYTHON_VERSION=${1?python version is required}
@@ -373,21 +371,18 @@ miniconda::lsst_env() {
 	)
 }
 
-echo
-echo "LSST Software Stack Builder"
-echo "======================================================================="
-echo
-
-##########	Warn if there's a different version on the server
-
+#
+# Warn if there's a different version on the server
+#
 # Don't make this fatal, it should still work for developers who are hacking
 # their copy.
-
+#
 # Don't attempt to run diff when the script has been piped into the shell
-if [[ -n $0 && $0 != bash ]]; then
+#
+up2date_check() {
 	set +e
 
-	AMIDIFF=$($CURL $CURL_OPTS -L "$NEWINSTALL_URL" | diff --brief - "$0")
+	AMIDIFF=$($CURL "$CURL_OPTS" -L "$NEWINSTALL_URL" | diff --brief - "$0")
 
 	if [[ $AMIDIFF == *differ ]]; then
 		print_error "$(cat <<-EOF
@@ -399,32 +394,10 @@ if [[ -n $0 && $0 != bash ]]; then
 	fi
 
 	set -e
-fi
+}
 
-##########	If no-op, prefix every install command with echo
-
-if [[ $noop_flag == true ]]; then
-	cmd="echo"
-	echo "!!! -n flag specified, no install commands will be really executed"
-else
-	cmd=""
-fi
-
-##########	Refuse to run from a non-empty directory
-
-if [[ $cont_flag == false ]]; then
-	if [[ ! -z $(ls) && ! $(ls) == newinstall.sh ]]; then
-		fail "$(cat <<-EOF
-			Please run this script from an empty directory. The LSST stack will be
-			installed into it.
-			EOF
-		)"
-	fi
-fi
-
-##########  Discuss the state of Git.
-
-if true; then
+# Discuss the state of Git.
+git_check() {
 	if hash git 2>/dev/null; then
 		GITVERNUM=$(git --version | cut -d\  -f 3)
 		# shellcheck disable=SC2046 disable=SC2183
@@ -465,15 +438,15 @@ if true; then
 		echo "Detected $(git --version). OK."
 	fi
 	echo
-fi
+}
 
-
+#
 #	Test/warn about Python versions, offer to get miniconda if not supported.
 #	LSST currently mandates Python 3.5 and, optionally, 2.7.  We assume that the
 #	python in PATH is the python that will be used to build the stack if
 #	miniconda(2/3) is not installed.
-
-if true; then
+#
+python_check() {
 	# Check the version by running a small Python program (taken from the Python
 	# EUPS package) XXX this will break if python is not in $PATH
 	PYVEROK=$(python -c 'import sys
@@ -541,47 +514,35 @@ else:
 		done
 		echo
 	fi
-fi
+}
 
-##########	Bootstrap miniconda (optional)
-
-if true; then
-	if [[ $WITH_MINICONDA == true ]]; then
-		miniconda_slug="miniconda${LSST_PYTHON_VERSION}-${MINICONDA_VERSION}"
-		miniconda_path="${LSST_HOME}/${miniconda_slug}"
-		if [[ ! -e $miniconda_path ]]; then
-			miniconda::install \
-				"$LSST_PYTHON_VERSION" \
-				"$MINICONDA_VERSION" \
-				"$miniconda_path" \
-				"$MINICONDA_BASE_URL"
-		fi
-
-		export PATH="${miniconda_path}/bin:${PATH}"
-
-		if [[ -n $CONDA_CHANNELS ]]; then
-			miniconda::config_channels "$CONDA_CHANNELS"
-		fi
-		miniconda::lsst_env "$LSST_PYTHON_VERSION" "$LSSTSW_REF"
-
-		CMD_SETUP_MINICONDA_SH="export PATH=\"${miniconda_path}/bin:\${PATH}\""
-		CMD_SETUP_MINICONDA_CSH="setenv PATH ${miniconda_path}/bin:\$PATH)"
+bootstrap_miniconda() {
+	miniconda_slug="miniconda${LSST_PYTHON_VERSION}-${MINICONDA_VERSION}"
+	miniconda_path="${LSST_HOME}/${miniconda_slug}"
+	if [[ ! -e $miniconda_path ]]; then
+		miniconda::install \
+			"$LSST_PYTHON_VERSION" \
+			"$MINICONDA_VERSION" \
+			"$miniconda_path" \
+			"$MINICONDA_BASE_URL"
 	fi
-fi
 
-# By default we use the PATH Python to bootstrap EUPS.  Set $EUPS_PYTHON to
-# override this or use the -P command line option.  $EUPS_PYTHON is used to
-# install and run EUPS and will not necessarily be the python in the path being
-# used to build the stack itself.
-EUPS_PYTHON=${EUPS_PYTHON:-$(which python)}
+	export PATH="${miniconda_path}/bin:${PATH}"
 
+	if [[ -n $CONDA_CHANNELS ]]; then
+		miniconda::config_channels "$CONDA_CHANNELS"
+	fi
+	miniconda::lsst_env "$LSST_PYTHON_VERSION" "$LSSTSW_REF"
 
-##########	Install EUPS
+	CMD_SETUP_MINICONDA_SH="export PATH=\"${miniconda_path}/bin:\${PATH}\""
+	CMD_SETUP_MINICONDA_CSH="setenv PATH ${miniconda_path}/bin:\$PATH)"
+}
 
-##########	$EUPS_PYTHON is the Python used to install/run EUPS.
-##########	It can be any Python >= v2.6
-
-if true; then
+#
+# $EUPS_PYTHON is the Python used to install/run EUPS.  It can be any Python >=
+# v2.6
+#
+install_eups() {
 	if [[ ! -x $EUPS_PYTHON ]]; then
 		fail "$(cat <<-EOF
 			Cannot find or execute \'${EUPS_PYTHON}\'.  Please set the EUPS_PYTHON
@@ -637,21 +598,9 @@ if true; then
 		)"
 	fi
 	echo " done."
+}
 
-fi
-
-##########	Source EUPS
-
-set +e
-$cmd source "${LSST_HOME}/eups/bin/setups.sh"
-set -e
-
-##########	Download optional component (python, git, ...)
-
-
-##########	Create the environment loader scripts
-
-function generate_loader_bash() {
+generate_loader_bash() {
 	file_name=$1
 	# shellcheck disable=SC2094
 	cat > "$file_name" <<-EOF
@@ -673,10 +622,10 @@ function generate_loader_bash() {
 		source "\${EUPS_DIR}/bin/setups.sh"
 
 		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$EUPS_PKGROOT}
-EOF
+	EOF
 }
 
-function generate_loader_csh() {
+generate_loader_csh() {
 	file_name=$1
 	# shellcheck disable=SC2094
 	cat > "$file_name" <<-EOF
@@ -705,10 +654,10 @@ function generate_loader_csh() {
 		     set EUPS_PKGROOT = "$EUPS_PKGROOT"
 		   endif
 		endif
-EOF
+	EOF
 }
 
-function generate_loader_ksh() {
+generate_loader_ksh() {
 	file_name=$1
 	# shellcheck disable=SC2094
 	cat > "$file_name" <<-EOF
@@ -730,10 +679,10 @@ function generate_loader_ksh() {
 		source "\${EUPS_DIR}/bin/setups.sh"
 
 		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$EUPS_PKGROOT}
-EOF
+	EOF
 }
 
-function generate_loader_zsh() {
+generate_loader_zsh() {
 	file_name=$1
 	# shellcheck disable=SC2094
 	cat > "$file_name" <<-EOF
@@ -755,45 +704,116 @@ function generate_loader_zsh() {
 		source "\${EUPS_DIR}/bin/setups.zsh"
 
 		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$EUPS_PKGROOT}
-EOF
+	EOF
 }
 
-for sfx in bash ksh csh zsh; do
-	echo -n "Creating startup scripts (${sfx}) ... "
-	generate_loader_$sfx "${LSST_HOME}/loadLSST.${sfx}"
-	echo "done."
-done
+create_load_scripts() {
+	for sfx in bash ksh csh zsh; do
+		echo -n "Creating startup scripts (${sfx}) ... "
+		generate_loader_$sfx "${LSST_HOME}/loadLSST.${sfx}"
+		echo "done."
+	done
+}
 
-##########	Helpful message about what to do next
+print_greeting() {
+	cat <<-EOF
 
-cat <<-EOF
+		Bootstrap complete. To continue installing (and to use) the LSST stack type
+		one of:
 
-	Bootstrap complete. To continue installing (and to use) the LSST stack type
-	one of:
+			source "${LSST_HOME}/loadLSST.bash"  # for bash
+			source "${LSST_HOME}/loadLSST.csh"   # for csh
+			source "${LSST_HOME}/loadLSST.ksh"   # for ksh
+			source "${LSST_HOME}/loadLSST.zsh"   # for zsh
 
-		source "${LSST_HOME}/loadLSST.bash"  # for bash
-		source "${LSST_HOME}/loadLSST.csh"   # for csh
-		source "${LSST_HOME}/loadLSST.ksh"   # for ksh
-		source "${LSST_HOME}/loadLSST.zsh"   # for zsh
+		Individual LSST packages may now be installed with the usual \`eups distrib
+		install\` command.  For example, to install the science pipeline elements
+		of the LSST stack, use:
 
-	Individual LSST packages may now be installed with the usual \`eups distrib
-	install\` command.  For example, to install the science pipeline elements of
-	the LSST stack, use:
+			eups distrib install lsst_apps
 
-		eups distrib install lsst_apps
+		Next, read the documentation at:
 
-	Next, read the documentation at:
+			https://pipelines.lsst.io
 
-		https://pipelines.lsst.io
+		and feel free to ask any questions via the LSST Community forum:
 
-	and feel free to ask any questions via the LSST Community forum:
-
-		https://community.lsst.org/c/support
+			https://community.lsst.org/c/support
 
 	                                       Thanks!
 	                                                -- The LSST Software Teams
 	                                                       http://dm.lsst.org/
 
+	EOF
+}
+
+
+#
+# script main
+#
+config_curl
+
+cont_flag=false
+batch_flag=false
+noop_flag=false
+
+parse_args "$@"
+
+cat <<-EOF
+
+	LSST Software Stack Builder
+	=======================================================================
+
 EOF
+
+# If no-op, prefix every install command with echo
+if [[ $noop_flag == true ]]; then
+	cmd="echo"
+	echo "!!! -n flag specified, no install commands will be really executed"
+else
+	cmd=""
+fi
+
+# Refuse to run from a non-empty directory
+if [[ $cont_flag == false ]]; then
+	if [[ ! -z $(ls) && ! $(ls) == newinstall.sh ]]; then
+		fail "$(cat <<-EOF
+			Please run this script from an empty directory. The LSST stack will be
+			installed into it.
+			EOF
+		)"
+	fi
+fi
+
+# Warn if there's a different version on the server
+if [[ -n $0 && $0 != bash ]]; then
+	up2date_check
+fi
+
+git_check
+python_check
+
+# By default we use the PATH Python to bootstrap EUPS.  Set $EUPS_PYTHON to
+# override this or use the -P command line option.  $EUPS_PYTHON is used to
+# install and run EUPS and will not necessarily be the python in the path being
+# used to build the stack itself.
+EUPS_PYTHON=${EUPS_PYTHON:-$(which python)}
+
+EUPS_PKGROOT=${EUPS_PKGROOT:-$(default_eups_pkgroot)}
+print_error "Configured EUPS_PKGROOT: ${EUPS_PKGROOT}"
+
+# Bootstrap miniconda (optional)
+if [[ $WITH_MINICONDA == true ]]; then
+	bootstrap_miniconda
+fi
+
+# Install EUPS
+install_eups
+
+# Create the environment loader scripts
+create_load_scripts
+
+# Helpful message about what to do next
+print_greeting
 
 # vim: tabstop=2 shiftwidth=2 noexpandtab
