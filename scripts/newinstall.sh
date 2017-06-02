@@ -31,6 +31,7 @@ EUPS_GITREPO=${EUPS_GITREPO:-https://github.com/RobertLuptonTheGood/eups.git}
 EUPS_TARURL=${EUPS_TARURL:-https://github.com/RobertLuptonTheGood/eups/archive/$EUPS_VERSION.tar.gz}
 
 EUPS_PKGROOT_BASE_URL=${EUPS_PKGROOT_BASE_URL:-https://eups.lsst.codes/stack}
+EUPS_USE_TARBALLS=${EUPS_USE_TARBALLS:-false}
 
 # At the moment, we default to the -2 option and install Python 2 miniconda
 # if we are asked to install a Python. Once the Python 3 port is stable
@@ -76,7 +77,7 @@ fail() {
 usage() {
 	fail "$(cat <<-EOF
 
-		usage: newinstall.sh [-b] [-f] [-h] [-n] [-3|-2] [-P <path-to-python>]
+		usage: newinstall.sh [-b] [-f] [-h] [-n] [-3|-2] [-t] [-P <path-to-python>]
 		 -b -- Run in batch mode. Don\'t ask any questions and install all extra
 		       packages.
 		 -c -- Attempt to continue a previously failed install.
@@ -85,6 +86,7 @@ usage() {
 		 -P [PATH_TO_PYTHON] -- Use a specific python interpreter for EUPS.
 		 -2 -- Use Python 2 if the script is installing its own Python. (default)
 		 -3 -- Use Python 3 if the script is installing its own Python.
+		 -t -- Use pre-compiled EUPS "tarball" packages, if available.
 		 -h -- Display this help message.
 
 		EOF
@@ -95,7 +97,7 @@ parse_args() {
 	local OPTIND
 	local opt
 
-	while getopts cbhnP:32 opt; do
+	while getopts cbhnP:32t opt; do
 		case $opt in
 			b)
 				batch_flag=true
@@ -114,6 +116,9 @@ parse_args() {
 				;;
 			3)
 				LSST_PYTHON_VERSION=3
+				;;
+			t)
+				EUPS_USE_TARBALLS=true
 				;;
 			h|*)
 				usage
@@ -234,6 +239,8 @@ sys::platform() {
 join() { local IFS="$1"; shift; echo "$*"; }
 
 default_eups_pkgroot() {
+	local use_tarballs=${1:-false}
+
 	local osfamily
 	local release
 	local platform
@@ -242,7 +249,10 @@ default_eups_pkgroot() {
 
 	local pyslug="miniconda${LSST_PYTHON_VERSION}-${MINICONDA_VERSION}-${LSSTSW_REF}"
 
-	sys::osfamily osfamily release
+	# only probe system *IF* tarballs are desired
+	if [[ $use_tarballs == true ]]; then
+		sys::osfamily osfamily release
+	fi
 
 	if [[ -n $osfamily && -n $release ]]; then
 		sys::platform "$osfamily" "$release" platform target_cc
@@ -799,7 +809,7 @@ python_check
 # used to build the stack itself.
 EUPS_PYTHON=${EUPS_PYTHON:-$(which python)}
 
-EUPS_PKGROOT=${EUPS_PKGROOT:-$(default_eups_pkgroot)}
+EUPS_PKGROOT=${EUPS_PKGROOT:-$(default_eups_pkgroot $EUPS_USE_TARBALLS)}
 print_error "Configured EUPS_PKGROOT: ${EUPS_PKGROOT}"
 
 # Bootstrap miniconda (optional)
