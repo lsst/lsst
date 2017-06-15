@@ -1,4 +1,3 @@
-sudo: false
 language: cpp
 os:
   - linux
@@ -9,6 +8,10 @@ dist: trusty
 compiler:
   - clang
   - gcc
+addons:
+  apt:
+    packages:
+    - tcsh
 script: |
   set -e
   if [[ $BATCH == true ]]; then
@@ -18,13 +21,25 @@ script: |
     echo -e "*** testing interactive mode in Python version $PYVER ***\n"
     echo -e "yes\nyes" | bash -x ./scripts/newinstall.sh -c -${PYVER}
   fi
-  echo -e "*** Initialising bash environment **\n"
-  source loadLSST.bash
+  echo -e "*** Testing initializaion of shell environment ***\n"
+  case $MANGLER in
+    tcsh)
+      # csh_20110502-2ubuntu2_amd64.deb from ubuntu:trusty (travis) opens a new
+      # shell interactive shell when passed--version
+      tcsh --version
+      tcsh -ec 'source loadLSST.csh && echo $EUPS_PKGROOT'
+      ;;
+    *)
+      bash --version
+      bash -ec 'source loadLSST.bash && echo $EUPS_PKGROOT'
+      ;;
+  esac
 env:
   - BATCH=true PYVER="2"
   - BATCH=true PYVER="3"
   - BATCH=false PYVER="2"
   - BATCH=false PYVER="3"
+  - MANGLER=tcsh BATCH=true PYVER="3"
 matrix:
   # osx builds are often very slow to start due to high demand
   fast_finish: true
