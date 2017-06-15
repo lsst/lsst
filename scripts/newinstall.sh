@@ -570,8 +570,17 @@ else:
 }
 
 bootstrap_miniconda() {
+	local miniconda_base_path="${LSST_HOME}/python"
 	local miniconda_path
-	miniconda_path="${LSST_HOME}/$(miniconda_slug)"
+	miniconda_path="${miniconda_base_path}/$(miniconda_slug)"
+
+	local miniconda_path_old
+	miniconda_path_old="${LSST_HOME}/$(miniconda_slug)"
+
+	# remove old unnested miniconda -- the install has hard coded shebangs
+	if [[ -e $miniconda_path_old ]]; then
+		rm -rf "$miniconda_path_old"
+	fi
 
 	if [[ ! -e $miniconda_path ]]; then
 		miniconda::install \
