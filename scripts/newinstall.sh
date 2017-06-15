@@ -661,7 +661,7 @@ generate_loader_csh() {
 		   source "\${EUPS_DIR}/bin/setups.csh"
 
 		   if ( ! \${?EUPS_PKGROOT} ) then
-		     set EUPS_PKGROOT = "$EUPS_PKGROOT"
+		     setenv EUPS_PKGROOT "$EUPS_PKGROOT"
 		   endif
 		endif
 	EOF
