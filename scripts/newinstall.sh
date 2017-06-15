@@ -646,23 +646,19 @@ generate_loader_csh() {
 		# Setup optional packages
 		${CMD_SETUP_MINICONDA_CSH}
 
-		set sourced=(\$_)
-		if ("\${sourced}" != "") then
-			 # If not already initialized, set LSST_HOME to the directory where this
-			 # script is located
-		   set this_script = \${sourced[2]}
-		   if ( ! \${?LSST_HOME} ) then
-		     set LSST_HOME = \`dirname \${this_script}\`
-		     set LSST_HOME = \`cd \${LSST_HOME} && pwd\`
-		   endif
+		# If not already initialized, set LSST_HOME to the directory where this
+		# script is located
+		if ( ! \${?LSST_HOME} ) then
+		  set LSST_HOME = \`dirname \$0\`
+		  set LSST_HOME = \`cd \${LSST_HOME} && pwd\`
+		endif
 
-		   # Bootstrap EUPS
-		   set EUPS_DIR = "\${LSST_HOME}/eups"
-		   source "\${EUPS_DIR}/bin/setups.csh"
+		# Bootstrap EUPS
+		set EUPS_DIR = "\${LSST_HOME}/eups"
+		source "\${EUPS_DIR}/bin/setups.csh"
 
-		   if ( ! \${?EUPS_PKGROOT} ) then
-		     setenv EUPS_PKGROOT "$EUPS_PKGROOT"
-		   endif
+		if ( ! \${?EUPS_PKGROOT} ) then
+		  setenv EUPS_PKGROOT "$EUPS_PKGROOT"
 		endif
 	EOF
 }
