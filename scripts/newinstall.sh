@@ -97,6 +97,10 @@ miniconda_slug() {
 	echo "miniconda${LSST_PYTHON_VERSION}-${MINICONDA_VERSION}"
 }
 
+python_env_slug() {
+	echo "$(miniconda_slug)-${LSSTSW_REF}"
+}
+
 parse_args() {
 	local OPTIND
 	local opt
@@ -251,7 +255,8 @@ default_eups_pkgroot() {
 	local target_cc
 	declare -a roots
 
-	local pyslug="miniconda${LSST_PYTHON_VERSION}-${MINICONDA_VERSION}-${LSSTSW_REF}"
+	local pyslug
+	pyslug=$(python_env_slug)
 
 	# only probe system *IF* tarballs are desired
 	if [[ $use_tarballs == true ]]; then
