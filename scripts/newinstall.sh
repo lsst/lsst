@@ -545,7 +545,7 @@ bootstrap_miniconda() {
 	miniconda::lsst_env "$LSST_PYTHON_VERSION" "$LSSTSW_REF"
 
 	CMD_SETUP_MINICONDA_SH="export PATH=\"${miniconda_path}/bin:\${PATH}\""
-	CMD_SETUP_MINICONDA_CSH="setenv PATH ${miniconda_path}/bin:\$PATH)"
+	CMD_SETUP_MINICONDA_CSH="setenv PATH ${miniconda_path}/bin:\$PATH"
 }
 
 #
