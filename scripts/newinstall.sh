@@ -93,6 +93,10 @@ usage() {
 	)"
 }
 
+miniconda_slug() {
+	echo "miniconda${LSST_PYTHON_VERSION}-${MINICONDA_VERSION}"
+}
+
 parse_args() {
 	local OPTIND
 	local opt
@@ -532,8 +536,8 @@ else:
 }
 
 bootstrap_miniconda() {
-	local miniconda_slug="miniconda${LSST_PYTHON_VERSION}-${MINICONDA_VERSION}"
-	local miniconda_path="${LSST_HOME}/${miniconda_slug}"
+	local miniconda_path
+	miniconda_path="${LSST_HOME}/$(miniconda_slug)"
 
 	if [[ ! -e $miniconda_path ]]; then
 		miniconda::install \
