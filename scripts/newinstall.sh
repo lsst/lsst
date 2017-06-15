@@ -590,7 +590,7 @@ install_eups() {
 			$cmd cd "eups-${EUPS_VERSION}"
 		else
 			# Clone from git repository
-			$cmd git clone "$EUPS_GITREPO"
+			$cmd git clone "$EUPS_GITREPO" eups
 			$cmd cd eups
 			$cmd git checkout "$EUPS_GITREV"
 		fi
