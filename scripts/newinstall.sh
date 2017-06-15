@@ -119,6 +119,16 @@ eups_dir() {
 	echo "$(eups_base_dir)/$(eups_slug)"
 }
 
+#
+# version the eups product installation path using the *complete* python
+# environment
+#
+# XXX this will probably need to be extended to include the compiler used for
+# binary tarballs
+#
+eups_path() {
+	echo "${LSST_HOME}/stack/$(python_env_slug)"
+}
 
 parse_args() {
 	local OPTIND
@@ -651,7 +661,7 @@ install_eups() {
 
 		$cmd ./configure \
 			--prefix="$(eups_dir)" \
-			--with-eups="$LSST_HOME" \
+			--with-eups="$(eups_path)" \
 			--with-python="$EUPS_PYTHON"
 		$cmd make install
 	) > eupsbuild.log 2>&1 ; then
