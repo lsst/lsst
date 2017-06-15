@@ -24,7 +24,7 @@ set -e
 # Note to developers: change these when the EUPS version we use changes
 #
 
-EUPS_VERSION=${EUPS_VERSION:-2.1.2}
+EUPS_VERSION=${EUPS_VERSION:-2.1.3}
 
 EUPS_GITREV=${EUPS_GITREV:-}
 EUPS_GITREPO=${EUPS_GITREPO:-https://github.com/RobertLuptonTheGood/eups.git}
