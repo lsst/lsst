@@ -757,73 +757,97 @@ print_greeting() {
 	EOF
 }
 
+#
+# test to see if script is being sourced or executed. Note that this function
+# will work correctly when the source is being piped to a shell. `Ie., cat
+# newinstall.sh | bash -s`
+#
+# See: https://stackoverflow.com/a/12396228
+#
+am_I_sourced() {
+	if [ "${FUNCNAME[1]}" = source ]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
 
 #
 # script main
 #
-config_curl
+main() {
+	config_curl
 
-cont_flag=false
-batch_flag=false
-noop_flag=false
+	cont_flag=false
+	batch_flag=false
+	noop_flag=false
 
-parse_args "$@"
+	parse_args "$@"
 
-cat <<-EOF
+	cat <<-EOF
 
-	LSST Software Stack Builder
-	=======================================================================
+		LSST Software Stack Builder
+		=======================================================================
 
-EOF
+	EOF
 
-# If no-op, prefix every install command with echo
-if [[ $noop_flag == true ]]; then
-	cmd="echo"
-	echo "!!! -n flag specified, no install commands will be really executed"
-else
-	cmd=""
-fi
-
-# Refuse to run from a non-empty directory
-if [[ $cont_flag == false ]]; then
-	if [[ ! -z $(ls) && ! $(ls) == newinstall.sh ]]; then
-		fail "$(cat <<-EOF
-			Please run this script from an empty directory. The LSST stack will be
-			installed into it.
-			EOF
-		)"
+	# If no-op, prefix every install command with echo
+	if [[ $noop_flag == true ]]; then
+		cmd="echo"
+		echo "!!! -n flag specified, no install commands will be really executed"
+	else
+		cmd=""
 	fi
+
+	# Refuse to run from a non-empty directory
+	if [[ $cont_flag == false ]]; then
+		if [[ ! -z $(ls) && ! $(ls) == newinstall.sh ]]; then
+			fail "$(cat <<-EOF
+				Please run this script from an empty directory. The LSST stack will be
+				installed into it.
+				EOF
+			)"
+		fi
+	fi
+
+	# Warn if there's a different version on the server
+	if [[ -n $0 && $0 != bash ]]; then
+		up2date_check
+	fi
+
+	git_check
+	python_check
+
+	# By default we use the PATH Python to bootstrap EUPS.  Set $EUPS_PYTHON to
+	# override this or use the -P command line option.  $EUPS_PYTHON is used to
+	# install and run EUPS and will not necessarily be the python in the path being
+	# used to build the stack itself.
+	EUPS_PYTHON=${EUPS_PYTHON:-$(which python)}
+
+	EUPS_PKGROOT=${EUPS_PKGROOT:-$(default_eups_pkgroot $EUPS_USE_TARBALLS)}
+	print_error "Configured EUPS_PKGROOT: ${EUPS_PKGROOT}"
+
+	# Bootstrap miniconda (optional)
+	if [[ $WITH_MINICONDA == true ]]; then
+		bootstrap_miniconda
+	fi
+
+	# Install EUPS
+	install_eups
+
+	# Create the environment loader scripts
+	create_load_scripts
+
+	# Helpful message about what to do next
+	print_greeting
+}
+
+#
+# support being sourced as a lib or executed
+#
+if ! am_I_sourced; then
+	main "$@"
 fi
-
-# Warn if there's a different version on the server
-if [[ -n $0 && $0 != bash ]]; then
-	up2date_check
-fi
-
-git_check
-python_check
-
-# By default we use the PATH Python to bootstrap EUPS.  Set $EUPS_PYTHON to
-# override this or use the -P command line option.  $EUPS_PYTHON is used to
-# install and run EUPS and will not necessarily be the python in the path being
-# used to build the stack itself.
-EUPS_PYTHON=${EUPS_PYTHON:-$(which python)}
-
-EUPS_PKGROOT=${EUPS_PKGROOT:-$(default_eups_pkgroot $EUPS_USE_TARBALLS)}
-print_error "Configured EUPS_PKGROOT: ${EUPS_PKGROOT}"
-
-# Bootstrap miniconda (optional)
-if [[ $WITH_MINICONDA == true ]]; then
-	bootstrap_miniconda
-fi
-
-# Install EUPS
-install_eups
-
-# Create the environment loader scripts
-create_load_scripts
-
-# Helpful message about what to do next
-print_greeting
 
 # vim: tabstop=2 shiftwidth=2 noexpandtab
