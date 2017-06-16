@@ -344,9 +344,24 @@ miniconda::install() {
 
 	miniconda_file_name="Miniconda${py_ver}-${mini_ver}-${ana_platform}.sh"
 	echo "::: Deploying ${miniconda_file_name}"
-	$cmd "$CURL" "$CURL_OPTS" -L -O "${miniconda_base_url}/${miniconda_file_name}"
 
-	$cmd bash "$miniconda_file_name" -b -p "$prefix"
+	(
+		set -e
+
+		# the miniconda installer seems to complains if the filename does not end
+		# with .sh
+		tmpfile=$(mktemp -t "XXXXXXXX.${miniconda_file_name}")
+		# attempt to be a good citizen and not leave tmp files laying around
+		# after either a normal exit or an error condition
+		# shellcheck disable=SC2064
+		trap "{ rm -rf $tmpfile; }" EXIT
+
+		$cmd "$CURL" "$CURL_OPTS" -L \
+			"${miniconda_base_url}/${miniconda_file_name}" \
+			--output "$tmpfile"
+
+		$cmd bash "$tmpfile" -b -p "$prefix"
+	)
 }
 
 # configure alt conda channel(s)
@@ -570,8 +585,17 @@ else:
 }
 
 bootstrap_miniconda() {
+	local miniconda_base_path="${LSST_HOME}/python"
 	local miniconda_path
-	miniconda_path="${LSST_HOME}/$(miniconda_slug)"
+	miniconda_path="${miniconda_base_path}/$(miniconda_slug)"
+
+	local miniconda_path_old
+	miniconda_path_old="${LSST_HOME}/$(miniconda_slug)"
+
+	# remove old unnested miniconda -- the install has hard coded shebangs
+	if [[ -e $miniconda_path_old ]]; then
+		rm -rf "$miniconda_path_old"
+	fi
 
 	if [[ ! -e $miniconda_path ]]; then
 		miniconda::install \
