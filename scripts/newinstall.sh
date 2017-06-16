@@ -93,6 +93,43 @@ usage() {
 	)"
 }
 
+miniconda_slug() {
+	echo "miniconda${LSST_PYTHON_VERSION}-${MINICONDA_VERSION}"
+}
+
+python_env_slug() {
+	echo "$(miniconda_slug)-${LSSTSW_REF}"
+}
+
+eups_slug() {
+	local eups_slug=$EUPS_VERSION
+
+	if [[ -n $EUPS_GITREV ]]; then
+		eups_slug=$EUPS_GITREV
+	fi
+
+	echo "$eups_slug"
+}
+
+eups_base_dir() {
+	echo "${LSST_HOME}/eups"
+}
+
+eups_dir() {
+	echo "$(eups_base_dir)/$(eups_slug)"
+}
+
+#
+# version the eups product installation path using the *complete* python
+# environment
+#
+# XXX this will probably need to be extended to include the compiler used for
+# binary tarballs
+#
+eups_path() {
+	echo "${LSST_HOME}/stack/$(python_env_slug)"
+}
+
 parse_args() {
 	local OPTIND
 	local opt
@@ -247,7 +284,8 @@ default_eups_pkgroot() {
 	local target_cc
 	declare -a roots
 
-	local pyslug="miniconda${LSST_PYTHON_VERSION}-${MINICONDA_VERSION}-${LSSTSW_REF}"
+	local pyslug
+	pyslug=$(python_env_slug)
 
 	# only probe system *IF* tarballs are desired
 	if [[ $use_tarballs == true ]]; then
@@ -532,8 +570,8 @@ else:
 }
 
 bootstrap_miniconda() {
-	local miniconda_slug="miniconda${LSST_PYTHON_VERSION}-${MINICONDA_VERSION}"
-	local miniconda_path="${LSST_HOME}/${miniconda_slug}"
+	local miniconda_path
+	miniconda_path="${LSST_HOME}/$(miniconda_slug)"
 
 	if [[ ! -e $miniconda_path ]]; then
 		miniconda::install \
@@ -583,14 +621,33 @@ install_eups() {
 		echo "Using python at ${EUPS_PYTHON} to install EUPS"
 	fi
 
-	if [[ -z $EUPS_GITREV ]]; then
-		echo -n "Installing EUPS (v${EUPS_VERSION})... "
-	else
-		echo -n "Installing EUPS (branch ${EUPS_GITREV} from ${EUPS_GITREPO})..."
+	# if there is an existing, unversioned install, renamed it to "legacy"
+	if [[ -e "$(eups_base_dir)/Release_Notes" ]]; then
+		local eups_legacy_dir
+		eups_legacy_dir="$(eups_base_dir)/legacy"
+		local eups_tmp_dir="${LSST_HOME}/eups-tmp"
+
+		echo "Moving old EUPS to ${eups_legacy_dir}"
+
+		mv "$(eups_base_dir)" "$eups_tmp_dir"
+		mkdir -p "$(eups_base_dir)"
+		mv "$eups_tmp_dir" "$eups_legacy_dir"
 	fi
 
-	if ! (
-		mkdir _build && cd _build
+	echo -n "Installing EUPS ($(eups_slug))... "
+
+	# remove previous install
+	if [[ -e $(eups_dir) ]]; then
+		chmod -R +w "$(eups_dir)"
+		rm -rf "$(eups_dir)"
+	fi
+
+	local eups_build_dir="$LSST_HOME/_build"
+
+	if ! ( set -e
+		mkdir "$eups_build_dir"
+		cd "$eups_build_dir"
+
 		if [[ -z $EUPS_GITREV ]]; then
 			# Download tarball from github
 			$cmd "$CURL" "$CURL_OPTS" -L "$EUPS_TARURL" | tar xzvf -
@@ -603,8 +660,8 @@ install_eups() {
 		fi
 
 		$cmd ./configure \
-			--prefix="$LSST_HOME"/eups \
-			--with-eups="$LSST_HOME" \
+			--prefix="$(eups_dir)" \
+			--with-eups="$(eups_path)" \
 			--with-python="$EUPS_PYTHON"
 		$cmd make install
 	) > eupsbuild.log 2>&1 ; then
@@ -614,6 +671,15 @@ install_eups() {
 			EOF
 		)"
 	fi
+
+	# update current eups version link
+	local eups_current_link
+	eups_current_link="$(eups_base_dir)/current"
+
+	if [[ $(readlink "$eups_current_link") != $(eups_slug) ]]; then
+		ln -sf "$(eups_dir)" "$eups_current_link"
+	fi
+
 	echo " done."
 }
 
@@ -636,7 +702,7 @@ generate_loader_bash() {
 		fi
 
 		# Bootstrap EUPS
-		EUPS_DIR="\${LSST_HOME}/eups"
+		EUPS_DIR="\${LSST_HOME}/eups/$(eups_slug)"
 		source "\${EUPS_DIR}/bin/setups.sh"
 
 		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$EUPS_PKGROOT}
@@ -691,7 +757,7 @@ generate_loader_ksh() {
 		fi
 
 		# Bootstrap EUPS
-		EUPS_DIR="\${LSST_HOME}/eups"
+		EUPS_DIR="\${LSST_HOME}/eups/$(eups_slug)"
 		source "\${EUPS_DIR}/bin/setups.sh"
 
 		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$EUPS_PKGROOT}
@@ -717,7 +783,7 @@ generate_loader_zsh() {
 		fi
 
 		# Bootstrap EUPS
-		EUPS_DIR="\${LSST_HOME}/eups"
+		EUPS_DIR="\${LSST_HOME}/eups/$(eups_slug)"
 		source "\${EUPS_DIR}/bin/setups.zsh"
 
 		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$EUPS_PKGROOT}
