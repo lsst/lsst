@@ -100,13 +100,13 @@ parse_args() {
 	while getopts cbhnP:32t opt; do
 		case $opt in
 			b)
-				batch_flag=true
+				BATCH_FLAG=true
 				;;
 			c)
-				cont_flag=true
+				CONT_FLAG=true
 				;;
 			n)
-				noop_flag=true
+				NOOP_FLAG=true
 				;;
 			P)
 				EUPS_PYTHON=$OPTARG
@@ -287,8 +287,8 @@ config_curl() {
 }
 
 miniconda::install() {
-	local LSST_PYTHON_VERSION=${1?python version is required}
-	local version=${2?miniconda version is required}
+	local py_ver=${1?python version is required}
+	local mini_ver=${2?miniconda version is required}
 	local prefix=${3?prefix is required}
 	local miniconda_base_url=${4:-https://repo.continuum.io/miniconda}
 
@@ -304,7 +304,7 @@ miniconda::install() {
 			;;
 	esac
 
-	miniconda_file_name="Miniconda${LSST_PYTHON_VERSION}-${version}-${ana_platform}.sh"
+	miniconda_file_name="Miniconda${py_ver}-${mini_ver}-${ana_platform}.sh"
 	echo "::: Deploying ${miniconda_file_name}"
 	$cmd "$CURL" "$CURL_OPTS" -L -O "${miniconda_base_url}/${miniconda_file_name}"
 
@@ -335,15 +335,15 @@ miniconda::config_channels() {
 
 # Install packages on which the stack is known to depend
 miniconda::lsst_env() {
-	local LSST_PYTHON_VERSION=${1?python version is required}
+	local py_ver=${1?python version is required}
 	local ref=${2?lsstsw git ref is required}
 
 	case $(uname -s) in
 		Linux*)
-			conda_packages="conda${LSST_PYTHON_VERSION}_packages-linux-64.txt"
+			conda_packages="conda${py_ver}_packages-linux-64.txt"
 			;;
 		Darwin*)
-			conda_packages="conda${LSST_PYTHON_VERSION}_packages-osx-64.txt"
+			conda_packages="conda${py_ver}_packages-osx-64.txt"
 			;;
 		*)
 			fail "Cannot configure miniconda env: unsupported platform $(uname -s)"
@@ -392,9 +392,10 @@ miniconda::lsst_env() {
 up2date_check() {
 	set +e
 
-	AMIDIFF=$($CURL "$CURL_OPTS" -L "$NEWINSTALL_URL" | diff --brief - "$0")
+	local amidiff
+	amidiff=$($CURL "$CURL_OPTS" -L "$NEWINSTALL_URL" | diff --brief - "$0")
 
-	if [[ $AMIDIFF == *differ ]]; then
+	if [[ $amidiff == *differ ]]; then
 		print_error "$(cat <<-EOF
 			!!! This script differs from the official version on the distribution
 			server.  If this is not intentional, get the current version from here:
@@ -409,14 +410,17 @@ up2date_check() {
 # Discuss the state of Git.
 git_check() {
 	if hash git 2>/dev/null; then
-		GITVERNUM=$(git --version | cut -d\  -f 3)
+		local gitvernum
+		gitvernum=$(git --version | cut -d\  -f 3)
+
+		local gitver
 		# shellcheck disable=SC2046 disable=SC2183
-		GITVER=$(printf "%02d-%02d-%02d\n" \
-			$(echo "$GITVERNUM" | cut -d. -f1-3 | tr . ' '))
+		gitver=$(printf "%02d-%02d-%02d\n" \
+			$(echo "$gitvernum" | cut -d. -f1-3 | tr . ' '))
 	fi
 
-	if [[ $GITVER < 01-08-04 ]]; then
-		if [[ $batch_flag != true ]]; then
+	if [[ $gitver < 01-08-04 ]]; then
+		if [[ $BATCH_FLAG != true ]]; then
 			cat <<-EOF
 			Detected $(git --version).
 
@@ -459,7 +463,8 @@ git_check() {
 python_check() {
 	# Check the version by running a small Python program (taken from the Python
 	# EUPS package) XXX this will break if python is not in $PATH
-	PYVEROK=$(python -c 'import sys
+	local pyverok
+	pyverok=$(python -c 'import sys
 minver2=7
 minver3=5
 vmaj = sys.version_info[0]
@@ -468,10 +473,10 @@ if (vmaj == 2 and vmin >= minver2) or (vmaj == 3 and vmin >= minver3):
     print(1)
 else:
     print(0)')
-	if [[ $batch_flag = true ]]; then
+	if [[ $BATCH_FLAG = true ]]; then
 		WITH_MINICONDA=true
 	else
-		if [[ $PYVEROK != 1 ]]; then
+		if [[ $pyverok != 1 ]]; then
 			cat <<-EOF
 
 			LSST stack requires Python 2 (>=2.7) or 3 (>=3.5); you seem to have
@@ -508,7 +513,7 @@ else:
 				break
 				;;
 			[Nn]* )
-				if [[ $PYVEROK != 1 ]]; then
+				if [[ $pyverok != 1 ]]; then
 					cat <<-EOF
 
 					Thanks. After you install Python 2.7 or 3.5 and the required modules,
@@ -527,8 +532,9 @@ else:
 }
 
 bootstrap_miniconda() {
-	miniconda_slug="miniconda${LSST_PYTHON_VERSION}-${MINICONDA_VERSION}"
-	miniconda_path="${LSST_HOME}/${miniconda_slug}"
+	local miniconda_slug="miniconda${LSST_PYTHON_VERSION}-${MINICONDA_VERSION}"
+	local miniconda_path="${LSST_HOME}/${miniconda_slug}"
+
 	if [[ ! -e $miniconda_path ]]; then
 		miniconda::install \
 			"$LSST_PYTHON_VERSION" \
@@ -562,8 +568,9 @@ install_eups() {
 		)"
 	fi
 
-	PYVEROK=$($EUPS_PYTHON -c 'import sys; print("%i" % (sys.hexversion >= 0x02060000))')
-	if [[ $PYVEROK != 1 ]]; then
+	local pyverok
+	pyverok=$($EUPS_PYTHON -c 'import sys; print("%i" % (sys.hexversion >= 0x02060000))')
+	if [[ $pyverok != 1 ]]; then
 		fail "$(cat <<-EOF
 			EUPS requires Python 2.6 or newer; we are using $("$EUPS_PYTHON" -V 2>&1)
 			from ${EUPS_PYTHON}.  Please set up a compatible python interpreter using
@@ -611,7 +618,8 @@ install_eups() {
 }
 
 generate_loader_bash() {
-	file_name=$1
+	local file_name=$1
+
 	# shellcheck disable=SC2094
 	cat > "$file_name" <<-EOF
 		# This script is intended to be used with bash to load the minimal LSST
@@ -636,7 +644,8 @@ generate_loader_bash() {
 }
 
 generate_loader_csh() {
-	file_name=$1
+	local file_name=$1
+
 	# shellcheck disable=SC2094
 	cat > "$file_name" <<-EOF
 		# This script is intended to be used with (t)csh to load the minimal LSST
@@ -664,7 +673,8 @@ generate_loader_csh() {
 }
 
 generate_loader_ksh() {
-	file_name=$1
+	local file_name=$1
+
 	# shellcheck disable=SC2094
 	cat > "$file_name" <<-EOF
 		# This script is intended to be used with ksh to load the minimal LSST
@@ -689,7 +699,8 @@ generate_loader_ksh() {
 }
 
 generate_loader_zsh() {
-	file_name=$1
+	local file_name=$1
+
 	# shellcheck disable=SC2094
 	cat > "$file_name" <<-EOF
 		# This script is intended to be used with zsh to load the minimal LSST
@@ -775,9 +786,9 @@ am_I_sourced() {
 main() {
 	config_curl
 
-	cont_flag=false
-	batch_flag=false
-	noop_flag=false
+	CONT_FLAG=false
+	BATCH_FLAG=false
+	NOOP_FLAG=false
 
 	parse_args "$@"
 
@@ -789,7 +800,7 @@ main() {
 	EOF
 
 	# If no-op, prefix every install command with echo
-	if [[ $noop_flag == true ]]; then
+	if [[ $NOOP_FLAG == true ]]; then
 		cmd="echo"
 		echo "!!! -n flag specified, no install commands will be really executed"
 	else
@@ -797,7 +808,7 @@ main() {
 	fi
 
 	# Refuse to run from a non-empty directory
-	if [[ $cont_flag == false ]]; then
+	if [[ $CONT_FLAG == false ]]; then
 		if [[ ! -z $(ls) && ! $(ls) == newinstall.sh ]]; then
 			fail "$(cat <<-EOF
 				Please run this script from an empty directory. The LSST stack will be
