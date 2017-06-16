@@ -344,9 +344,24 @@ miniconda::install() {
 
 	miniconda_file_name="Miniconda${py_ver}-${mini_ver}-${ana_platform}.sh"
 	echo "::: Deploying ${miniconda_file_name}"
-	$cmd "$CURL" "$CURL_OPTS" -L -O "${miniconda_base_url}/${miniconda_file_name}"
 
-	$cmd bash "$miniconda_file_name" -b -p "$prefix"
+	(
+		set -e
+
+		# the miniconda installer seems to complains if the filename does not end
+		# with .sh
+		tmpfile=$(mktemp -t "XXXXXXXX.${miniconda_file_name}")
+		# attempt to be a good citizen and not leave tmp files laying around
+		# after either a normal exit or an error condition
+		# shellcheck disable=SC2064
+		trap "{ rm -rf $tmpfile; }" EXIT
+
+		$cmd "$CURL" "$CURL_OPTS" -L \
+			"${miniconda_base_url}/${miniconda_file_name}" \
+			--output "$tmpfile"
+
+		$cmd bash "$tmpfile" -b -p "$prefix"
+	)
 }
 
 # configure alt conda channel(s)
