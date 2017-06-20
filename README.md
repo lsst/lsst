@@ -6,6 +6,13 @@ lsst
 This package sets up a basic environment needed to:
 
   1.  install packages from the LSST software server
+  2.  build LSST products from git
+  3.  build external software that uses LSST products
+
+For building products, this package provides the following:
+
+  *  it setups up the base package, which is necessary for properly
+     loading LSST python modules.
 
 For managing products, this package provides the following:
 

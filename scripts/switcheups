@@ -1,0 +1,120 @@
+#! /bin/bash
+#
+# Switch the default version of EUPS that will get loaded when
+# sourcing the loadLSST.*sh script.  This is done by creating a link
+# in the $LSST_HOME/eups directory called "default" that points to the 
+# desired version of eups.  
+#
+prog=`basename $0`
+eups="eups"
+
+#@
+# print a general but brief usage line
+#
+function print_usage {
+    echo "Usage:  $prog [-l lssthome] eups_version"
+    echo "        $prog -h|--help"
+    echo "        $prog -V|--version"
+}
+
+#@
+#  print the help message
+#
+function print_help {
+    echo "Switch the default version of eups for the LSST software stack"
+    echo 
+    print_usage
+    echo "Options:"
+    echo "  -l, --lsst_home lssthome  the software stack to update (default: \$LSST_HOME)"
+    echo "  -V, --version             print the script version"
+    echo "  -h, --help                print this message"
+}
+
+#@
+#  print the version of this script and and the version of the underlying
+#  eups command
+#
+function print_version {
+    # local eupsver=`$eups -V | sed -e 's/Version: //'`
+    local thisver="svn(unbuilt)"
+    echo "$prog version $thisver"
+}
+
+#@
+#  process the command line arguments and do the requested switch
+#
+function main {
+
+    local lssthome=$LSST_HOME
+    local eupsver=
+    while [ $# -gt 0 ]; do
+        case "$1" in 
+            -h|--help)       print_help; return 0 ;;
+            -V|--version)    print_version; return 0 ;;
+            -l|--lsst_home)  lssthome="$2"; shift ;;
+            -*)              echo "$prog: Unknown option: $1"; return 1 ;;
+            *)               [ -z "$eupsver" ] && eupsver=$1
+        esac
+        shift
+    done
+
+    if [ -z "$eupsver" ]; then
+        echo "$prog: version argument missing"
+        print_usage
+        return 1
+    fi
+
+    if [ -z "$lssthome" ]; then
+        echo "LSST_HOME not set; try using --lsst_home"
+        print_usage
+        return 1
+    fi
+
+    if [ ! -d "$lssthome" ]; then
+        echo "LSST_HOME=$lssthome: not a directory"
+        return 1
+    fi
+
+    eupsdir="$lssthome/eups"
+    if [ ! -d "$eupsdir" ]; then
+        echo "eups product directory not found under LSST_HOME"
+        return 1
+    fi
+
+    if [ ! -w "$eupsdir" ]; then
+        echo "$prog: $eupsdir: permission denied"
+        echo "You do not have permission to switch the default EUPS version"
+        return 1
+    fi
+
+    verdir="$eupsdir/$eupsver"
+    if [ ! -e "$verdir" -o ! -d "$verdir" ]; then
+        echo "$prog: $verdir: does not exist as a directory"
+        return 1
+    fi
+
+    deflink="$eupsdir/default"
+    if [ -e "$deflink" -a ! -L "$deflink" ]; then
+        echo "$prog: $deflink: Not a symbolice link!"
+        return 1
+    fi
+
+    if [ -e "$deflink" ]; then
+        rm -f "$deflink" || {
+            echo "Failed to remove $deflink"
+            return 1
+        }
+    fi
+
+    cd $eupsdir && ln -s $eupsver default 
+    if [ "$?" -gt 0 ]; then
+        echo "$prog: Failed to create link, $deflink"
+        return 1
+    fi
+}
+
+main $*
+exit $?
+
+        
+        
