@@ -753,7 +753,7 @@ generate_loader_csh() {
 		endif
 
 		# Bootstrap EUPS
-		set EUPS_DIR = "\${LSST_HOME}/eups"
+		set EUPS_DIR = "\${LSST_HOME}/eups/$(eups_slug)"
 		source "\${EUPS_DIR}/bin/setups.csh"
 
 		if ( ! \${?EUPS_PKGROOT} ) then
