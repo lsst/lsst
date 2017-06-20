@@ -718,13 +718,10 @@ install_eups() {
 		)"
 	fi
 
-	# update current eups version link
-	local eups_current_link
-	eups_current_link="$(eups_base_dir)/current"
+	# symlinks should be relative to support relocation of the newinstall root
 
-	if [[ $(readlink "$eups_current_link") != $(eups_slug) ]]; then
-		ln -sf "$(eups_dir)" "$eups_current_link"
-	fi
+	# update $EUPS_DIR current symlink
+	ln_rel "$(eups_dir)" current
 
 	echo " done."
 }
