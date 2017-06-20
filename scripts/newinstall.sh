@@ -74,6 +74,28 @@ fail() {
 	exit $code
 }
 
+#
+# create/update a *relative* symlink, in the basedir of the target
+#
+ln_rel() {
+	local link_target=${1?link target is required}
+	local link_name=${2?link name is required}
+
+	target_dir=$(dirname "$link_target")
+	target_name=$(basename "$link_target")
+
+  ( set -e
+    cd "$target_dir"
+
+    if [[ $(readlink "$target_name") != "$link_name" ]]; then
+      # at least "ln (GNU coreutils) 8.25" will not change an abs symlink to be
+      # rel, even with `-f`
+      rm -f "$link_name"
+      ln -sf "$target_name" "$link_name"
+    fi
+  )
+}
+
 usage() {
 	fail "$(cat <<-EOF
 
@@ -696,13 +718,10 @@ install_eups() {
 		)"
 	fi
 
-	# update current eups version link
-	local eups_current_link
-	eups_current_link="$(eups_base_dir)/current"
+	# symlinks should be relative to support relocation of the newinstall root
 
-	if [[ $(readlink "$eups_current_link") != $(eups_slug) ]]; then
-		ln -sf "$(eups_dir)" "$eups_current_link"
-	fi
+	# update $EUPS_DIR current symlink
+	ln_rel "$(eups_dir)" current
 
 	echo " done."
 }
