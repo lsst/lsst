@@ -1,3 +1,0 @@
-# build script used with new installs
-#
-simplescons version=$version

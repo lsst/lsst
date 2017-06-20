@@ -1,7 +1,6 @@
 setupRequired(scons)
 setupRequired(sconsUtils)
 
-envPrepend(PATH, ${PRODUCT_DIR}/bin)
 envPrepend(EUPS_PKGROOT, http://sw.lsstcorp.org/eupspkg, |)
 
 # Deprecated: here for backwards compatibility, but discouraged from using
