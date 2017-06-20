@@ -627,6 +627,9 @@ bootstrap_miniconda() {
 			"$MINICONDA_BASE_URL"
 	fi
 
+	# update miniconda current symlink
+	ln_rel "$miniconda_path" current
+
 	export PATH="${miniconda_path}/bin:${PATH}"
 
 	if [[ -n $CONDA_CHANNELS ]]; then
