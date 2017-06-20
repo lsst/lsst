@@ -723,6 +723,9 @@ install_eups() {
 	# update $EUPS_DIR current symlink
 	ln_rel "$(eups_dir)" current
 
+	# update EUPS_PATH current symlink
+	ln_rel "$(eups_path)" current
+
 	echo " done."
 }
 
