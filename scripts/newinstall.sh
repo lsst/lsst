@@ -964,7 +964,7 @@ main() {
 	EUPS_PYTHON=${EUPS_PYTHON:-$(which python)}
 
 	EUPS_PKGROOT=${EUPS_PKGROOT:-$(default_eups_pkgroot $EUPS_USE_EUPSPKG $EUPS_USE_TARBALLS)}
-	print_error "Configured EUPS_PKGROOT: ${EUPS_PKGROOT}"
+	print_error "Configured EUPS_PKGROOT: ${EUPS_PKGROOT}\n"
 
 	# Bootstrap miniconda (optional)
 	if [[ $WITH_MINICONDA == true ]]; then
