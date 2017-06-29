@@ -100,7 +100,7 @@ ln_rel() {
 usage() {
 	fail "$(cat <<-EOF
 
-		usage: newinstall.sh [-b] [-f] [-h] [-n] [-3|-2] [-t] [-s|-S] [-P <path-to-python>]
+		usage: newinstall.sh [-b] [-f] [-h] [-n] [-3|-2] [-t|-T] [-s|-S] [-P <path-to-python>]
 		 -b -- Run in batch mode. Don\'t ask any questions and install all extra
 		       packages.
 		 -c -- Attempt to continue a previously failed install.
@@ -110,6 +110,7 @@ usage() {
 		 -2 -- Use Python 2 if the script is installing its own Python. (default)
 		 -3 -- Use Python 3 if the script is installing its own Python.
 		 -t -- Use pre-compiled EUPS "tarball" packages, if available.
+		 -T -- DO NOT use pre-compiled EUPS "tarball" packages.
 		 -s -- Use EUPS source "eupspkg" packages, if available.
 		 -S -- DO NOT use EUPS source "eupspkg" packages.
 		 -h -- Display this help message.
@@ -181,6 +182,9 @@ parse_args() {
 				;;
 			t)
 				EUPS_USE_TARBALLS=true
+				;;
+			T)
+				EUPS_USE_TARBALLS=false
 				;;
 			s)
 				EUPS_USE_EUPSPKG=true
