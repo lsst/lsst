@@ -32,6 +32,7 @@ EUPS_TARURL=${EUPS_TARURL:-https://github.com/RobertLuptonTheGood/eups/archive/$
 
 EUPS_PKGROOT_BASE_URL=${EUPS_PKGROOT_BASE_URL:-https://eups.lsst.codes/stack}
 EUPS_USE_TARBALLS=${EUPS_USE_TARBALLS:-false}
+EUPS_USE_EUPSPKG=${EUPS_USE_EUPSPKG:-true}
 
 # At the moment, we default to the -2 option and install Python 2 miniconda
 # if we are asked to install a Python. Once the Python 3 port is stable
@@ -99,7 +100,7 @@ ln_rel() {
 usage() {
 	fail "$(cat <<-EOF
 
-		usage: newinstall.sh [-b] [-f] [-h] [-n] [-3|-2] [-t] [-P <path-to-python>]
+		usage: newinstall.sh [-b] [-f] [-h] [-n] [-3|-2] [-t] [-s|-S] [-P <path-to-python>]
 		 -b -- Run in batch mode. Don\'t ask any questions and install all extra
 		       packages.
 		 -c -- Attempt to continue a previously failed install.
@@ -109,6 +110,8 @@ usage() {
 		 -2 -- Use Python 2 if the script is installing its own Python. (default)
 		 -3 -- Use Python 3 if the script is installing its own Python.
 		 -t -- Use pre-compiled EUPS "tarball" packages, if available.
+		 -s -- Use EUPS source "eupspkg" packages, if available.
+		 -S -- DO NOT use EUPS source "eupspkg" packages.
 		 -h -- Display this help message.
 
 		EOF
@@ -178,6 +181,12 @@ parse_args() {
 				;;
 			t)
 				EUPS_USE_TARBALLS=true
+				;;
+			s)
+				EUPS_USE_EUPSPKG=true
+				;;
+			S)
+				EUPS_USE_EUPSPKG=false
 				;;
 			h|*)
 				usage
@@ -298,7 +307,8 @@ sys::platform() {
 join() { local IFS="$1"; shift; echo "$*"; }
 
 default_eups_pkgroot() {
-	local use_tarballs=${1:-false}
+	local use_eupspkg=${1:-true}
+	local use_tarballs=${2:-false}
 
 	local osfamily
 	local release
@@ -324,7 +334,9 @@ default_eups_pkgroot() {
 			roots+=( "${EUPS_PKGROOT_BASE_URL}/${osfamily}/${platform}/${target_cc}/${pyslug}" )
 		fi
 
-		roots+=( "${EUPS_PKGROOT_BASE_URL}/src" )
+		if [[ $use_eupspkg == true ]]; then
+			roots+=( "${EUPS_PKGROOT_BASE_URL}/src" )
+		fi
 	fi
 
 	echo -n "$(join '|' "${roots[@]}")"
@@ -947,7 +959,7 @@ main() {
 	# used to build the stack itself.
 	EUPS_PYTHON=${EUPS_PYTHON:-$(which python)}
 
-	EUPS_PKGROOT=${EUPS_PKGROOT:-$(default_eups_pkgroot $EUPS_USE_TARBALLS)}
+	EUPS_PKGROOT=${EUPS_PKGROOT:-$(default_eups_pkgroot $EUPS_USE_EUPSPKG $EUPS_USE_TARBALLS)}
 	print_error "Configured EUPS_PKGROOT: ${EUPS_PKGROOT}"
 
 	# Bootstrap miniconda (optional)
