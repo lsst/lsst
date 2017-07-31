@@ -388,7 +388,7 @@ miniconda::install() {
 
 		# the miniconda installer seems to complains if the filename does not end
 		# with .sh
-		tmpfile=$(mktemp -t "XXXXXXXX.${miniconda_file_name}")
+		tmpfile=$(mktemp -t "${miniconda_file_name}.XXXXXXXX")
 		# attempt to be a good citizen and not leave tmp files laying around
 		# after either a normal exit or an error condition
 		# shellcheck disable=SC2064
