@@ -386,9 +386,12 @@ miniconda::install() {
 	(
 		set -e
 
-		# the miniconda installer seems to complains if the filename does not end
-		# with .sh
-		tmpfile=$(mktemp -t "XXXXXXXX.${miniconda_file_name}")
+		# XXX the miniconda installer seems to complains if the filename does not
+		# end with .sh
+		#
+		# XXX GNU mktemp will complain about extra Xs in the filename that are too
+		# small of a consecutive sequence to constitute a legal template.
+		tmpfile=$(mktemp -t "XXXXXXXX.${miniconda_file_name//X/_}")
 		# attempt to be a good citizen and not leave tmp files laying around
 		# after either a normal exit or an error condition
 		# shellcheck disable=SC2064
@@ -458,7 +461,7 @@ miniconda::lsst_env() {
 			conda_opts='--quiet'
 	  fi
 
-		tmpfile=$(mktemp -t "${conda_packages}.XXXXXXXX")
+		tmpfile=$(mktemp -t "${conda_packages//X/_}.XXXXXXXX")
 		# attempt to be a good citizen and not leave tmp files laying around
 		# after either a normal exit or an error condition
 		# shellcheck disable=SC2064

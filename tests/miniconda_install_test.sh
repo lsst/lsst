@@ -19,3 +19,5 @@ miniconda::install 3 4.2.12 /dne
 #
 # see: DM-11444
 miniconda::install 3 X /dne
+miniconda::install 3 XX /dne
+miniconda::install 3 XXX /dne
