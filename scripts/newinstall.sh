@@ -95,6 +95,11 @@ ln_rel() {
   )
 }
 
+n8l::has_cmd() {
+	local command=${1?command is required}
+	command -v "$command" > /dev/null 2>&1
+}
+
 usage() {
 	fail "$(cat <<-EOF
 
@@ -546,53 +551,78 @@ git_check() {
 	echo
 }
 
+n8l::pyverok() {
+	local py_interp=${1:-python}
+	local minver2=${2:-7}
+	local minver3=${3:-5}
+
+	$py_interp -c "import sys
+minver2=${minver2}
+minver3=${minver3}
+vmaj = sys.version_info[0]
+vmin = sys.version_info[1]
+if (vmaj == 2 and vmin >= minver2) or (vmaj == 3 and vmin >= minver3):
+    sys.exit(0)
+else:
+    sys.exit(1)"
+}
+
 #
 #	Test/warn about Python versions, offer to get miniconda if not supported.
 #	LSST currently mandates Python 3.5 and, optionally, 2.7.  We assume that the
 #	python in PATH is the python that will be used to build the stack if
 #	miniconda(2/3) is not installed.
 #
-python_check() {
+n8l::python_check() {
 	# Check the version by running a small Python program (taken from the Python
 	# EUPS package) XXX this will break if python is not in $PATH
-	local pyverok
-	pyverok=$(python -c 'import sys
-minver2=7
-minver3=5
-vmaj = sys.version_info[0]
-vmin = sys.version_info[1]
-if (vmaj == 2 and vmin >= minver2) or (vmaj == 3 and vmin >= minver3):
-    print(1)
-else:
-    print(0)')
-	if [[ $BATCH_FLAG = true ]]; then
-		WITH_MINICONDA=true
-	else
-		if [[ $pyverok != 1 ]]; then
+	local py_interp=python
+	local minver2=7
+	local minver3=5
+
+	local has_python=false
+	local pyverok=false
+	if n8l::has_cmd $py_interp; then
+		has_python=true
+		if n8l::pyverok $py_interp $minver2 $minver3; then
+			pyverok=true
+		fi
+	fi
+
+	if [[ $pyverok != true ]]; then
+		if [[ $has_python == true ]]; then
 			cat <<-EOF
 
-			LSST stack requires Python 2 (>=2.7) or 3 (>=3.5); you seem to have
-			$(python -V 2>&1) on your path ($(which python)).  Please set up a
-			compatible python interpreter, prepend it to your PATH, and rerun this
-			script.  Alternatively, we can set up the Miniconda Python distribution
+			LSST stack requires Python 2 (>=2.${minver2}) or 3 (>=3.${minver3}); you
+			seem to have $($py_interp -V 2>&1) on your path ($(which $py_interp)).
 
-			for you.
+			EOF
+		else
+			cat <<-EOF
+
+			Unable to locate python.
+
+			Please set up a compatible python interpreter, prepend it to your PATH, and
+			rerun this script.  Alternatively, we can set up the Miniconda Python
+			distribution for you.
+
 			EOF
 		fi
+	fi
 
-		cat <<-EOF
+	cat <<-EOF
 
-		In addition to Python 2 (>=2.7) or 3 (>=3.5), some LSST packages depend on
-		recent versions of numpy, matplotlib, and scipy.  If you do not have all of
-		these, the installation may fail.  Using the Miniconda Python distribution
-		will ensure all these are set up.
+	In addition to Python 2 (>=2.${minver2}) or 3 (>=3.${minver3}), some LSST
+	packages depend on recent versions of numpy, matplotlib, and scipy.  If you
+	do not have all of these, the installation may fail.  Using the Miniconda
+	Python distribution will ensure all these are set up.
 
-		Miniconda Python installed by this installer will be managed by LSST\'s EUPS
-		package manager, and will not replace or modify your system python.
+	Miniconda Python installed by this installer will be managed by LSST\'s EUPS
+	package manager, and will not replace or modify your system python.
 
-		EOF
+	EOF
 
-		while true; do
+	while true; do
 		read -r -p "$(cat <<-EOF
 			Would you like us to install the Miniconda Python distribution (if
 			unsure, say yes)?
@@ -605,22 +635,20 @@ else:
 				break
 				;;
 			[Nn]* )
-				if [[ $pyverok != 1 ]]; then
+				if [[ $pyverok != true ]]; then
 					cat <<-EOF
 
 					Thanks. After you install Python 2.7 or 3.5 and the required modules,
 					rerun this script to continue the installation.
 
 					EOF
-					exit
+					fail
 				fi
 				break;
 				;;
 			* ) echo "Please answer yes or no.";;
 		esac
-		done
-		echo
-	fi
+	done
 }
 
 bootstrap_miniconda() {
@@ -956,21 +984,28 @@ main() {
 	fi
 
 	git_check
-	python_check
+
+	# always use miniconda when in batch mode
+	if [[ $BATCH_FLAG = true ]]; then
+		WITH_MINICONDA=true
+	else
+		n8l::python_check
+	fi
+
+	# Bootstrap miniconda (optional)
+	# Note that this will add miniconda to the path
+	if [[ $WITH_MINICONDA == true ]]; then
+		bootstrap_miniconda
+	fi
 
 	# By default we use the PATH Python to bootstrap EUPS.  Set $EUPS_PYTHON to
 	# override this or use the -P command line option.  $EUPS_PYTHON is used to
-	# install and run EUPS and will not necessarily be the python in the path being
-	# used to build the stack itself.
+	# install and run EUPS and will not necessarily be the python in the path
+	# being used to build the stack itself.
 	EUPS_PYTHON=${EUPS_PYTHON:-$(which python)}
 
 	EUPS_PKGROOT=${EUPS_PKGROOT:-$(default_eups_pkgroot $EUPS_USE_EUPSPKG $EUPS_USE_TARBALLS)}
 	print_error "Configured EUPS_PKGROOT: ${EUPS_PKGROOT}\n"
-
-	# Bootstrap miniconda (optional)
-	if [[ $WITH_MINICONDA == true ]]; then
-		bootstrap_miniconda
-	fi
 
 	# Install EUPS
 	install_eups
