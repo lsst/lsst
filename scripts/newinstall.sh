@@ -617,9 +617,6 @@ n8l::python_check() {
 	do not have all of these, the installation may fail.  Using the Miniconda
 	Python distribution will ensure all these are set up.
 
-	Miniconda Python installed by this installer will be managed by LSST\'s EUPS
-	package manager, and will not replace or modify your system python.
-
 	EOF
 
 	while true; do
