@@ -1,11 +1,11 @@
-_build.*
+/autom4te.cache
 bin/
+_build.*
+.bundle/
+/config.log
+/configure
 doc/README.md
 etc/
-# /
-/autom4te.cache
-/configure
-/config.log
-/.sconsign.dblite
 /.sconf_temp
+/.sconsign.dblite
 ups/*.cfgc
