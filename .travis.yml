@@ -32,7 +32,6 @@ script: |
     *)
       bash --version
       bash -ec 'source loadLSST.bash && echo $EUPS_PKGROOT'
-      bash tests/miniconda_install_test.sh
       ;;
   esac
 env:
