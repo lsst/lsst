@@ -595,7 +595,7 @@ else:
 		while true; do
 		read -r -p "$(cat <<-EOF
 			Would you like us to install the Miniconda Python distribution (if
-			unsure, say yes)? 
+			unsure, say yes)?
 			EOF
 		)" yn
 
