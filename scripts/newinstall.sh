@@ -34,10 +34,8 @@ EUPS_PKGROOT_BASE_URL=${EUPS_PKGROOT_BASE_URL:-https://eups.lsst.codes/stack}
 EUPS_USE_TARBALLS=${EUPS_USE_TARBALLS:-false}
 EUPS_USE_EUPSPKG=${EUPS_USE_EUPSPKG:-true}
 
-# At the moment, we default to the -2 option and install Python 2 miniconda
-# if we are asked to install a Python. Once the Python 3 port is stable
-# we can switch the default or insist that the user specifies a version.
-LSST_PYTHON_VERSION=${LSST_PYTHON_VERSION:-2}
+# Default to -3 (Python 3)
+LSST_PYTHON_VERSION=${LSST_PYTHON_VERSION:-3}
 MINICONDA_VERSION=${MINICONDA_VERSION:-4.2.12}
 # this git ref controls which set of conda packages are used to initialize the
 # the default conda env.
@@ -107,8 +105,8 @@ usage() {
 		 -n -- No-op. Go through the motions but echo commands instead of running
 		       them.
 		 -P [PATH_TO_PYTHON] -- Use a specific python interpreter for EUPS.
-		 -2 -- Use Python 2 if the script is installing its own Python. (default)
-		 -3 -- Use Python 3 if the script is installing its own Python.
+		 -2 -- Use Python 2 if the script is installing its own Python.
+		 -3 -- Use Python 3 if the script is installing its own Python. (default)
 		 -t -- Use pre-compiled EUPS "tarball" packages, if available.
 		 -T -- DO NOT use pre-compiled EUPS "tarball" packages.
 		 -s -- Use EUPS source "eupspkg" packages, if available.
@@ -597,7 +595,7 @@ else:
 		while true; do
 		read -r -p "$(cat <<-EOF
 			Would you like us to install the Miniconda Python distribution (if
-			unsure, say yes)? 
+			unsure, say yes)?
 			EOF
 		)" yn
 
