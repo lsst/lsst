@@ -163,7 +163,7 @@ n8l::parse_args() {
 	local OPTIND
 	local opt
 
-	while getopts cbhnP:32t opt; do
+	while getopts cbhnP:32tTsS opt; do
 		case $opt in
 			b)
 				BATCH_FLAG=true
