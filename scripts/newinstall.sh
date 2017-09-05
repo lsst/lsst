@@ -159,7 +159,7 @@ eups_path() {
 	echo "${LSST_HOME}/stack/$(python_env_slug)"
 }
 
-parse_args() {
+n8l::parse_args() {
 	local OPTIND
 	local opt
 
@@ -947,7 +947,7 @@ main() {
 	BATCH_FLAG=false
 	NOOP_FLAG=false
 
-	parse_args "$@"
+	n8l::parse_args "$@"
 
 	cat <<-EOF
 
