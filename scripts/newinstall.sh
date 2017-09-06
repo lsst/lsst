@@ -159,11 +159,11 @@ eups_path() {
 	echo "${LSST_HOME}/stack/$(python_env_slug)"
 }
 
-parse_args() {
+n8l::parse_args() {
 	local OPTIND
 	local opt
 
-	while getopts cbhnP:32t opt; do
+	while getopts cbhnP:32tTsS opt; do
 		case $opt in
 			b)
 				BATCH_FLAG=true
@@ -947,7 +947,7 @@ main() {
 	BATCH_FLAG=false
 	NOOP_FLAG=false
 
-	parse_args "$@"
+	n8l::parse_args "$@"
 
 	cat <<-EOF
 
