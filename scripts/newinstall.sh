@@ -83,16 +83,16 @@ ln_rel() {
 	target_dir=$(dirname "$link_target")
 	target_name=$(basename "$link_target")
 
-  ( set -e
-    cd "$target_dir"
+	( set -e
+		cd "$target_dir"
 
-    if [[ $(readlink "$target_name") != "$link_name" ]]; then
-      # at least "ln (GNU coreutils) 8.25" will not change an abs symlink to be
-      # rel, even with `-f`
-      rm -f "$link_name"
-      ln -sf "$target_name" "$link_name"
-    fi
-  )
+		if [[ $(readlink "$target_name") != "$link_name" ]]; then
+			# at least "ln (GNU coreutils) 8.25" will not change an abs symlink to be
+			# rel, even with `-f`
+			rm -f "$link_name"
+			ln -sf "$target_name" "$link_name"
+		fi
+	)
 }
 
 n8l::has_cmd() {
@@ -462,7 +462,7 @@ miniconda::lsst_env() {
 		# intended to reduce the amount of console output when running under CI
 		if [[ ! -t 1 ]]; then
 			conda_opts='--quiet'
-	  fi
+		fi
 
 		tmpfile=$(mktemp -t "${conda_packages//X/_}.XXXXXXXX")
 		# attempt to be a good citizen and not leave tmp files laying around
