@@ -389,16 +389,14 @@ miniconda::install() {
 	(
 		set -e
 
-		# XXX the miniconda installer seems to complains if the filename does not
-		# end with .sh
-		#
-		# XXX GNU mktemp will complain about extra Xs in the filename that are too
-		# small of a consecutive sequence to constitute a legal template.
-		tmpfile=$(mktemp -t "XXXXXXXX.${miniconda_file_name//X/_}")
+		# Create a temporary directory to download the installation script into
+		tmpdir=$(mktemp -d -t miniconda-XXXXXXXX)
+		tmpfile="$tmpdir/${miniconda_file_name}"
+
 		# attempt to be a good citizen and not leave tmp files laying around
 		# after either a normal exit or an error condition
 		# shellcheck disable=SC2064
-		trap "{ rm -rf $tmpfile; }" EXIT
+		trap "{ rm -rf $tmpdir; }" EXIT
 
 		$cmd "$CURL" "$CURL_OPTS" -L \
 			"${miniconda_base_url}/${miniconda_file_name}" \

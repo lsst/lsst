@@ -44,7 +44,9 @@ describe 'miniconda::install' do
 
     context '$4/miniconda_base_url' do
       it 'is optional' do
+        stubbed_env.stub_command('uname').outputs('Linux')
         curl = stubbed_env.stub_command('curl')
+        bash = stubbed_env.stub_command('bash')
 
         _, _, status = stubbed_env.execute_function(
           'scripts/newinstall.sh',
@@ -52,6 +54,7 @@ describe 'miniconda::install' do
         )
 
         expect(status.exitstatus).to be 0
+        expect(curl).to be_called_with_arguments.times(1)
         expect(curl).to be_called_with_arguments(
           '', # empty $CURL_OPTS
           '-L',
@@ -59,10 +62,20 @@ describe 'miniconda::install' do
           '--output',
           instance_of(String)
         )
+        expect(bash).to be_called_with_arguments.times(1)
+        expect(bash).to be_called_with_arguments(
+          %r|Minicondafoo-bar-Linux-x86_64.sh|,
+          '-b',
+          '-p',
+          instance_of(String)
+        )
       end
 
       it 'https://example.org' do
+        stubbed_env.stub_command('uname').outputs('Linux')
         curl = stubbed_env.stub_command('curl')
+        bash = stubbed_env.stub_command('bash')
+
 
         _, _, status = stubbed_env.execute_function(
           'scripts/newinstall.sh',
@@ -70,11 +83,18 @@ describe 'miniconda::install' do
         )
 
         expect(status.exitstatus).to be 0
+        expect(curl).to be_called_with_arguments.times(1)
         expect(curl).to be_called_with_arguments(
           '', # empty $CURL_OPTS
           '-L',
           %r|https://example.org|,
           '--output',
+          instance_of(String)
+        )
+        expect(bash).to be_called_with_arguments(
+          %r|Minicondafoo-bar-Linux-x86_64.sh|,
+          '-b',
+          '-p',
           instance_of(String)
         )
       end
@@ -122,36 +142,6 @@ describe 'miniconda::install' do
 
       expect(status.exitstatus).to_not be 0
       expect(err).to match(/Cannot install miniconda: unsupported platform Batman-x86_64/)
-    end
-  end
-
-  context 'mktemp template mangling' do
-    %w[
-      X
-      XX
-      XXX
-      XXXX
-    ].each do |pattern|
-      it "removes #{pattern}" do
-        installer = "Minicondafoo-#{pattern.gsub('X', '_')}-Linux-x86_64.sh"
-
-        stubbed_env.stub_command('uname').outputs('Linux')
-        mktemp = stubbed_env.stub_command('mktemp')
-        stubbed_env.stub_command('curl')
-        stubbed_env.stub_command('bash')
-
-        _, _, status = stubbed_env.execute_function(
-          'scripts/newinstall.sh',
-          "CURL=\"curl\"; miniconda::install foo #{pattern} baz",
-        )
-
-        expect(status.exitstatus).to be 0
-        expect(mktemp).to be_called_with_arguments.times(1)
-        expect(mktemp).to be_called_with_arguments(
-          '-t',
-          "XXXXXXXX.#{installer}",
-        )
-      end
     end
   end
 end
