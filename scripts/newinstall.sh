@@ -66,7 +66,7 @@ n8l::print_error() {
 	>&2 echo -e "$@"
 }
 
-fail() {
+n8l::fail() {
 	local code=${2:-1}
 	[[ -n $1 ]] && n8l::print_error "$1"
 	# shellcheck disable=SC2086
@@ -101,7 +101,7 @@ n8l::has_cmd() {
 }
 
 usage() {
-	fail "$(cat <<-EOF
+	n8l::fail "$(cat <<-EOF
 
 		usage: newinstall.sh [-b] [-f] [-h] [-n] [-3|-2] [-t|-T] [-s|-S] [-P <path-to-python>]
 		 -b -- Run in batch mode. Don\'t ask any questions and install all extra
@@ -379,7 +379,7 @@ miniconda::install() {
 			ana_platform="MacOSX-x86_64"
 			;;
 		*)
-			fail "Cannot install miniconda: unsupported platform $(uname -s)"
+			n8l::fail "Cannot install miniconda: unsupported platform $(uname -s)"
 			;;
 	esac
 
@@ -410,7 +410,7 @@ miniconda::install() {
 miniconda::config_channels() {
 	local channels=$1
 
-	[[ -z $channels ]] && fail "channels param is required"
+	[[ -z $channels ]] && n8l::fail "channels param is required"
 
 	# remove any previously configured non-default channels
 	# XXX allowed to fail
@@ -441,7 +441,7 @@ miniconda::lsst_env() {
 			conda_packages="conda${py_ver}_packages-osx-64.txt"
 			;;
 		*)
-			fail "Cannot configure miniconda env: unsupported platform $(uname -s)"
+			n8l::fail "Cannot configure miniconda env: unsupported platform $(uname -s)"
 			;;
 	esac
 
@@ -637,7 +637,7 @@ n8l::python_check() {
 					rerun this script to continue the installation.
 
 					EOF
-					fail
+					n8l::fail
 				fi
 				break;
 				;;
@@ -687,7 +687,7 @@ bootstrap_miniconda() {
 #
 install_eups() {
 	if [[ ! -x $EUPS_PYTHON ]]; then
-		fail "$(cat <<-EOF
+		n8l::fail "$(cat <<-EOF
 			Cannot find or execute \'${EUPS_PYTHON}\'.  Please set the EUPS_PYTHON
 			environment variable or use the -P option to point to a functioning
 			Python >= 2.6 interpreter and rerun.
@@ -698,7 +698,7 @@ install_eups() {
 	local pyverok
 	pyverok=$($EUPS_PYTHON -c 'import sys; print("%i" % (sys.hexversion >= 0x02060000))')
 	if [[ $pyverok != 1 ]]; then
-		fail "$(cat <<-EOF
+		n8l::fail "$(cat <<-EOF
 			EUPS requires Python 2.6 or newer; we are using $("$EUPS_PYTHON" -V 2>&1)
 			from ${EUPS_PYTHON}.  Please set up a compatible python interpreter using
 			the EUPS_PYTHON environment variable or the -P command line option.
@@ -754,9 +754,9 @@ install_eups() {
 			--with-python="$EUPS_PYTHON"
 		$cmd make install
 	) > eupsbuild.log 2>&1 ; then
-		fail "$(cat <<-EOF
+		n8l::fail "$(cat <<-EOF
 			FAILED.
-			fail "See log in eupsbuild.log"
+			"See log in eupsbuild.log"
 			EOF
 		)"
 	fi
@@ -965,7 +965,7 @@ main() {
 	# Refuse to run from a non-empty directory
 	if [[ $CONT_FLAG == false ]]; then
 		if [[ ! -z $(ls) && ! $(ls) == newinstall.sh ]]; then
-			fail "$(cat <<-EOF
+			n8l::fail "$(cat <<-EOF
 				Please run this script from an empty directory. The LSST stack will be
 				installed into it.
 				EOF
