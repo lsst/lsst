@@ -54,9 +54,3 @@ matrix:
       script: bundle exec rspec --format doc
 notifications:
   email: false
-  hipchat:
-    rooms:
-      secure: vdljuR+bCqCLkYekrsOHsbYb0sXXodGXc9q5GQA3cOxd/TP/vztBCcPatTSFZpHsYAMnfXqul98X1W5/vQ+eqKtCCFMF7+GKrS179cIYdrohMhU/1Ltbvx2hTofjuYi/T/8jF8APswxE2hBu0RJYLO+btPFMz0qhLA8owpmY4FY=
-    template:
-    - '%{repository}#%{build_number} (%{branch} - %{commit} : %{author}): %{message} (<a href="%{build_url}">Details</a>/<a href="%{compare_url}">Change view</a>)'
-    format: html
