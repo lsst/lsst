@@ -62,13 +62,13 @@ n8l::trim() {
 	echo -n "$var"
 }
 
-print_error() {
+n8l::print_error() {
 	>&2 echo -e "$@"
 }
 
 fail() {
 	local code=${2:-1}
-	[[ -n $1 ]] && print_error "$1"
+	[[ -n $1 ]] && n8l::print_error "$1"
 	# shellcheck disable=SC2086
 	exit $code
 }
@@ -229,13 +229,13 @@ sys::osfamily() {
 		Linux*)
 			local release_file='/etc/redhat-release'
 			if [[ ! -e $release_file ]]; then
-				[[ $__debug == true ]] && print_error "unknown osfamily"
+				[[ $__debug == true ]] && n8l::print_error "unknown osfamily"
 			fi
 			__osfamily="redhat"
 
 			# capture only major version number because "posix character classes"
 			if [[ ! $(<"$release_file") =~ release[[:space:]]*([[:digit:]]+) ]]; then
-				[[ $__debug == true ]] && print_error "unable to find release string"
+				[[ $__debug == true ]] && n8l::print_error "unable to find release string"
 			fi
 			__release="${BASH_REMATCH[1]}"
 			;;
@@ -243,12 +243,12 @@ sys::osfamily() {
 			__osfamily="osx"
 
 			if ! release=$(sw_vers -productVersion); then
-				[[ $__debug == true ]] && print_error "unable to find release string"
+				[[ $__debug == true ]] && n8l::print_error "unable to find release string"
 			fi
 			__release=$(n8l::trim "$release")
 			;;
 		*)
-			print_error "unknown osfamily"
+			n8l::print_error "unknown osfamily"
 			;;
 	esac
 
@@ -285,7 +285,7 @@ sys::platform() {
 					__target_cc=gcc-system
 					;;
 				*)
-					[[ $__debug == true ]] && print_error "unsupported release: $__release"
+					[[ $__debug == true ]] && n8l::print_error "unsupported release: $__release"
 					;;
 			esac
 			;;
@@ -297,12 +297,12 @@ sys::platform() {
 					__target_cc=clang-800.0.42.1
 					;;
 				*)
-					[[ $__debug == true ]] && print_error "unsupported release: $__release"
+					[[ $__debug == true ]] && n8l::print_error "unsupported release: $__release"
 					;;
 			esac
 			;;
 		*)
-			[[ $__debug == true ]] && print_error "unsupported osfamily: $__osfamily"
+			[[ $__debug == true ]] && n8l::print_error "unsupported osfamily: $__osfamily"
 			;;
 	esac
 
@@ -491,7 +491,7 @@ up2date_check() {
 	amidiff=$($CURL "$CURL_OPTS" -L "$NEWINSTALL_URL" | diff --brief - "$0")
 
 	if [[ $amidiff == *differ ]]; then
-		print_error "$(cat <<-EOF
+		n8l::print_error "$(cat <<-EOF
 			!!! This script differs from the official version on the distribution
 			server.  If this is not intentional, get the current version from here:
 			${NEWINSTALL_URL}
@@ -1000,7 +1000,7 @@ main() {
 	EUPS_PYTHON=${EUPS_PYTHON:-$(which python)}
 
 	EUPS_PKGROOT=${EUPS_PKGROOT:-$(default_eups_pkgroot $EUPS_USE_EUPSPKG $EUPS_USE_TARBALLS)}
-	print_error "Configured EUPS_PKGROOT: ${EUPS_PKGROOT}\n"
+	n8l::print_error "Configured EUPS_PKGROOT: ${EUPS_PKGROOT}\n"
 
 	# Install EUPS
 	install_eups
