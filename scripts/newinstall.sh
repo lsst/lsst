@@ -53,7 +53,7 @@ NEWINSTALL_URL="https://raw.githubusercontent.com/lsst/lsst/master/scripts/newin
 #
 #http://stackoverflow.com/questions/369758/how-to-trim-whitespace-from-a-bash-variable#12973694
 #
-trim() {
+n8l::trim() {
 	local var="$*"
 	# remove leading whitespace characters
 	var="${var#"${var%%[![:space:]]*}"}"
@@ -245,7 +245,7 @@ sys::osfamily() {
 			if ! release=$(sw_vers -productVersion); then
 				[[ $__debug == true ]] && print_error "unable to find release string"
 			fi
-			__release=$(trim "$release")
+			__release=$(n8l::trim "$release")
 			;;
 		*)
 			print_error "unknown osfamily"
