@@ -100,7 +100,7 @@ n8l::has_cmd() {
 	command -v "$command" > /dev/null 2>&1
 }
 
-usage() {
+n8l::usage() {
 	n8l::fail "$(cat <<-EOF
 
 		usage: newinstall.sh [-b] [-f] [-h] [-n] [-3|-2] [-t|-T] [-s|-S] [-P <path-to-python>]
@@ -196,7 +196,7 @@ n8l::parse_args() {
 				EUPS_USE_EUPSPKG=false
 				;;
 			h|*)
-				usage
+				n8l::usage
 				;;
 		esac
 	done
