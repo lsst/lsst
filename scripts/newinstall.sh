@@ -311,7 +311,12 @@ n8l::sys::platform() {
 }
 
 # http://stackoverflow.com/questions/1527049/join-elements-of-an-array#17841619
-join() { local IFS="$1"; shift; echo "$*"; }
+n8l::join() {
+	local IFS=${1?separator is required}
+	shift
+
+	echo -n "$*"
+}
 
 default_eups_pkgroot() {
 	local use_eupspkg=${1:-true}
@@ -346,7 +351,7 @@ default_eups_pkgroot() {
 		fi
 	fi
 
-	echo -n "$(join '|' "${roots[@]}")"
+	echo -n "$(n8l::join '|' "${roots[@]}")"
 }
 
 config_curl() {
