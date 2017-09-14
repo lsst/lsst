@@ -318,7 +318,7 @@ n8l::join() {
 	echo -n "$*"
 }
 
-default_eups_pkgroot() {
+n8l::default_eups_pkgroot() {
 	local use_eupspkg=${1:-true}
 	local use_tarballs=${2:-false}
 
@@ -1004,7 +1004,7 @@ main() {
 	# being used to build the stack itself.
 	EUPS_PYTHON=${EUPS_PYTHON:-$(which python)}
 
-	EUPS_PKGROOT=${EUPS_PKGROOT:-$(default_eups_pkgroot $EUPS_USE_EUPSPKG $EUPS_USE_TARBALLS)}
+	EUPS_PKGROOT=${EUPS_PKGROOT:-$(n8l::default_eups_pkgroot $EUPS_USE_EUPSPKG $EUPS_USE_TARBALLS)}
 	n8l::print_error "Configured EUPS_PKGROOT: ${EUPS_PKGROOT}\n"
 
 	# Install EUPS
