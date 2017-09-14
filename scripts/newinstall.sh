@@ -263,7 +263,7 @@ n8l::sys::osfamily() {
 # XXX cc lookup should be a seperate function if/when there is more than one #
 # compiler option per platform.
 #
-sys::platform() {
+n8l::sys::platform() {
 	local __osfamily=${1?osfamily is required}
 	local __release=${2?release is required}
 	local __platform_result=${3?platform result variable is required}
@@ -332,7 +332,7 @@ default_eups_pkgroot() {
 	fi
 
 	if [[ -n $osfamily && -n $release ]]; then
-		sys::platform "$osfamily" "$release" platform target_cc
+		n8l::sys::platform "$osfamily" "$release" platform target_cc
 	fi
 
 	if [[ -n $EUPS_PKGROOT_BASE_URL ]]; then
