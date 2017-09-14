@@ -130,7 +130,7 @@ n8l::python_env_slug() {
 	echo "$(n8l::miniconda_slug)-${LSSTSW_REF}"
 }
 
-eups_slug() {
+n8l::eups_slug() {
 	local eups_slug=$EUPS_VERSION
 
 	if [[ -n $EUPS_GITREV ]]; then
@@ -723,7 +723,7 @@ install_eups() {
 		mv "$eups_tmp_dir" "$eups_legacy_dir"
 	fi
 
-	echo -n "Installing EUPS ($(eups_slug))... "
+	echo -n "Installing EUPS ($(n8l::eups_slug))... "
 
 	# remove previous install
 	if [[ -e $(eups_dir) ]]; then
@@ -791,7 +791,7 @@ generate_loader_bash() {
 		fi
 
 		# Bootstrap EUPS
-		EUPS_DIR="\${LSST_HOME}/eups/$(eups_slug)"
+		EUPS_DIR="\${LSST_HOME}/eups/$(n8l::eups_slug)"
 		source "\${EUPS_DIR}/bin/setups.sh"
 
 		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$EUPS_PKGROOT}
@@ -818,7 +818,7 @@ generate_loader_csh() {
 		endif
 
 		# Bootstrap EUPS
-		set EUPS_DIR = "\${LSST_HOME}/eups/$(eups_slug)"
+		set EUPS_DIR = "\${LSST_HOME}/eups/$(n8l::eups_slug)"
 		source "\${EUPS_DIR}/bin/setups.csh"
 
 		if ( ! \${?EUPS_PKGROOT} ) then
@@ -846,7 +846,7 @@ generate_loader_ksh() {
 		fi
 
 		# Bootstrap EUPS
-		EUPS_DIR="\${LSST_HOME}/eups/$(eups_slug)"
+		EUPS_DIR="\${LSST_HOME}/eups/$(n8l::eups_slug)"
 		source "\${EUPS_DIR}/bin/setups.sh"
 
 		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$EUPS_PKGROOT}
@@ -872,7 +872,7 @@ generate_loader_zsh() {
 		fi
 
 		# Bootstrap EUPS
-		EUPS_DIR="\${LSST_HOME}/eups/$(eups_slug)"
+		EUPS_DIR="\${LSST_HOME}/eups/$(n8l::eups_slug)"
 		source "\${EUPS_DIR}/bin/setups.zsh"
 
 		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$EUPS_PKGROOT}
