@@ -155,7 +155,7 @@ n8l::eups_dir() {
 # XXX this will probably need to be extended to include the compiler used for
 # binary tarballs
 #
-eups_path() {
+n8l::eups_path() {
 	echo "${LSST_HOME}/stack/$(n8l::python_env_slug)"
 }
 
@@ -750,7 +750,7 @@ install_eups() {
 
 		$cmd ./configure \
 			--prefix="$(n8l::eups_dir)" \
-			--with-eups="$(eups_path)" \
+			--with-eups="$(n8l::eups_path)" \
 			--with-python="$EUPS_PYTHON"
 		$cmd make install
 	) > eupsbuild.log 2>&1 ; then
@@ -767,7 +767,7 @@ install_eups() {
 	n8l::ln_rel "$(n8l::eups_dir)" current
 
 	# update EUPS_PATH current symlink
-	n8l::ln_rel "$(eups_path)" current
+	n8l::ln_rel "$(n8l::eups_path)" current
 
 	echo " done."
 }
