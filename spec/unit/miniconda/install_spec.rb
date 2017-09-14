@@ -8,36 +8,39 @@ describe 'miniconda::install' do
   context 'parameters' do
     context '$1/py_ver' do
       it 'is required' do
-        _, err, status = stubbed_env.execute_function(
+        out, err, status = stubbed_env.execute_function(
           'scripts/newinstall.sh',
           'miniconda::install',
         )
 
         expect(status.exitstatus).to_not be 0
+        expect(out).to eq('')
         expect(err).to match(/python version is required/)
       end
     end
 
     context '$2/mini_ver' do
       it 'is required' do
-        _, err, status = stubbed_env.execute_function(
+        out, err, status = stubbed_env.execute_function(
           'scripts/newinstall.sh',
           'miniconda::install foo',
         )
 
         expect(status.exitstatus).to_not be 0
+        expect(out).to eq('')
         expect(err).to match(/miniconda version is required/)
       end
     end
 
     context '$3/prefix' do
       it 'is required' do
-        _, err, status = stubbed_env.execute_function(
+        out, err, status = stubbed_env.execute_function(
           'scripts/newinstall.sh',
           'miniconda::install foo bar',
         )
 
         expect(status.exitstatus).to_not be 0
+        expect(out).to eq('')
         expect(err).to match(/prefix is required/)
       end
     end
@@ -48,12 +51,15 @@ describe 'miniconda::install' do
         curl = stubbed_env.stub_command('curl')
         bash = stubbed_env.stub_command('bash')
 
-        _, _, status = stubbed_env.execute_function(
+        out, err, status = stubbed_env.execute_function(
           'scripts/newinstall.sh',
           'CURL="curl"; miniconda::install foo bar baz',
         )
 
         expect(status.exitstatus).to be 0
+        expect(out).to match(/Deploying Minicondafoo-bar-Linux-x86_64.sh/)
+        expect(err).to eq('')
+
         expect(curl).to be_called_with_arguments.times(1)
         expect(curl).to be_called_with_arguments(
           '', # empty $CURL_OPTS
@@ -77,12 +83,15 @@ describe 'miniconda::install' do
         bash = stubbed_env.stub_command('bash')
 
 
-        _, _, status = stubbed_env.execute_function(
+        out, err, status = stubbed_env.execute_function(
           'scripts/newinstall.sh',
           'CURL="curl"; miniconda::install foo bar baz https://example.org',
         )
 
         expect(status.exitstatus).to be 0
+        expect(out).to match(/Deploying Minicondafoo-bar-Linux-x86_64.sh/)
+        expect(err).to eq('')
+
         expect(curl).to be_called_with_arguments.times(1)
         expect(curl).to be_called_with_arguments(
           '', # empty $CURL_OPTS
@@ -114,12 +123,15 @@ describe 'miniconda::install' do
         curl = stubbed_env.stub_command('curl')
         stubbed_env.stub_command('bash')
 
-        out, _, status = stubbed_env.execute_function(
+        out, err, status = stubbed_env.execute_function(
           'scripts/newinstall.sh',
           'CURL="curl"; miniconda::install foo bar baz',
         )
 
         expect(status.exitstatus).to be 0
+        expect(out).to match(/#{installer}/)
+        expect(err).to eq('')
+
         expect(curl).to be_called_with_arguments.times(1)
         expect(curl).to be_called_with_arguments(
           '', # empty $CURL_OPTS
@@ -128,19 +140,19 @@ describe 'miniconda::install' do
           '--output',
           instance_of(String)
         )
-        expect(out).to match(/#{installer}/)
       end
     end
 
     it '(unknown)' do
       stubbed_env.stub_command('uname').outputs('Batman-x86_64')
 
-      _, err, status = stubbed_env.execute_function(
+      out, err, status = stubbed_env.execute_function(
         'scripts/newinstall.sh',
         'miniconda::install foo bar baz',
       )
 
       expect(status.exitstatus).to_not be 0
+      expect(out).to eq('')
       expect(err).to match(/Cannot install miniconda: unsupported platform Batman-x86_64/)
     end
   end
