@@ -217,7 +217,7 @@ n8l::parse_args() {
 # osfamily string is returned in the variable name passed as $1
 # release string is returned in the variable name passed as $2
 #
-sys::osfamily() {
+n8l::sys::osfamily() {
 	local __osfamily_result=${1?osfamily result variable is required}
 	local __release_result=${2?release result variable is required}
 	local __debug=$3
@@ -248,7 +248,7 @@ sys::osfamily() {
 			__release=$(n8l::trim "$release")
 			;;
 		*)
-			n8l::print_error "unknown osfamily"
+			[[ $__debug == true ]] && n8l::print_error "unknown osfamily"
 			;;
 	esac
 
@@ -328,7 +328,7 @@ default_eups_pkgroot() {
 
 	# only probe system *IF* tarballs are desired
 	if [[ $use_tarballs == true ]]; then
-		sys::osfamily osfamily release
+		n8l::sys::osfamily osfamily release
 	fi
 
 	if [[ -n $osfamily && -n $release ]]; then
