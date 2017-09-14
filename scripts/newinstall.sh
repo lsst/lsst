@@ -144,8 +144,8 @@ n8l::eups_base_dir() {
 	echo "${LSST_HOME}/eups"
 }
 
-eups_dir() {
-	echo "$(eups_base_dir)/$(eups_slug)"
+n8l::eups_dir() {
+	echo "$(n8l::eups_base_dir)/$(n8l::eups_slug)"
 }
 
 #
@@ -726,9 +726,9 @@ install_eups() {
 	echo -n "Installing EUPS ($(n8l::eups_slug))... "
 
 	# remove previous install
-	if [[ -e $(eups_dir) ]]; then
-		chmod -R +w "$(eups_dir)"
-		rm -rf "$(eups_dir)"
+	if [[ -e $(n8l::eups_dir) ]]; then
+		chmod -R +w "$(n8l::eups_dir)"
+		rm -rf "$(n8l::eups_dir)"
 	fi
 
 	local eups_build_dir="$LSST_HOME/_build"
@@ -749,7 +749,7 @@ install_eups() {
 		fi
 
 		$cmd ./configure \
-			--prefix="$(eups_dir)" \
+			--prefix="$(n8l::eups_dir)" \
 			--with-eups="$(eups_path)" \
 			--with-python="$EUPS_PYTHON"
 		$cmd make install
@@ -764,7 +764,7 @@ install_eups() {
 	# symlinks should be relative to support relocation of the newinstall root
 
 	# update $EUPS_DIR current symlink
-	n8l::ln_rel "$(eups_dir)" current
+	n8l::ln_rel "$(n8l::eups_dir)" current
 
 	# update EUPS_PATH current symlink
 	n8l::ln_rel "$(eups_path)" current
