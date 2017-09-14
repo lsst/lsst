@@ -4,6 +4,7 @@ describe 'n8l::pyverok' do
   include Rspec::Bash
 
   let(:stubbed_env) { create_stubbed_env }
+  subject(:func) { 'n8l::pyverok' }
 
   context 'parameters' do
     it '(defaults)' do
@@ -11,7 +12,7 @@ describe 'n8l::pyverok' do
 
       out, err, status = stubbed_env.execute_function(
         'scripts/newinstall.sh',
-        'n8l::pyverok',
+        "#{func}",
       )
 
       expect(status.exitstatus).to be 0
@@ -28,7 +29,7 @@ describe 'n8l::pyverok' do
 
       out, err, status = stubbed_env.execute_function(
         'scripts/newinstall.sh',
-        'n8l::pyverok batman 12 34',
+        "#{func} batman 12 34",
       )
 
       expect(status.exitstatus).to be 0
@@ -47,7 +48,7 @@ describe 'n8l::pyverok' do
 
       out, err, status = stubbed_env.execute_function(
         'scripts/newinstall.sh',
-        'n8l::pyverok',
+        "#{func}",
       )
 
       expect(status.exitstatus).to be 1

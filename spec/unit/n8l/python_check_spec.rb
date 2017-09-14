@@ -4,6 +4,7 @@ describe 'n8l::python_check' do
   include Rspec::Bash
 
   let(:stubbed_env) { create_stubbed_env }
+  subject(:func) { 'n8l::python_check' }
 
   context 'python interp' do
     it 'does not exist' do
@@ -11,7 +12,7 @@ describe 'n8l::python_check' do
 
       out, err, status = stubbed_env.execute_function(
         'scripts/newinstall.sh',
-        'n8l::python_check',
+        "#{func}",
       )
 
       # XXX can't figure out how to mock `read` and have it set env vars
@@ -30,7 +31,7 @@ describe 'n8l::python_check' do
 
         out, err, status = stubbed_env.execute_function(
           'scripts/newinstall.sh',
-          'n8l::python_check',
+          "#{func}",
         )
 
         expect(status.exitstatus).to_not be 0
@@ -50,7 +51,7 @@ describe 'n8l::python_check' do
 
         out, err, status = stubbed_env.execute_function(
           'scripts/newinstall.sh',
-          'n8l::python_check',
+          "#{func}",
         )
 
         expect(status.exitstatus).to_not be 0

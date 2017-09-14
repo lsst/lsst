@@ -4,13 +4,14 @@ describe 'n8l::has_cmd' do
   include Rspec::Bash
 
   let(:stubbed_env) { create_stubbed_env }
+  subject(:func) { 'n8l::has_cmd' }
 
   context 'parameters' do
     context '$1/command' do
       it 'is required' do
         out, err, status = stubbed_env.execute_function(
           'scripts/newinstall.sh',
-          'n8l::has_cmd',
+          "#{func}",
         )
 
         expect(status.exitstatus).to_not be 0
@@ -23,7 +24,7 @@ describe 'n8l::has_cmd' do
 
         out, err, status = stubbed_env.execute_function(
           'scripts/newinstall.sh',
-          'n8l::has_cmd batman',
+          "#{func} batman",
         )
 
         expect(status.exitstatus).to be 0

@@ -4,13 +4,14 @@ describe 'miniconda::install' do
   include Rspec::Bash
 
   let(:stubbed_env) { create_stubbed_env }
+  subject(:func) { 'miniconda::install' }
 
   context 'parameters' do
     context '$1/py_ver' do
       it 'is required' do
         out, err, status = stubbed_env.execute_function(
           'scripts/newinstall.sh',
-          'miniconda::install',
+          "#{func}",
         )
 
         expect(status.exitstatus).to_not be 0
@@ -23,7 +24,7 @@ describe 'miniconda::install' do
       it 'is required' do
         out, err, status = stubbed_env.execute_function(
           'scripts/newinstall.sh',
-          'miniconda::install foo',
+          "#{func} foo",
         )
 
         expect(status.exitstatus).to_not be 0
@@ -36,7 +37,7 @@ describe 'miniconda::install' do
       it 'is required' do
         out, err, status = stubbed_env.execute_function(
           'scripts/newinstall.sh',
-          'miniconda::install foo bar',
+          "#{func} foo bar",
         )
 
         expect(status.exitstatus).to_not be 0
@@ -53,7 +54,8 @@ describe 'miniconda::install' do
 
         out, err, status = stubbed_env.execute_function(
           'scripts/newinstall.sh',
-          'CURL="curl"; miniconda::install foo bar baz',
+          "#{func} foo bar baz",
+          { 'CURL' => 'curl' },
         )
 
         expect(status.exitstatus).to be 0
@@ -82,10 +84,10 @@ describe 'miniconda::install' do
         curl = stubbed_env.stub_command('curl')
         bash = stubbed_env.stub_command('bash')
 
-
         out, err, status = stubbed_env.execute_function(
           'scripts/newinstall.sh',
-          'CURL="curl"; miniconda::install foo bar baz https://example.org',
+          "#{func} foo bar baz https://example.org",
+          { 'CURL' => 'curl' },
         )
 
         expect(status.exitstatus).to be 0
@@ -125,7 +127,8 @@ describe 'miniconda::install' do
 
         out, err, status = stubbed_env.execute_function(
           'scripts/newinstall.sh',
-          'CURL="curl"; miniconda::install foo bar baz',
+          "#{func} foo bar baz",
+          { 'CURL' => 'curl' },
         )
 
         expect(status.exitstatus).to be 0
@@ -148,7 +151,7 @@ describe 'miniconda::install' do
 
       out, err, status = stubbed_env.execute_function(
         'scripts/newinstall.sh',
-        'miniconda::install foo bar baz',
+        "#{func} foo bar baz",
       )
 
       expect(status.exitstatus).to_not be 0
