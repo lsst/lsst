@@ -122,12 +122,12 @@ n8l::usage() {
 	)"
 }
 
-miniconda_slug() {
+n8l::miniconda_slug() {
 	echo "miniconda${LSST_PYTHON_VERSION}-${MINICONDA_VERSION}"
 }
 
 python_env_slug() {
-	echo "$(miniconda_slug)-${LSSTSW_REF}"
+	echo "$(n8l::miniconda_slug)-${LSSTSW_REF}"
 }
 
 eups_slug() {
@@ -649,10 +649,10 @@ n8l::python_check() {
 bootstrap_miniconda() {
 	local miniconda_base_path="${LSST_HOME}/python"
 	local miniconda_path
-	miniconda_path="${miniconda_base_path}/$(miniconda_slug)"
+	miniconda_path="${miniconda_base_path}/$(n8l::miniconda_slug)"
 
 	local miniconda_path_old
-	miniconda_path_old="${LSST_HOME}/$(miniconda_slug)"
+	miniconda_path_old="${LSST_HOME}/$(n8l::miniconda_slug)"
 
 	# remove old unnested miniconda -- the install has hard coded shebangs
 	if [[ -e $miniconda_path_old ]]; then
