@@ -140,7 +140,7 @@ n8l::eups_slug() {
 	echo "$eups_slug"
 }
 
-eups_base_dir() {
+n8l::eups_base_dir() {
 	echo "${LSST_HOME}/eups"
 }
 
@@ -711,15 +711,15 @@ install_eups() {
 	fi
 
 	# if there is an existing, unversioned install, renamed it to "legacy"
-	if [[ -e "$(eups_base_dir)/Release_Notes" ]]; then
+	if [[ -e "$(n8l::eups_base_dir)/Release_Notes" ]]; then
 		local eups_legacy_dir
-		eups_legacy_dir="$(eups_base_dir)/legacy"
+		eups_legacy_dir="$(n8l::eups_base_dir)/legacy"
 		local eups_tmp_dir="${LSST_HOME}/eups-tmp"
 
 		echo "Moving old EUPS to ${eups_legacy_dir}"
 
-		mv "$(eups_base_dir)" "$eups_tmp_dir"
-		mkdir -p "$(eups_base_dir)"
+		mv "$(n8l::eups_base_dir)" "$eups_tmp_dir"
+		mkdir -p "$(n8l::eups_base_dir)"
 		mv "$eups_tmp_dir" "$eups_legacy_dir"
 	fi
 
