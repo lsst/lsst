@@ -126,7 +126,7 @@ n8l::miniconda_slug() {
 	echo "miniconda${LSST_PYTHON_VERSION}-${MINICONDA_VERSION}"
 }
 
-python_env_slug() {
+n8l::python_env_slug() {
 	echo "$(n8l::miniconda_slug)-${LSSTSW_REF}"
 }
 
@@ -156,7 +156,7 @@ eups_dir() {
 # binary tarballs
 #
 eups_path() {
-	echo "${LSST_HOME}/stack/$(python_env_slug)"
+	echo "${LSST_HOME}/stack/$(n8l::python_env_slug)"
 }
 
 n8l::parse_args() {
@@ -324,7 +324,7 @@ default_eups_pkgroot() {
 	declare -a roots
 
 	local pyslug
-	pyslug=$(python_env_slug)
+	pyslug=$(n8l::python_env_slug)
 
 	# only probe system *IF* tarballs are desired
 	if [[ $use_tarballs == true ]]; then
