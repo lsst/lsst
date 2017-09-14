@@ -76,7 +76,7 @@ n8l::fail() {
 #
 # create/update a *relative* symlink, in the basedir of the target
 #
-ln_rel() {
+n8l::ln_rel() {
 	local link_target=${1?link target is required}
 	local link_name=${2?link name is required}
 
@@ -668,7 +668,7 @@ bootstrap_miniconda() {
 	fi
 
 	# update miniconda current symlink
-	ln_rel "$miniconda_path" current
+	n8l::ln_rel "$miniconda_path" current
 
 	export PATH="${miniconda_path}/bin:${PATH}"
 
@@ -764,10 +764,10 @@ install_eups() {
 	# symlinks should be relative to support relocation of the newinstall root
 
 	# update $EUPS_DIR current symlink
-	ln_rel "$(eups_dir)" current
+	n8l::ln_rel "$(eups_dir)" current
 
 	# update EUPS_PATH current symlink
-	ln_rel "$(eups_path)" current
+	n8l::ln_rel "$(eups_path)" current
 
 	echo " done."
 }
