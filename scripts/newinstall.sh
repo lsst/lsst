@@ -435,7 +435,7 @@ n8l::miniconda::config_channels() {
 }
 
 # Install packages on which the stack is known to depend
-miniconda::lsst_env() {
+n8l::miniconda::lsst_env() {
 	local py_ver=${1?python version is required}
 	local ref=${2?lsstsw git ref is required}
 
@@ -681,7 +681,7 @@ bootstrap_miniconda() {
 	if [[ -n $CONDA_CHANNELS ]]; then
 		n8l::miniconda::config_channels "$CONDA_CHANNELS"
 	fi
-	miniconda::lsst_env "$LSST_PYTHON_VERSION" "$LSSTSW_REF"
+	n8l::miniconda::lsst_env "$LSST_PYTHON_VERSION" "$LSSTSW_REF"
 
 	CMD_SETUP_MINICONDA_SH="export PATH=\"${miniconda_path}/bin:\${PATH}\""
 	CMD_SETUP_MINICONDA_CSH="setenv PATH ${miniconda_path}/bin:\$PATH"
