@@ -652,7 +652,7 @@ n8l::python_check() {
 	done
 }
 
-bootstrap_miniconda() {
+n8l::bootstrap_miniconda() {
 	local miniconda_base_path="${LSST_HOME}/python"
 	local miniconda_path
 	miniconda_path="${miniconda_base_path}/$(n8l::miniconda_slug)"
@@ -996,7 +996,7 @@ main() {
 	# Bootstrap miniconda (optional)
 	# Note that this will add miniconda to the path
 	if [[ $WITH_MINICONDA == true ]]; then
-		bootstrap_miniconda
+		n8l::bootstrap_miniconda
 	fi
 
 	# By default we use the PATH Python to bootstrap EUPS.  Set $EUPS_PYTHON to
