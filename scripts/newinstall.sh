@@ -354,7 +354,10 @@ n8l::default_eups_pkgroot() {
 	echo -n "$(n8l::join '|' "${roots[@]}")"
 }
 
-config_curl() {
+# XXX this sould be split into two functions that echo values.  This would
+# allow them to be called directly and remove the usage of the global
+# variables.
+n8l::config_curl() {
 	# Prefer system curl; user-installed ones sometimes behave oddly
 	if [[ -x /usr/bin/curl ]]; then
 		CURL=${CURL:-/usr/bin/curl}
@@ -362,8 +365,8 @@ config_curl() {
 		CURL=${CURL:-curl}
 	fi
 
-	# disable curl progress meter unless running under a tty -- this is intended to
-	# reduce the amount of console output when running under CI
+	# disable curl progress meter unless running under a tty -- this is intended
+	# to reduce the amount of console output when running under CI
 	CURL_OPTS='-#'
 	if [[ ! -t 1 ]]; then
 		CURL_OPTS='-sS'
@@ -944,7 +947,7 @@ am_I_sourced() {
 # script main
 #
 main() {
-	config_curl
+	n8l::config_curl
 
 	CONT_FLAG=false
 	BATCH_FLAG=false
