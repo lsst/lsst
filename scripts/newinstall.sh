@@ -373,7 +373,7 @@ n8l::config_curl() {
 	fi
 }
 
-miniconda::install() {
+n8l::miniconda::install() {
 	local py_ver=${1?python version is required}
 	local mini_ver=${2?miniconda version is required}
 	local prefix=${3?prefix is required}
@@ -668,7 +668,7 @@ bootstrap_miniconda() {
 	fi
 
 	if [[ ! -e $miniconda_path ]]; then
-		miniconda::install \
+		n8l::miniconda::install \
 			"$LSST_PYTHON_VERSION" \
 			"$MINICONDA_VERSION" \
 			"$miniconda_path" \
