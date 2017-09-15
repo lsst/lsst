@@ -886,7 +886,7 @@ n8l::generate_loader_zsh() {
 	EOF
 }
 
-create_load_scripts() {
+n8l::create_load_scripts() {
 	for sfx in bash ksh csh zsh; do
 		echo -n "Creating startup scripts (${sfx}) ... "
 		n8l::generate_loader_$sfx "${LSST_HOME}/loadLSST.${sfx}"
@@ -1013,7 +1013,7 @@ main() {
 	n8l::install_eups
 
 	# Create the environment loader scripts
-	create_load_scripts
+	n8l::create_load_scripts
 
 	# Helpful message about what to do next
 	print_greeting
