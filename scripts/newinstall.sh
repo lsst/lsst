@@ -779,7 +779,7 @@ n8l::install_eups() {
 	echo " done."
 }
 
-generate_loader_bash() {
+n8l::generate_loader_bash() {
 	local file_name=$1
 
 	# shellcheck disable=SC2094
@@ -805,7 +805,7 @@ generate_loader_bash() {
 	EOF
 }
 
-generate_loader_csh() {
+n8l::generate_loader_csh() {
 	local file_name=$1
 
 	# shellcheck disable=SC2094
@@ -834,7 +834,7 @@ generate_loader_csh() {
 	EOF
 }
 
-generate_loader_ksh() {
+n8l::generate_loader_ksh() {
 	local file_name=$1
 
 	# shellcheck disable=SC2094
@@ -860,7 +860,7 @@ generate_loader_ksh() {
 	EOF
 }
 
-generate_loader_zsh() {
+n8l::generate_loader_zsh() {
 	local file_name=$1
 
 	# shellcheck disable=SC2094
@@ -889,7 +889,7 @@ generate_loader_zsh() {
 create_load_scripts() {
 	for sfx in bash ksh csh zsh; do
 		echo -n "Creating startup scripts (${sfx}) ... "
-		generate_loader_$sfx "${LSST_HOME}/loadLSST.${sfx}"
+		n8l::generate_loader_$sfx "${LSST_HOME}/loadLSST.${sfx}"
 		echo "done."
 	done
 }
