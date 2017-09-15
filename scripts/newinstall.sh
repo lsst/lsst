@@ -36,10 +36,10 @@ EUPS_USE_EUPSPKG=${EUPS_USE_EUPSPKG:-true}
 
 # Default to -3 (Python 3)
 LSST_PYTHON_VERSION=${LSST_PYTHON_VERSION:-3}
-MINICONDA_VERSION=${MINICONDA_VERSION:-4.2.12}
+MINICONDA_VERSION=${MINICONDA_VERSION:-4.3.21}
 # this git ref controls which set of conda packages are used to initialize the
 # the default conda env.
-LSSTSW_REF=${LSSTSW_REF:-7c8e67}
+LSSTSW_REF=${LSSTSW_REF:-10a4fa6}
 MINICONDA_BASE_URL=${MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
 CONDA_CHANNELS=${CONDA_CHANNELS:-}
 
@@ -573,7 +573,7 @@ else:
 
 #
 #	Test/warn about Python versions, offer to get miniconda if not supported.
-#	LSST currently mandates Python 3.5 and, optionally, 2.7.  We assume that the
+#	LSST currently mandates specific versions of Python.  We assume that the
 #	python in PATH is the python that will be used to build the stack if
 #	miniconda(2/3) is not installed.
 #
@@ -582,7 +582,7 @@ n8l::python_check() {
 	# EUPS package) XXX this will break if python is not in $PATH
 	local py_interp=python
 	local minver2=7
-	local minver3=5
+	local minver3=6
 
 	local has_python=false
 	local pyverok=false
@@ -639,8 +639,8 @@ n8l::python_check() {
 				if [[ $pyverok != true ]]; then
 					cat <<-EOF
 
-					Thanks. After you install Python 2.7 or 3.5 and the required modules,
-					rerun this script to continue the installation.
+					Thanks. After you install the required version of Python and the
+					required modules, rerun this script to continue the installation.
 
 					EOF
 					n8l::fail
