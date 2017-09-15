@@ -490,7 +490,7 @@ n8l::miniconda::lsst_env() {
 #
 # Don't attempt to run diff when the script has been piped into the shell
 #
-up2date_check() {
+n8l::up2date_check() {
 	set +e
 
 	local amidiff
@@ -981,7 +981,7 @@ main() {
 
 	# Warn if there's a different version on the server
 	if [[ -n $0 && $0 != bash ]]; then
-		up2date_check
+		n8l::up2date_check
 	fi
 
 	git_check
