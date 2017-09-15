@@ -1,0 +1,19 @@
+AllCops:
+  TargetRubyVersion: '2.2'
+
+Metrics/BlockLength:
+  Enabled: false
+
+Style/TrailingCommaInArguments:
+  Enabled: false
+
+Style/BracesAroundHashParameters:
+  Enabled: false
+
+# trailing commas after last item in hash
+Style/TrailingCommaInLiteral:
+  Enabled: false
+
+# no, I really don't want to put //'s around %r{}s
+Style/RegexpLiteral:
+  Enabled: false
