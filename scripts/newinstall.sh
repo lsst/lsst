@@ -509,7 +509,8 @@ n8l::up2date_check() {
 }
 
 # Discuss the state of Git.
-git_check() {
+# XXX should probably fail if git version is insufficient under batch mode.
+n8l::git_check() {
 	if hash git 2>/dev/null; then
 		local gitvernum
 		gitvernum=$(git --version | cut -d\  -f 3)
@@ -552,7 +553,6 @@ git_check() {
 	else
 		echo "Detected $(git --version). OK."
 	fi
-	echo
 }
 
 n8l::pyverok() {
@@ -984,7 +984,7 @@ main() {
 		n8l::up2date_check
 	fi
 
-	git_check
+	n8l::git_check
 
 	# always use miniconda when in batch mode
 	if [[ $BATCH_FLAG = true ]]; then
