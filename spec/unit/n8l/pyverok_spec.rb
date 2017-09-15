@@ -12,7 +12,7 @@ describe 'n8l::pyverok' do
 
       out, err, status = stubbed_env.execute_function(
         'scripts/newinstall.sh',
-        "#{func}",
+        func,
       )
 
       expect(status.exitstatus).to be 0
@@ -48,7 +48,7 @@ describe 'n8l::pyverok' do
 
       out, err, status = stubbed_env.execute_function(
         'scripts/newinstall.sh',
-        "#{func}",
+        func,
       )
 
       expect(status.exitstatus).to be 1

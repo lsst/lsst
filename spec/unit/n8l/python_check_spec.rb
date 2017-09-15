@@ -12,7 +12,7 @@ describe 'n8l::python_check' do
 
       out, err, status = stubbed_env.execute_function(
         'scripts/newinstall.sh',
-        "#{func}",
+        func,
       )
 
       # XXX can't figure out how to mock `read` and have it set env vars
@@ -31,7 +31,7 @@ describe 'n8l::python_check' do
 
         out, err, status = stubbed_env.execute_function(
           'scripts/newinstall.sh',
-          "#{func}",
+          func,
         )
 
         expect(status.exitstatus).to_not be 0
@@ -51,7 +51,7 @@ describe 'n8l::python_check' do
 
         out, err, status = stubbed_env.execute_function(
           'scripts/newinstall.sh',
-          "#{func}",
+          func,
         )
 
         expect(status.exitstatus).to_not be 0
@@ -63,7 +63,6 @@ describe 'n8l::python_check' do
 
         expect(has_cmd).to be_called_with_arguments('python').times(1)
         expect(pyverok).to be_called_with_arguments('python', '7', '5').times(1)
-
       end
     end
   end

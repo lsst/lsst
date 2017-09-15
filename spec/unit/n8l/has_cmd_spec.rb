@@ -11,7 +11,7 @@ describe 'n8l::has_cmd' do
       it 'is required' do
         out, err, status = stubbed_env.execute_function(
           'scripts/newinstall.sh',
-          "#{func}",
+          func,
         )
 
         expect(status.exitstatus).to_not be 0
