@@ -415,10 +415,8 @@ n8l::miniconda::install() {
 }
 
 # configure alt conda channel(s)
-miniconda::config_channels() {
-	local channels=$1
-
-	[[ -z $channels ]] && n8l::fail "channels param is required"
+n8l::miniconda::config_channels() {
+	local channels=${1?channels is required}
 
 	# remove any previously configured non-default channels
 	# XXX allowed to fail
@@ -681,7 +679,7 @@ bootstrap_miniconda() {
 	export PATH="${miniconda_path}/bin:${PATH}"
 
 	if [[ -n $CONDA_CHANNELS ]]; then
-		miniconda::config_channels "$CONDA_CHANNELS"
+		n8l::miniconda::config_channels "$CONDA_CHANNELS"
 	fi
 	miniconda::lsst_env "$LSST_PYTHON_VERSION" "$LSSTSW_REF"
 
