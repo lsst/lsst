@@ -691,10 +691,11 @@ n8l::bootstrap_miniconda() {
 # $EUPS_PYTHON is the Python used to install/run EUPS.  It can be any Python >=
 # v2.6
 #
-install_eups() {
+# XXX this function should be broken up to enable better unit testing.
+n8l::install_eups() {
 	if [[ ! -x $EUPS_PYTHON ]]; then
 		n8l::fail "$(cat <<-EOF
-			Cannot find or execute \'${EUPS_PYTHON}\'.  Please set the EUPS_PYTHON
+			Cannot find or execute '${EUPS_PYTHON}'.  Please set the EUPS_PYTHON
 			environment variable or use the -P option to point to a functioning
 			Python >= 2.6 interpreter and rerun.
 			EOF
@@ -1009,7 +1010,7 @@ main() {
 	n8l::print_error "Configured EUPS_PKGROOT: ${EUPS_PKGROOT}\n"
 
 	# Install EUPS
-	install_eups
+	n8l::install_eups
 
 	# Create the environment loader scripts
 	create_load_scripts
