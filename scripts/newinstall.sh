@@ -894,7 +894,7 @@ n8l::create_load_scripts() {
 	done
 }
 
-print_greeting() {
+n8l::print_greeting() {
 	cat <<-EOF
 
 		Bootstrap complete. To continue installing (and to use) the LSST stack type
@@ -1016,7 +1016,7 @@ main() {
 	n8l::create_load_scripts
 
 	# Helpful message about what to do next
-	print_greeting
+	n8l::print_greeting
 }
 
 #
