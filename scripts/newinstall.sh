@@ -933,7 +933,7 @@ n8l::print_greeting() {
 #
 # See: https://stackoverflow.com/a/12396228
 #
-am_I_sourced() {
+n8l::am_i_sourced() {
 	if [ "${FUNCNAME[1]}" = source ]; then
 		return 0
 	else
@@ -1022,7 +1022,7 @@ main() {
 #
 # support being sourced as a lib or executed
 #
-if ! am_I_sourced; then
+if ! n8l::am_i_sourced; then
 	main "$@"
 fi
 
