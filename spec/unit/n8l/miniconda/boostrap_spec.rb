@@ -1,10 +1,10 @@
 require 'rspec/bash'
 
-describe 'n8l::bootstrap_miniconda' do
+describe 'n8l::miniconda::bootstrap' do
   include Rspec::Bash
 
   let(:stubbed_env) { create_stubbed_env }
-  subject(:func) { 'n8l::bootstrap_miniconda' }
+  subject(:func) { 'n8l::miniconda::bootstrap' }
 
   context 'without $CONDA_CHANNELS' do
     it 'works' do
