@@ -662,12 +662,19 @@ n8l::python_check() {
 # channels and installation of the conda packages.
 #
 n8l::miniconda::bootstrap() {
-	local miniconda_base_path="${LSST_HOME}/python"
+	local py_ver=${1?python version is required}
+	local mini_ver=${2?miniconda version is required}
+	local prefix=${3?prefix is required}
+	local miniconda_base_url=${4:-https://repo.continuum.io/miniconda}
+	local lsstsw_ref=${5:-master}
+	local conda_channels=$6
+
+	local miniconda_base_path="${prefix}/python"
 	local miniconda_path
 	miniconda_path="${miniconda_base_path}/$(n8l::miniconda_slug)"
 
 	local miniconda_path_old
-	miniconda_path_old="${LSST_HOME}/$(n8l::miniconda_slug)"
+	miniconda_path_old="${prefix}/$(n8l::miniconda_slug)"
 
 	# remove old unnested miniconda -- the install has hard coded shebangs
 	if [[ -e $miniconda_path_old ]]; then
@@ -676,10 +683,10 @@ n8l::miniconda::bootstrap() {
 
 	if [[ ! -e $miniconda_path ]]; then
 		n8l::miniconda::install \
-			"$LSST_PYTHON_VERSION" \
-			"$MINICONDA_VERSION" \
+			"$py_ver" \
+			"$mini_ver" \
 			"$miniconda_path" \
-			"$MINICONDA_BASE_URL"
+			"$miniconda_base_url"
 	fi
 
 	# update miniconda current symlink
@@ -687,10 +694,10 @@ n8l::miniconda::bootstrap() {
 
 	export PATH="${miniconda_path}/bin:${PATH}"
 
-	if [[ -n $CONDA_CHANNELS ]]; then
-		n8l::miniconda::config_channels "$CONDA_CHANNELS"
+	if [[ -n $conda_channels ]]; then
+		n8l::miniconda::config_channels "$conda_channels"
 	fi
-	n8l::miniconda::lsst_env "$LSST_PYTHON_VERSION" "$LSSTSW_REF"
+	n8l::miniconda::lsst_env "$py_ver" "$lsstsw_ref"
 
 	CMD_SETUP_MINICONDA_SH="export PATH=\"${miniconda_path}/bin:\${PATH}\""
 	CMD_SETUP_MINICONDA_CSH="setenv PATH ${miniconda_path}/bin:\$PATH"
@@ -1040,6 +1047,11 @@ n8l::main() {
 	# Note that this will add miniconda to the path
 	if [[ $WITH_MINICONDA == true ]]; then
 		n8l::miniconda::bootstrap
+			"$LSST_PYTHON_VERSION" \
+			"$MINICONDA_VERSION" \
+			"$LSST_HOME" \
+			"$MINICONDA_BASE_URL" \
+			"$CONDA_CHANNELS"
 	fi
 
 	# By default we use the PATH Python to bootstrap EUPS.  Set $EUPS_PYTHON to

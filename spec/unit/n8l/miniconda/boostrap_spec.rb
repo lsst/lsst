@@ -6,6 +6,129 @@ describe 'n8l::miniconda::bootstrap' do
   let(:stubbed_env) { create_stubbed_env }
   subject(:func) { 'n8l::miniconda::bootstrap' }
 
+  context 'parameters' do
+		before(:each) do
+			%w[
+				rm
+				n8l::miniconda::install
+				n8l::ln_rel
+				n8l::miniconda::config_channels
+				n8l::miniconda::lsst_env
+			].each { |cmd| stubbed_env.stub_command(cmd) }
+		end
+
+    context '$1/py_ver' do
+      it 'is required' do
+        out, err, status = stubbed_env.execute_function(
+          'scripts/newinstall.sh',
+          func,
+        )
+
+        expect(status.exitstatus).to_not be 0
+        expect(out).to eq('')
+        expect(err).to match(/python version is required/)
+      end
+    end
+
+    context '$2/mini_ver' do
+      it 'is required' do
+        out, err, status = stubbed_env.execute_function(
+          'scripts/newinstall.sh',
+          "#{func} foo",
+        )
+
+        expect(status.exitstatus).to_not be 0
+        expect(out).to eq('')
+        expect(err).to match(/miniconda version is required/)
+      end
+    end
+
+    context '$3/prefix' do
+      it 'is required' do
+        out, err, status = stubbed_env.execute_function(
+          'scripts/newinstall.sh',
+          "#{func} foo bar",
+        )
+
+        expect(status.exitstatus).to_not be 0
+        expect(out).to eq('')
+        expect(err).to match(/prefix is required/)
+      end
+    end
+
+    context '$4/miniconda_base_url' do
+      it 'is optional' do
+        out, err, status = stubbed_env.execute_function(
+          'scripts/newinstall.sh',
+          "#{func} foo bar baz",
+        )
+
+        expect(status.exitstatus).to be 0
+        expect(out).to eq('')
+        expect(err).to eq('')
+      end
+
+      it 'is accepted' do
+        out, err, status = stubbed_env.execute_function(
+          'scripts/newinstall.sh',
+          "#{func} foo bar baz qux",
+        )
+
+        expect(status.exitstatus).to be 0
+        expect(out).to eq('')
+        expect(err).to eq('')
+      end
+    end
+
+    context '$5/lsstsw_ref' do
+      it 'is optional' do
+        out, err, status = stubbed_env.execute_function(
+          'scripts/newinstall.sh',
+          "#{func} foo bar baz qux",
+        )
+
+        expect(status.exitstatus).to be 0
+        expect(out).to eq('')
+        expect(err).to eq('')
+      end
+
+      it 'is accepted' do
+        out, err, status = stubbed_env.execute_function(
+          'scripts/newinstall.sh',
+          "#{func} foo bar baz qux blah",
+        )
+
+        expect(status.exitstatus).to be 0
+        expect(out).to eq('')
+        expect(err).to eq('')
+      end
+    end
+
+    context '$6/conda_channels' do
+      it 'is optional' do
+        out, err, status = stubbed_env.execute_function(
+          'scripts/newinstall.sh',
+          "#{func} foo bar baz qux blah",
+        )
+
+        expect(status.exitstatus).to be 0
+        expect(out).to eq('')
+        expect(err).to eq('')
+      end
+
+      it 'is accepted' do
+        out, err, status = stubbed_env.execute_function(
+          'scripts/newinstall.sh',
+          "#{func} foo bar baz qux blah boop",
+        )
+
+        expect(status.exitstatus).to be 0
+        expect(out).to eq('')
+        expect(err).to eq('')
+      end
+    end
+  end
+
   context 'without $CONDA_CHANNELS' do
     it 'works' do
       miniconda_slug = stubbed_env.stub_command('n8l::miniconda_slug')
@@ -19,14 +142,7 @@ describe 'n8l::miniconda::bootstrap' do
 
       out, err, status = stubbed_env.execute_function(
         'scripts/newinstall.sh',
-        # LSST_HOME must be set after newinstall.sh is sourced to override it
-        "LSST_HOME=/dne/home #{func}",
-        {
-          'LSST_PYTHON_VERSION' => '42',
-          'MINICONDA_VERSION'   => 'apple',
-          'MINICONDA_BASE_URL'  => 'https://example.org',
-          'LSSTSW_REF'          => 'grape',
-        },
+        "#{func} 42 apple /dne/home https://example.org grape",
       )
 
       expect(status.exitstatus).to be 0
@@ -70,15 +186,7 @@ describe 'n8l::miniconda::bootstrap' do
 
       out, err, status = stubbed_env.execute_function(
         'scripts/newinstall.sh',
-        # LSST_HOME must be set after newinstall.sh is sourced to override it
-        "LSST_HOME=/dne/home #{func}",
-        {
-          'LSST_PYTHON_VERSION' => '42',
-          'MINICONDA_VERSION'   => 'apple',
-          'MINICONDA_BASE_URL'  => 'https://example.org',
-          'LSSTSW_REF'          => 'grape',
-          'CONDA_CHANNELS'      => 'foo bar baz',
-        },
+        "#{func} 42 apple /dne/home https://example.org grape \"foo bar baz\"",
       )
 
       expect(status.exitstatus).to be 0
