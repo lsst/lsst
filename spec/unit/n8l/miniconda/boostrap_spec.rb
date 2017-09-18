@@ -6,16 +6,23 @@ describe 'n8l::miniconda::bootstrap' do
   let(:stubbed_env) { create_stubbed_env }
   subject(:func) { 'n8l::miniconda::bootstrap' }
 
+  let(:stubbed_cmds) do
+    %w[
+      rm
+      n8l::miniconda::install
+      n8l::ln_rel
+      n8l::miniconda::config_channels
+      n8l::miniconda::lsst_env
+    ]
+  end
+
   context 'parameters' do
-		before(:each) do
-			%w[
-				rm
-				n8l::miniconda::install
-				n8l::ln_rel
-				n8l::miniconda::config_channels
-				n8l::miniconda::lsst_env
-			].each { |cmd| stubbed_env.stub_command(cmd) }
-		end
+    before(:each) do
+      @cmds = Hash[stubbed_cmds.collect do |c|
+                     [c, stubbed_env.stub_command(c)]
+                   end
+              ]
+    end
 
     context '$1/py_ver' do
       it 'is required' do
@@ -24,9 +31,9 @@ describe 'n8l::miniconda::bootstrap' do
           func,
         )
 
-        expect(status.exitstatus).to_not be 0
         expect(out).to eq('')
         expect(err).to match(/python version is required/)
+        expect(status.exitstatus).to_not be 0
       end
     end
 
@@ -37,9 +44,9 @@ describe 'n8l::miniconda::bootstrap' do
           "#{func} foo",
         )
 
-        expect(status.exitstatus).to_not be 0
         expect(out).to eq('')
         expect(err).to match(/miniconda version is required/)
+        expect(status.exitstatus).to_not be 0
       end
     end
 
@@ -50,86 +57,99 @@ describe 'n8l::miniconda::bootstrap' do
           "#{func} foo bar",
         )
 
-        expect(status.exitstatus).to_not be 0
         expect(out).to eq('')
         expect(err).to match(/prefix is required/)
+        expect(status.exitstatus).to_not be 0
       end
     end
 
-    context '$4/miniconda_base_url' do
-      it 'is optional' do
+    context '$4/__miniconda_path_result' do
+      it 'is required' do
         out, err, status = stubbed_env.execute_function(
           'scripts/newinstall.sh',
           "#{func} foo bar baz",
         )
 
-        expect(status.exitstatus).to be 0
         expect(out).to eq('')
-        expect(err).to eq('')
-      end
-
-      it 'is accepted' do
-        out, err, status = stubbed_env.execute_function(
-          'scripts/newinstall.sh',
-          "#{func} foo bar baz qux",
-        )
-
-        expect(status.exitstatus).to be 0
-        expect(out).to eq('')
-        expect(err).to eq('')
+        expect(err).to match(/__miniconda_path_result is required/)
+        expect(status.exitstatus).to_not be 0
       end
     end
 
-    context '$5/lsstsw_ref' do
+    context '$5/miniconda_base_url' do
       it 'is optional' do
         out, err, status = stubbed_env.execute_function(
           'scripts/newinstall.sh',
           "#{func} foo bar baz qux",
         )
 
-        expect(status.exitstatus).to be 0
         expect(out).to eq('')
         expect(err).to eq('')
+        expect(status.exitstatus).to be 0
       end
 
       it 'is accepted' do
         out, err, status = stubbed_env.execute_function(
           'scripts/newinstall.sh',
-          "#{func} foo bar baz qux blah",
+          "#{func} foo bar baz qux blep",
         )
 
-        expect(status.exitstatus).to be 0
         expect(out).to eq('')
         expect(err).to eq('')
+        expect(status.exitstatus).to be 0
       end
     end
 
-    context '$6/conda_channels' do
+    context '$6/lsstsw_ref' do
       it 'is optional' do
         out, err, status = stubbed_env.execute_function(
           'scripts/newinstall.sh',
-          "#{func} foo bar baz qux blah",
+          "#{func} foo bar baz qux blep",
         )
 
-        expect(status.exitstatus).to be 0
         expect(out).to eq('')
         expect(err).to eq('')
+        expect(status.exitstatus).to be 0
       end
 
       it 'is accepted' do
         out, err, status = stubbed_env.execute_function(
           'scripts/newinstall.sh',
-          "#{func} foo bar baz qux blah boop",
+          "#{func} foo bar baz qux blep blah",
         )
 
-        expect(status.exitstatus).to be 0
         expect(out).to eq('')
         expect(err).to eq('')
+        expect(status.exitstatus).to be 0
+      end
+    end
+
+    context '$7/conda_channels' do
+      it 'is optional' do
+        out, err, status = stubbed_env.execute_function(
+          'scripts/newinstall.sh',
+          "#{func} foo bar baz qux blep blah",
+        )
+
+        expect(out).to eq('')
+        expect(err).to eq('')
+        expect(status.exitstatus).to be 0
+      end
+
+      it 'is accepted' do
+        out, err, status = stubbed_env.execute_function(
+          'scripts/newinstall.sh',
+          "#{func} foo bar baz qux blep blah boop",
+        )
+
+        expect(out).to eq('')
+        expect(err).to eq('')
+        expect(status.exitstatus).to be 0
       end
     end
   end
 
-  context 'without $CONDA_CHANNELS' do
+  context 'without $lsstsw_ref' do
     it 'works' do
       miniconda_slug = stubbed_env.stub_command('n8l::miniconda_slug')
                                   .outputs('banana')
@@ -142,12 +162,15 @@ describe 'n8l::miniconda::bootstrap' do
 
       out, err, status = stubbed_env.execute_function(
         'scripts/newinstall.sh',
-        "#{func} 42 apple /dne/home https://example.org grape",
+        <<-SCRIPT
+          #{func} 42 apple /dne/home MINI_PATH https://example.org
+          echo MINI_PATH=${MINI_PATH}
+        SCRIPT
       )
 
-      expect(status.exitstatus).to be 0
-      expect(out).to eq('')
+      expect(out).to match(%r{MINI_PATH=/dne/home/python/banana})
       expect(err).to eq('')
+      expect(status.exitstatus).to be 0
 
       # sadly, be_called_with_no_arguments() does not support times()
       expect(miniconda_slug).to be_called_with_no_arguments
@@ -163,17 +186,14 @@ describe 'n8l::miniconda::bootstrap' do
         '/dne/home/python/banana',
         'current',
       )
-      # not called unless CONDA_CHANNELS is defined
+      # not called unless conda_channels is defined
       expect(config_channels).to_not be_called
-      expect(lsst_env).to be_called_with_arguments.times(1)
-      expect(lsst_env).to be_called_with_arguments(
-        '42',
-        'grape',
-      )
+      # not called unless lsstsw_ref is defined
+      expect(lsst_env).to_not be_called
     end
-  end # without $CONDA_CHANNELS
+  end # without $lsstsw_ref
 
-  context 'with $CONDA_CHANNELS' do
+  context 'without $conda_channels' do
     it 'works' do
       miniconda_slug = stubbed_env.stub_command('n8l::miniconda_slug')
                                   .outputs('banana')
@@ -186,12 +206,70 @@ describe 'n8l::miniconda::bootstrap' do
 
       out, err, status = stubbed_env.execute_function(
         'scripts/newinstall.sh',
-        "#{func} 42 apple /dne/home https://example.org grape \"foo bar baz\"",
+        <<-SCRIPT
+          #{func} 42 apple /dne/home MINI_PATH https://example.org grape
+          echo MINI_PATH=${MINI_PATH}
+        SCRIPT
       )
 
-      expect(status.exitstatus).to be 0
-      expect(out).to eq('')
+      expect(out).to match(%r{MINI_PATH=/dne/home/python/banana})
       expect(err).to eq('')
+      expect(status.exitstatus).to be 0
+
+      # sadly, be_called_with_no_arguments() does not support times()
+      expect(miniconda_slug).to be_called_with_no_arguments
+      expect(install).to be_called_with_arguments.times(1)
+      expect(install).to be_called_with_arguments(
+        '42',
+        'apple',
+        '/dne/home/python/banana',
+        'https://example.org',
+      )
+      expect(ln_rel).to be_called_with_arguments.times(1)
+      expect(ln_rel).to be_called_with_arguments(
+        '/dne/home/python/banana',
+        'current',
+      )
+      # not called unless conda_channels is defined
+      expect(config_channels).to_not be_called
+      # not called unless lsstsw_ref is defined
+      expect(lsst_env).to be_called_with_arguments.times(1)
+      expect(lsst_env).to be_called_with_arguments(
+        '42',
+        'grape',
+      )
+    end
+  end # without $conda_channels
+
+  context 'all parameters' do
+    it 'works' do
+      miniconda_slug = stubbed_env.stub_command('n8l::miniconda_slug')
+                                  .outputs('banana')
+      install = stubbed_env.stub_command('n8l::miniconda::install')
+      ln_rel = stubbed_env.stub_command('n8l::ln_rel')
+      config_channels = stubbed_env.stub_command(
+        'n8l::miniconda::config_channels'
+      )
+      lsst_env = stubbed_env.stub_command('n8l::miniconda::lsst_env')
+
+      out, err, status = stubbed_env.execute_function(
+        'scripts/newinstall.sh',
+        <<-SCRIPT
+          #{func} \
+            42 \
+            apple \
+            /dne/home \
+            MINI_PATH \
+            https://example.org \
+            grape \
+            "foo bar baz"
+          echo MINI_PATH=${MINI_PATH}
+        SCRIPT
+      )
+
+      expect(out).to match(%r{MINI_PATH=/dne/home/python/banana})
+      expect(err).to eq('')
+      expect(status.exitstatus).to be 0
 
       # sadly, be_called_with_no_arguments() does not support times()
       expect(miniconda_slug).to be_called_with_no_arguments
@@ -215,5 +293,5 @@ describe 'n8l::miniconda::bootstrap' do
         'grape',
       )
     end
-  end # with $CONDA_CHANNELS
+  end # with $conda_channels
 end
