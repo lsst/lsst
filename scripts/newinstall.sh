@@ -661,13 +661,16 @@ n8l::python_check() {
 # boostrap a complete miniconda based env that includes configuring conda
 # channels and installation of the conda packages.
 #
+# this appears to be a bug in shellcheck
+# shellcheck disable=SC2120
 n8l::miniconda::bootstrap() {
 	local py_ver=${1?python version is required}
 	local mini_ver=${2?miniconda version is required}
 	local prefix=${3?prefix is required}
-	local miniconda_base_url=${4:-https://repo.continuum.io/miniconda}
-	local lsstsw_ref=${5:-master}
-	local conda_channels=$6
+	local __miniconda_path_result=${4?__miniconda_path_result is required}
+	local miniconda_base_url=${5:-https://repo.continuum.io/miniconda}
+	local lsstsw_ref=$6
+	local conda_channels=$7
 
 	local miniconda_base_path="${prefix}/python"
 	local miniconda_path
@@ -697,10 +700,12 @@ n8l::miniconda::bootstrap() {
 	if [[ -n $conda_channels ]]; then
 		n8l::miniconda::config_channels "$conda_channels"
 	fi
-	n8l::miniconda::lsst_env "$py_ver" "$lsstsw_ref"
 
-	CMD_SETUP_MINICONDA_SH="export PATH=\"${miniconda_path}/bin:\${PATH}\""
-	CMD_SETUP_MINICONDA_CSH="setenv PATH ${miniconda_path}/bin:\$PATH"
+	if [[ -n $lsstsw_ref ]]; then
+		n8l::miniconda::lsst_env "$py_ver" "$lsstsw_ref"
+	fi
+
+	declare -g "$__miniconda_path_result"="$miniconda_path"
 }
 
 #
@@ -840,7 +845,10 @@ n8l::problem_vars_check() {
 }
 
 n8l::generate_loader_bash() {
-	local file_name=$1
+	local file_name=${1?file_name is required}
+	local miniconda_path=${2?miniconda_path is required}
+
+	local cmd_setup_miniconda="export PATH=\"${miniconda_path}/bin:\${PATH}\""
 
 	# shellcheck disable=SC2094
 	cat > "$file_name" <<-EOF
@@ -849,7 +857,7 @@ n8l::generate_loader_bash() {
 		# Usage: source $(basename "$file_name")
 
 		# Setup optional packages
-		${CMD_SETUP_MINICONDA_SH}
+		${cmd_setup_miniconda}
 
 		LSST_HOME="\$( cd "\$( dirname "\${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -862,7 +870,10 @@ n8l::generate_loader_bash() {
 }
 
 n8l::generate_loader_csh() {
-	local file_name=$1
+	local file_name=${1?file_name is required}
+	local miniconda_path=${2?miniconda_path is required}
+
+	local cmd_setup_miniconda="setenv PATH ${miniconda_path}/bin:\$PATH"
 
 	# shellcheck disable=SC2094
 	cat > "$file_name" <<-EOF
@@ -871,7 +882,7 @@ n8l::generate_loader_csh() {
 		# Usage: source $(basename "$file_name")
 
 		# Setup optional packages
-		${CMD_SETUP_MINICONDA_CSH}
+		${cmd_setup_miniconda}
 
 		set LSST_HOME = \`dirname \$0\`
 		set LSST_HOME = \`cd \${LSST_HOME} && pwd\`
@@ -887,7 +898,10 @@ n8l::generate_loader_csh() {
 }
 
 n8l::generate_loader_ksh() {
-	local file_name=$1
+	local file_name=${1?file_name is required}
+	local miniconda_path=${2?miniconda_path is required}
+
+	local cmd_setup_miniconda="export PATH=\"${miniconda_path}/bin:\${PATH}\""
 
 	# shellcheck disable=SC2094
 	cat > "$file_name" <<-EOF
@@ -896,7 +910,7 @@ n8l::generate_loader_ksh() {
 		# Usage: source $(basename "$file_name")
 
 		# Setup optional packages
-		${CMD_SETUP_MINICONDA_SH}
+		${cmd_setup_miniconda}
 
 		LSST_HOME="\$( cd "\$( dirname "\${.sh.file}" )" && pwd )"
 
@@ -909,7 +923,10 @@ n8l::generate_loader_ksh() {
 }
 
 n8l::generate_loader_zsh() {
-	local file_name=$1
+	local file_name=${1?file_name is required}
+	local miniconda_path=${2?miniconda_path is required}
+
+	local cmd_setup_miniconda="export PATH=\"${miniconda_path}/bin:\${PATH}\""
 
 	# shellcheck disable=SC2094
 	cat > "$file_name" <<-EOF
@@ -918,7 +935,7 @@ n8l::generate_loader_zsh() {
 		# Usage: source $(basename "$file_name")
 
 		# Setup optional packages
-		${CMD_SETUP_MINICONDA_SH}
+		${cmd_setup_miniconda}
 
 		LSST_HOME=\`dirname "\$0:A"\`
 
@@ -931,9 +948,12 @@ n8l::generate_loader_zsh() {
 }
 
 n8l::create_load_scripts() {
+	local prefix=${1?prefix is required}
+	local miniconda_path=${2?miniconda_path is required}
+
 	for sfx in bash ksh csh zsh; do
 		echo -n "Creating startup scripts (${sfx}) ... "
-		n8l::generate_loader_$sfx "${LSST_HOME}/loadLSST.${sfx}"
+		n8l::generate_loader_$sfx "${prefix}/loadLSST.${sfx}" "$miniconda_path"
 		echo "done."
 	done
 }
@@ -1046,11 +1066,15 @@ n8l::main() {
 	# Bootstrap miniconda (optional)
 	# Note that this will add miniconda to the path
 	if [[ $WITH_MINICONDA == true ]]; then
-		n8l::miniconda::bootstrap
+		# this appears to be a bug in shellcheck
+		# shellcheck disable=SC2119
+		n8l::miniconda::bootstrap \
 			"$LSST_PYTHON_VERSION" \
 			"$MINICONDA_VERSION" \
 			"$LSST_HOME" \
+			'MINICONDA_PATH' \
 			"$MINICONDA_BASE_URL" \
+			"$LSSTSW_REF" \
 			"$CONDA_CHANNELS"
 	fi
 
@@ -1073,7 +1097,9 @@ n8l::main() {
 	n8l::install_eups
 
 	# Create the environment loader scripts
-	n8l::create_load_scripts
+	# shellcheck disable=SC2153
+	# it can not know that MINICONDA_PATH is created by eval
+	n8l::create_load_scripts "$LSST_HOME" "$MINICONDA_PATH"
 
 	# Helpful message about what to do next
 	n8l::print_greeting
