@@ -7,7 +7,7 @@ describe 'n8l::parse_args' do
 
   context 'cli options' do
     context 'without arguments' do
-      %w[ b c n 2 3 t T s S ].each do |flag|
+      %w[b c n 2 3 t T s S].each do |flag|
         context "-#{flag}" do
           it 'should not die' do
             out, err, status = stubbed_env.execute_function(
@@ -25,7 +25,7 @@ describe 'n8l::parse_args' do
     end # context 'without arguments'
 
     context 'with arguments' do
-      %w[ P ].each do |flag|
+      %w[P].each do |flag|
         context "-#{flag}" do
           it 'should not die' do
             out, err, status = stubbed_env.execute_function(
@@ -43,7 +43,7 @@ describe 'n8l::parse_args' do
     end # context 'with arguments'
 
     context '-h or unknown option' do
-      %w[ h z ].each do |flag|
+      %w[h z].each do |flag|
         context "-#{flag}" do
           it 'should die' do
             out, err, status = stubbed_env.execute_function(
