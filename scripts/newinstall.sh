@@ -945,7 +945,7 @@ n8l::am_i_sourced() {
 #
 # script main
 #
-main() {
+n8l::main() {
 	n8l::config_curl
 
 	CONT_FLAG=false
@@ -1023,7 +1023,7 @@ main() {
 # support being sourced as a lib or executed
 #
 if ! n8l::am_i_sourced; then
-	main "$@"
+	n8l::main "$@"
 fi
 
 # vim: tabstop=2 shiftwidth=2 noexpandtab
