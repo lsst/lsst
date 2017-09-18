@@ -19,20 +19,23 @@ describe 'n8l::install_eups' do
     end
   end
 
-  context 'python below minimum version' do
-    it 'should die' do
-      stubbed_env.stub_command('git')
+  # the travis env does not include /usr/bin/true...
+  if File.exist?('/usr/bin/true')
+    context 'python below minimum version' do
+      it 'should die' do
+        stubbed_env.stub_command('git')
 
-      out, err, status = stubbed_env.execute_function(
-        'scripts/newinstall.sh',
-        # assuming that /usr/bin/true will always be a real executable on the
-        # test system as `-x` can not be mocked out.
-        "EUPS_PYTHON=/usr/bin/true #{func}",
-      )
+        out, err, status = stubbed_env.execute_function(
+          'scripts/newinstall.sh',
+          # assuming that /usr/bin/true will always be a real executable on the
+          # test system as `-x` can not be mocked out.
+          "EUPS_PYTHON=/usr/bin/true #{func}",
+        )
 
-      expect(status.exitstatus).to_not be 0
-      expect(out).to eq('')
-      expect(err).to match('EUPS requires Python 2.6 or newer')
+        expect(status.exitstatus).to_not be 0
+        expect(out).to eq('')
+        expect(err).to match('EUPS requires Python 2.6 or newer')
+      end
     end
   end
 
