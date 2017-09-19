@@ -103,7 +103,8 @@ n8l::has_cmd() {
 n8l::usage() {
 	n8l::fail "$(cat <<-EOF
 
-		usage: newinstall.sh [-b] [-f] [-h] [-n] [-3|-2] [-t|-T] [-s|-S] [-P <path-to-python>]
+		usage: newinstall.sh [-b] [-f] [-h] [-n] [-3|-2] [-t|-T] [-s|-S] [-p]
+                         [-P <path-to-python>]
 		 -b -- Run in batch mode. Don\'t ask any questions and install all extra
 		       packages.
 		 -c -- Attempt to continue a previously failed install.
@@ -116,6 +117,7 @@ n8l::usage() {
 		 -T -- DO NOT use pre-compiled EUPS "tarball" packages.
 		 -s -- Use EUPS source "eupspkg" packages, if available.
 		 -S -- DO NOT use EUPS source "eupspkg" packages.
+		 -p -- Preserve EUPS_PKGROOT environment variable.
 		 -h -- Display this help message.
 
 		EOF
@@ -163,7 +165,7 @@ n8l::parse_args() {
 	local OPTIND
 	local opt
 
-	while getopts cbhnP:32tTsS opt; do
+	while getopts cbhnP:32tTsSp opt; do
 		case $opt in
 			b)
 				BATCH_FLAG=true
@@ -194,6 +196,9 @@ n8l::parse_args() {
 				;;
 			S)
 				EUPS_USE_EUPSPKG=false
+				;;
+			p)
+				PRESERVE_EUPS_PKGROOT_FLAG=true
 				;;
 			h|*)
 				n8l::usage
@@ -951,6 +956,7 @@ n8l::main() {
 	CONT_FLAG=false
 	BATCH_FLAG=false
 	NOOP_FLAG=false
+	PRESERVE_EUPS_PKGROOT_FLAG=false
 
 	n8l::parse_args "$@"
 
@@ -1006,7 +1012,13 @@ n8l::main() {
 	# being used to build the stack itself.
 	EUPS_PYTHON=${EUPS_PYTHON:-$(which python)}
 
-	EUPS_PKGROOT=${EUPS_PKGROOT:-$(n8l::default_eups_pkgroot $EUPS_USE_EUPSPKG $EUPS_USE_TARBALLS)}
+	if [[ $PRESERVE_EUPS_PKGROOT_FLAG == true ]]; then
+		EUPS_PKGROOT=${EUPS_PKGROOT:-$(
+			n8l::default_eups_pkgroot $EUPS_USE_EUPSPKG $EUPS_USE_TARBALLS)}
+	else
+		EUPS_PKGROOT=$(
+			n8l::default_eups_pkgroot $EUPS_USE_EUPSPKG $EUPS_USE_TARBALLS)
+	fi
 	n8l::print_error "Configured EUPS_PKGROOT: ${EUPS_PKGROOT}\n"
 
 	# Install EUPS
