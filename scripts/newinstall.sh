@@ -784,6 +784,50 @@ n8l::install_eups() {
 	echo " done."
 }
 
+n8l::problem_vars() {
+	local problems=(
+		EUPS_PATH
+		EUPS_PKGROOT
+		REPOSITORY_PATH
+	)
+	local found=()
+
+	for v in ${problems[*]}; do
+		if [[ -n ${!v+1} ]]; then
+			found+=($v)
+		fi
+	done
+
+	echo -n "${found[@]}"
+}
+
+n8l::problem_vars_check() {
+	local problems=()
+	problems=($(n8l::problem_vars))
+
+	if [[ ${#problems} -gt 0 ]]; then
+		n8l::print_error "$(cat <<-EOF
+			WARNING: the following environment variables are defined that will affect
+			the operation of the LSST build tooling.\n
+			EOF
+		)"
+
+		for v in ${problems[*]}; do
+			n8l::print_error "${v}=\"${!v}\""
+		done
+
+		n8l::print_error "$(cat <<-EOF
+
+			It is recommended that they are undefined before running this script.
+
+			unset ${problems[*]}
+			EOF
+		)"
+
+		return 1
+	fi
+}
+
 n8l::generate_loader_bash() {
 	local file_name=$1
 
@@ -796,11 +840,7 @@ n8l::generate_loader_bash() {
 		# Setup optional packages
 		${CMD_SETUP_MINICONDA_SH}
 
-		# If not already initialized, set LSST_HOME to the directory where this
-		# script is located
-		if [ "x\${LSST_HOME}" = "x" ]; then
-		   LSST_HOME="\$( cd "\$( dirname "\${BASH_SOURCE[0]}" )" && pwd )"
-		fi
+		LSST_HOME="\$( cd "\$( dirname "\${BASH_SOURCE[0]}" )" && pwd )"
 
 		# Bootstrap EUPS
 		EUPS_DIR="\${LSST_HOME}/eups/$(n8l::eups_slug)"
@@ -822,12 +862,8 @@ n8l::generate_loader_csh() {
 		# Setup optional packages
 		${CMD_SETUP_MINICONDA_CSH}
 
-		# If not already initialized, set LSST_HOME to the directory where this
-		# script is located
-		if ( ! \${?LSST_HOME} ) then
-		  set LSST_HOME = \`dirname \$0\`
-		  set LSST_HOME = \`cd \${LSST_HOME} && pwd\`
-		endif
+		set LSST_HOME = \`dirname \$0\`
+		set LSST_HOME = \`cd \${LSST_HOME} && pwd\`
 
 		# Bootstrap EUPS
 		set EUPS_DIR = "\${LSST_HOME}/eups/$(n8l::eups_slug)"
@@ -851,11 +887,7 @@ n8l::generate_loader_ksh() {
 		# Setup optional packages
 		${CMD_SETUP_MINICONDA_SH}
 
-		# If not already initialized, set LSST_HOME to the directory where this
-		# script is located
-		if [ "x\${LSST_HOME}" = "x" ]; then
-		   LSST_HOME="\$( cd "\$( dirname "\${.sh.file}" )" && pwd )"
-		fi
+		LSST_HOME="\$( cd "\$( dirname "\${.sh.file}" )" && pwd )"
 
 		# Bootstrap EUPS
 		EUPS_DIR="\${LSST_HOME}/eups/$(n8l::eups_slug)"
@@ -877,11 +909,7 @@ n8l::generate_loader_zsh() {
 		# Setup optional packages
 		${CMD_SETUP_MINICONDA_SH}
 
-		# If not already initialized, set LSST_HOME to the directory where this
-		# script is located
-		if [[ -z \${LSST_HOME} ]]; then
-		   LSST_HOME=\`dirname "\$0:A"\`
-		fi
+		LSST_HOME=\`dirname "\$0:A"\`
 
 		# Bootstrap EUPS
 		EUPS_DIR="\${LSST_HOME}/eups/$(n8l::eups_slug)"
@@ -991,10 +1019,14 @@ n8l::main() {
 		n8l::up2date_check
 	fi
 
+	if [[ $BATCH_FLAG != true ]]; then
+		n8l::problem_vars_check
+	fi
+
 	n8l::git_check
 
 	# always use miniconda when in batch mode
-	if [[ $BATCH_FLAG = true ]]; then
+	if [[ $BATCH_FLAG == true ]]; then
 		WITH_MINICONDA=true
 	else
 		n8l::python_check
