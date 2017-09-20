@@ -14,7 +14,7 @@ describe 'n8l::generate_loader' do
         it 'writes file' do
           out, err, status = stubbed_env.execute_function(
             'scripts/newinstall.sh',
-            "n8l::generate_loader_#{sh} #{f.path}",
+            "n8l::generate_loader_#{sh} #{f.path} #{f.path}/python/banana",
           )
 
           expect(status.exitstatus).to be 0
