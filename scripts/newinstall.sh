@@ -257,6 +257,7 @@ n8l::sys::osfamily() {
 			;;
 	esac
 
+	# bash 3.2 does not support `declare -g`
 	eval "$__osfamily_result=$__osfamily"
 	eval "$__release_result=$__release"
 }
@@ -311,6 +312,7 @@ n8l::sys::platform() {
 			;;
 	esac
 
+	# bash 3.2 does not support `declare -g`
 	eval "$__platform_result=$__platform"
 	eval "$__target_cc_result=$__target_cc"
 }
@@ -705,7 +707,8 @@ n8l::miniconda::bootstrap() {
 		n8l::miniconda::lsst_env "$py_ver" "$lsstsw_ref"
 	fi
 
-	declare -g "$__miniconda_path_result"="$miniconda_path"
+	# bash 3.2 does not support `declare -g`
+	eval "$__miniconda_path_result=$miniconda_path"
 }
 
 #
