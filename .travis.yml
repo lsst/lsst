@@ -14,6 +14,17 @@ addons:
     - tcsh
 script: |
   set -e
+  if [[ -n ${ANCIENT_BASH+1} ]]; then
+    VER="bash-${ANCIENT_BASH}"
+    curl -sSLO "http://ftp.gnu.org/gnu/bash/${VER}.tar.gz"
+    tar -xf "${VER}.tar.gz"
+    cd "$VER"
+    ./configure
+    make -j
+    export PATH="$(pwd):$PATH"
+    cd ..
+    bash --version
+  fi
   if [[ $BATCH == true ]]; then
     echo -e "*** testing batch mode in Python version $PYVER ***\n"
     bash -x ./scripts/newinstall.sh -cb -${PYVER}
@@ -39,6 +50,8 @@ env:
   - BATCH=true PYVER="3"
   - BATCH=false PYVER="2"
   - BATCH=false PYVER="3"
+  - BATCH=true PYVER="3" ANCIENT_BASH="3.2.57"
+  - BATCH=false PYVER="3" ANCIENT_BASH="3.2.57"
   - MANGLER=tcsh BATCH=true PYVER="3"
 matrix:
   # osx builds are often very slow to start due to high demand

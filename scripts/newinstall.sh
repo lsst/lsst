@@ -257,8 +257,9 @@ n8l::sys::osfamily() {
 			;;
 	esac
 
-	declare -g "$__osfamily_result"="$__osfamily"
-	declare -g "$__release_result"="$__release"
+	# bash 3.2 does not support `declare -g`
+	eval "$__osfamily_result=$__osfamily"
+	eval "$__release_result=$__release"
 }
 
 #
@@ -311,8 +312,9 @@ n8l::sys::platform() {
 			;;
 	esac
 
-	declare -g "$__platform_result"="$__platform"
-	declare -g "$__target_cc_result"="$__target_cc"
+	# bash 3.2 does not support `declare -g`
+	eval "$__platform_result=$__platform"
+	eval "$__target_cc_result=$__target_cc"
 }
 
 # http://stackoverflow.com/questions/1527049/join-elements-of-an-array#17841619
@@ -705,7 +707,8 @@ n8l::miniconda::bootstrap() {
 		n8l::miniconda::lsst_env "$py_ver" "$lsstsw_ref"
 	fi
 
-	declare -g "$__miniconda_path_result"="$miniconda_path"
+	# bash 3.2 does not support `declare -g`
+	eval "$__miniconda_path_result=$miniconda_path"
 }
 
 #
