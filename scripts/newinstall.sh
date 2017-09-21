@@ -257,8 +257,8 @@ n8l::sys::osfamily() {
 			;;
 	esac
 
-	declare -g "$__osfamily_result"="$__osfamily"
-	declare -g "$__release_result"="$__release"
+	eval "$__osfamily_result=$__osfamily"
+	eval "$__release_result=$__release"
 }
 
 #
@@ -311,8 +311,8 @@ n8l::sys::platform() {
 			;;
 	esac
 
-	declare -g "$__platform_result"="$__platform"
-	declare -g "$__target_cc_result"="$__target_cc"
+	eval "$__platform_result=$__platform"
+	eval "$__target_cc_result=$__target_cc"
 }
 
 # http://stackoverflow.com/questions/1527049/join-elements-of-an-array#17841619
