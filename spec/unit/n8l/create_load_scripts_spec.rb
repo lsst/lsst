@@ -31,7 +31,7 @@ describe 'n8l::create_load_scripts' do
       end
     end
 
-    context '$2/miniconda_path' do
+    context '$2/eups_pkgroot' do
       it 'is required' do
         out, err, status = stubbed_env.execute_function(
           'scripts/newinstall.sh',
@@ -39,16 +39,29 @@ describe 'n8l::create_load_scripts' do
         )
 
         expect(out).to eq('')
-        expect(err).to match(/miniconda_path is required/)
+        expect(err).to match('eups_pkgroot is required')
         expect(status.exitstatus).to_not be 0
+      end
+    end
+
+    context '$3/miniconda_path' do
+      it 'is optional' do
+        out, err, status = stubbed_env.execute_function(
+          'scripts/newinstall.sh',
+          "#{func} foo bar",
+        )
+
+        expect(out).to match('Creating startup scripts')
+        expect(err).to eq('')
+        expect(status.exitstatus).to be 0
       end
     end
   end
 
-  it 'works' do
+  it 'does not invent a miniconda_path' do
     out, err, status = stubbed_env.execute_function(
       'scripts/newinstall.sh',
-      "#{func} /dne /dne/python/banana",
+      "#{func} /dne /dne/apple",
     )
 
     shells.each { |sh| expect(out).to match(/#{sh}/) }
@@ -59,6 +72,26 @@ describe 'n8l::create_load_scripts' do
       expect(stub).to be_called_with_arguments.times(1)
       expect(stub).to be_called_with_arguments(
         "/dne/loadLSST.#{sh}",
+        '/dne/apple',
+      )
+    end
+  end
+
+  it 'passes through miniconda_path' do
+    out, err, status = stubbed_env.execute_function(
+      'scripts/newinstall.sh',
+      "#{func} /dne /dne/apple /dne/python/banana",
+    )
+
+    shells.each { |sh| expect(out).to match(/#{sh}/) }
+    expect(err).to eq('')
+    expect(status.exitstatus).to be 0
+
+    @cmds.each do |sh, stub|
+      expect(stub).to be_called_with_arguments.times(1)
+      expect(stub).to be_called_with_arguments(
+        "/dne/loadLSST.#{sh}",
+        '/dne/apple',
         '/dne/python/banana',
       )
     end
