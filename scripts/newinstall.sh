@@ -849,9 +849,12 @@ n8l::problem_vars_check() {
 
 n8l::generate_loader_bash() {
 	local file_name=${1?file_name is required}
-	local miniconda_path=${2?miniconda_path is required}
+	local eups_pkgroot=${2?eups_pkgroot is required}
+	local miniconda_path=$3
 
-	local cmd_setup_miniconda="export PATH=\"${miniconda_path}/bin:\${PATH}\""
+	if [[ -n $miniconda_path ]]; then
+		local cmd_setup_miniconda="export PATH=\"${miniconda_path}/bin:\${PATH}\""
+	fi
 
 	# shellcheck disable=SC2094
 	cat > "$file_name" <<-EOF
@@ -859,24 +862,25 @@ n8l::generate_loader_bash() {
 		# environment
 		# Usage: source $(basename "$file_name")
 
-		# Setup optional packages
 		${cmd_setup_miniconda}
-
 		LSST_HOME="\$( cd "\$( dirname "\${BASH_SOURCE[0]}" )" && pwd )"
 
 		# Bootstrap EUPS
 		EUPS_DIR="\${LSST_HOME}/eups/$(n8l::eups_slug)"
 		source "\${EUPS_DIR}/bin/setups.sh"
 
-		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$EUPS_PKGROOT}
+		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$eups_pkgroot}
 	EOF
 }
 
 n8l::generate_loader_csh() {
 	local file_name=${1?file_name is required}
-	local miniconda_path=${2?miniconda_path is required}
+	local eups_pkgroot=${2?eups_pkgroot is required}
+	local miniconda_path=$3
 
-	local cmd_setup_miniconda="setenv PATH ${miniconda_path}/bin:\$PATH"
+	if [[ -n $miniconda_path ]]; then
+		local cmd_setup_miniconda="setenv PATH ${miniconda_path}/bin:\$PATH"
+	fi
 
 	# shellcheck disable=SC2094
 	cat > "$file_name" <<-EOF
@@ -884,9 +888,7 @@ n8l::generate_loader_csh() {
 		# environment
 		# Usage: source $(basename "$file_name")
 
-		# Setup optional packages
 		${cmd_setup_miniconda}
-
 		set LSST_HOME = \`dirname \$0\`
 		set LSST_HOME = \`cd \${LSST_HOME} && pwd\`
 
@@ -895,16 +897,19 @@ n8l::generate_loader_csh() {
 		source "\${EUPS_DIR}/bin/setups.csh"
 
 		if ( ! \${?EUPS_PKGROOT} ) then
-		  setenv EUPS_PKGROOT "$EUPS_PKGROOT"
+		  setenv EUPS_PKGROOT "$eups_pkgroot"
 		endif
 	EOF
 }
 
 n8l::generate_loader_ksh() {
 	local file_name=${1?file_name is required}
-	local miniconda_path=${2?miniconda_path is required}
+	local eups_pkgroot=${2?eups_pkgroot is required}
+	local miniconda_path=$3
 
-	local cmd_setup_miniconda="export PATH=\"${miniconda_path}/bin:\${PATH}\""
+	if [[ -n $miniconda_path ]]; then
+		local cmd_setup_miniconda="export PATH=\"${miniconda_path}/bin:\${PATH}\""
+	fi
 
 	# shellcheck disable=SC2094
 	cat > "$file_name" <<-EOF
@@ -912,24 +917,25 @@ n8l::generate_loader_ksh() {
 		# environment
 		# Usage: source $(basename "$file_name")
 
-		# Setup optional packages
 		${cmd_setup_miniconda}
-
 		LSST_HOME="\$( cd "\$( dirname "\${.sh.file}" )" && pwd )"
 
 		# Bootstrap EUPS
 		EUPS_DIR="\${LSST_HOME}/eups/$(n8l::eups_slug)"
 		source "\${EUPS_DIR}/bin/setups.sh"
 
-		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$EUPS_PKGROOT}
+		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$eups_pkgroot}
 	EOF
 }
 
 n8l::generate_loader_zsh() {
 	local file_name=${1?file_name is required}
-	local miniconda_path=${2?miniconda_path is required}
+	local eups_pkgroot=${2?eups_pkgroot is required}
+	local miniconda_path=$3
 
-	local cmd_setup_miniconda="export PATH=\"${miniconda_path}/bin:\${PATH}\""
+	if [[ -n $miniconda_path ]]; then
+		local cmd_setup_miniconda="export PATH=\"${miniconda_path}/bin:\${PATH}\""
+	fi
 
 	# shellcheck disable=SC2094
 	cat > "$file_name" <<-EOF
@@ -937,26 +943,29 @@ n8l::generate_loader_zsh() {
 		# environment
 		# Usage: source $(basename "$file_name")
 
-		# Setup optional packages
 		${cmd_setup_miniconda}
-
 		LSST_HOME=\`dirname "\$0:A"\`
 
 		# Bootstrap EUPS
 		EUPS_DIR="\${LSST_HOME}/eups/$(n8l::eups_slug)"
 		source "\${EUPS_DIR}/bin/setups.zsh"
 
-		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$EUPS_PKGROOT}
+		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$eups_pkgroot}
 	EOF
 }
 
 n8l::create_load_scripts() {
 	local prefix=${1?prefix is required}
-	local miniconda_path=${2?miniconda_path is required}
+	local eups_pkgroot=${2?eups_pkgroot is required}
+	local miniconda_path=$3
 
 	for sfx in bash ksh csh zsh; do
 		echo -n "Creating startup scripts (${sfx}) ... "
-		n8l::generate_loader_$sfx "${prefix}/loadLSST.${sfx}" "$miniconda_path"
+		# shellcheck disable=SC2086
+		n8l::generate_loader_$sfx \
+			"${prefix}/loadLSST.${sfx}" \
+			"$eups_pkgroot" \
+			$miniconda_path
 		echo "done."
 	done
 }
