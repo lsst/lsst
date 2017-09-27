@@ -25,6 +25,7 @@ script: |
     cd ..
     bash --version
   fi
+
   if [[ $BATCH == true ]]; then
     echo -e "*** testing batch mode in Python version $PYVER ***\n"
     bash -x ./scripts/newinstall.sh -cb -${PYVER}
@@ -32,6 +33,7 @@ script: |
     echo -e "*** testing interactive mode in Python version $PYVER ***\n"
     echo -e "yes\nyes" | bash -x ./scripts/newinstall.sh -c -${PYVER}
   fi
+
   echo -e "*** Testing initializaion of shell environment ***\n"
   case $MANGLER in
     tcsh)
@@ -45,6 +47,10 @@ script: |
       bash -ec 'source loadLSST.bash && echo $EUPS_PKGROOT'
       ;;
   esac
+
+  echo -e "*** Sanity checking EUPS_PKGROOT construction ***\n"
+  source loadLSST.bash
+  eups distrib install python -t v14_0_rc2
 env:
   - BATCH=true PYVER="2"
   - BATCH=true PYVER="3"
