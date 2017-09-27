@@ -1111,7 +1111,11 @@ n8l::main() {
 	# Create the environment loader scripts
 	# shellcheck disable=SC2153
 	# it can not know that MINICONDA_PATH is created by eval
-	n8l::create_load_scripts "$LSST_HOME" "$MINICONDA_PATH"
+	# shellcheck disable=SC2086
+	n8l::create_load_scripts \
+		"$LSST_HOME" \
+		"$EUPS_PKGROOT" \
+		$MINICONDA_PATH
 
 	# Helpful message about what to do next
 	n8l::print_greeting
