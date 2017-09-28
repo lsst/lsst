@@ -53,7 +53,7 @@ NEWINSTALL_URL="https://raw.githubusercontent.com/lsst/lsst/master/scripts/newin
 #
 #http://stackoverflow.com/questions/369758/how-to-trim-whitespace-from-a-bash-variable#12973694
 #
-trim() {
+n8l::trim() {
 	local var="$*"
 	# remove leading whitespace characters
 	var="${var#"${var%%[![:space:]]*}"}"
@@ -62,13 +62,13 @@ trim() {
 	echo -n "$var"
 }
 
-print_error() {
+n8l::print_error() {
 	>&2 echo -e "$@"
 }
 
-fail() {
+n8l::fail() {
 	local code=${2:-1}
-	[[ -n $1 ]] && print_error "$1"
+	[[ -n $1 ]] && n8l::print_error "$1"
 	# shellcheck disable=SC2086
 	exit $code
 }
@@ -76,7 +76,7 @@ fail() {
 #
 # create/update a *relative* symlink, in the basedir of the target
 #
-ln_rel() {
+n8l::ln_rel() {
 	local link_target=${1?link target is required}
 	local link_name=${2?link name is required}
 
@@ -100,10 +100,11 @@ n8l::has_cmd() {
 	command -v "$command" > /dev/null 2>&1
 }
 
-usage() {
-	fail "$(cat <<-EOF
+n8l::usage() {
+	n8l::fail "$(cat <<-EOF
 
-		usage: newinstall.sh [-b] [-f] [-h] [-n] [-3|-2] [-t|-T] [-s|-S] [-P <path-to-python>]
+		usage: newinstall.sh [-b] [-f] [-h] [-n] [-3|-2] [-t|-T] [-s|-S] [-p]
+                         [-P <path-to-python>]
 		 -b -- Run in batch mode. Don\'t ask any questions and install all extra
 		       packages.
 		 -c -- Attempt to continue a previously failed install.
@@ -116,21 +117,22 @@ usage() {
 		 -T -- DO NOT use pre-compiled EUPS "tarball" packages.
 		 -s -- Use EUPS source "eupspkg" packages, if available.
 		 -S -- DO NOT use EUPS source "eupspkg" packages.
+		 -p -- Preserve EUPS_PKGROOT environment variable.
 		 -h -- Display this help message.
 
 		EOF
 	)"
 }
 
-miniconda_slug() {
+n8l::miniconda_slug() {
 	echo "miniconda${LSST_PYTHON_VERSION}-${MINICONDA_VERSION}"
 }
 
-python_env_slug() {
-	echo "$(miniconda_slug)-${LSSTSW_REF}"
+n8l::python_env_slug() {
+	echo "$(n8l::miniconda_slug)-${LSSTSW_REF}"
 }
 
-eups_slug() {
+n8l::eups_slug() {
 	local eups_slug=$EUPS_VERSION
 
 	if [[ -n $EUPS_GITREV ]]; then
@@ -140,12 +142,12 @@ eups_slug() {
 	echo "$eups_slug"
 }
 
-eups_base_dir() {
+n8l::eups_base_dir() {
 	echo "${LSST_HOME}/eups"
 }
 
-eups_dir() {
-	echo "$(eups_base_dir)/$(eups_slug)"
+n8l::eups_dir() {
+	echo "$(n8l::eups_base_dir)/$(n8l::eups_slug)"
 }
 
 #
@@ -155,15 +157,15 @@ eups_dir() {
 # XXX this will probably need to be extended to include the compiler used for
 # binary tarballs
 #
-eups_path() {
-	echo "${LSST_HOME}/stack/$(python_env_slug)"
+n8l::eups_path() {
+	echo "${LSST_HOME}/stack/$(n8l::python_env_slug)"
 }
 
 n8l::parse_args() {
 	local OPTIND
 	local opt
 
-	while getopts cbhnP:32tTsS opt; do
+	while getopts cbhnP:32tTsSp opt; do
 		case $opt in
 			b)
 				BATCH_FLAG=true
@@ -195,8 +197,11 @@ n8l::parse_args() {
 			S)
 				EUPS_USE_EUPSPKG=false
 				;;
+			p)
+				PRESERVE_EUPS_PKGROOT_FLAG=true
+				;;
 			h|*)
-				usage
+				n8l::usage
 				;;
 		esac
 	done
@@ -217,7 +222,7 @@ n8l::parse_args() {
 # osfamily string is returned in the variable name passed as $1
 # release string is returned in the variable name passed as $2
 #
-sys::osfamily() {
+n8l::sys::osfamily() {
 	local __osfamily_result=${1?osfamily result variable is required}
 	local __release_result=${2?release result variable is required}
 	local __debug=$3
@@ -229,13 +234,13 @@ sys::osfamily() {
 		Linux*)
 			local release_file='/etc/redhat-release'
 			if [[ ! -e $release_file ]]; then
-				[[ $__debug == true ]] && print_error "unknown osfamily"
+				[[ $__debug == true ]] && n8l::print_error "unknown osfamily"
 			fi
 			__osfamily="redhat"
 
 			# capture only major version number because "posix character classes"
 			if [[ ! $(<"$release_file") =~ release[[:space:]]*([[:digit:]]+) ]]; then
-				[[ $__debug == true ]] && print_error "unable to find release string"
+				[[ $__debug == true ]] && n8l::print_error "unable to find release string"
 			fi
 			__release="${BASH_REMATCH[1]}"
 			;;
@@ -243,15 +248,16 @@ sys::osfamily() {
 			__osfamily="osx"
 
 			if ! release=$(sw_vers -productVersion); then
-				[[ $__debug == true ]] && print_error "unable to find release string"
+				[[ $__debug == true ]] && n8l::print_error "unable to find release string"
 			fi
-			__release=$(trim "$release")
+			__release=$(n8l::trim "$release")
 			;;
 		*)
-			print_error "unknown osfamily"
+			[[ $__debug == true ]] && n8l::print_error "unknown osfamily"
 			;;
 	esac
 
+	# bash 3.2 does not support `declare -g`
 	eval "$__osfamily_result=$__osfamily"
 	eval "$__release_result=$__release"
 }
@@ -263,7 +269,7 @@ sys::osfamily() {
 # XXX cc lookup should be a seperate function if/when there is more than one #
 # compiler option per platform.
 #
-sys::platform() {
+n8l::sys::platform() {
 	local __osfamily=${1?osfamily is required}
 	local __release=${2?release is required}
 	local __platform_result=${3?platform result variable is required}
@@ -285,7 +291,7 @@ sys::platform() {
 					__target_cc=gcc-system
 					;;
 				*)
-					[[ $__debug == true ]] && print_error "unsupported release: $__release"
+					[[ $__debug == true ]] && n8l::print_error "unsupported release: $__release"
 					;;
 			esac
 			;;
@@ -297,23 +303,29 @@ sys::platform() {
 					__target_cc=clang-800.0.42.1
 					;;
 				*)
-					[[ $__debug == true ]] && print_error "unsupported release: $__release"
+					[[ $__debug == true ]] && n8l::print_error "unsupported release: $__release"
 					;;
 			esac
 			;;
 		*)
-			[[ $__debug == true ]] && print_error "unsupported osfamily: $__osfamily"
+			[[ $__debug == true ]] && n8l::print_error "unsupported osfamily: $__osfamily"
 			;;
 	esac
 
+	# bash 3.2 does not support `declare -g`
 	eval "$__platform_result=$__platform"
 	eval "$__target_cc_result=$__target_cc"
 }
 
 # http://stackoverflow.com/questions/1527049/join-elements-of-an-array#17841619
-join() { local IFS="$1"; shift; echo "$*"; }
+n8l::join() {
+	local IFS=${1?separator is required}
+	shift
 
-default_eups_pkgroot() {
+	echo -n "$*"
+}
+
+n8l::default_eups_pkgroot() {
 	local use_eupspkg=${1:-true}
 	local use_tarballs=${2:-false}
 
@@ -324,15 +336,15 @@ default_eups_pkgroot() {
 	declare -a roots
 
 	local pyslug
-	pyslug=$(python_env_slug)
+	pyslug=$(n8l::python_env_slug)
 
 	# only probe system *IF* tarballs are desired
 	if [[ $use_tarballs == true ]]; then
-		sys::osfamily osfamily release
+		n8l::sys::osfamily osfamily release
 	fi
 
 	if [[ -n $osfamily && -n $release ]]; then
-		sys::platform "$osfamily" "$release" platform target_cc
+		n8l::sys::platform "$osfamily" "$release" platform target_cc
 	fi
 
 	if [[ -n $EUPS_PKGROOT_BASE_URL ]]; then
@@ -346,10 +358,13 @@ default_eups_pkgroot() {
 		fi
 	fi
 
-	echo -n "$(join '|' "${roots[@]}")"
+	echo -n "$(n8l::join '|' "${roots[@]}")"
 }
 
-config_curl() {
+# XXX this sould be split into two functions that echo values.  This would
+# allow them to be called directly and remove the usage of the global
+# variables.
+n8l::config_curl() {
 	# Prefer system curl; user-installed ones sometimes behave oddly
 	if [[ -x /usr/bin/curl ]]; then
 		CURL=${CURL:-/usr/bin/curl}
@@ -357,15 +372,15 @@ config_curl() {
 		CURL=${CURL:-curl}
 	fi
 
-	# disable curl progress meter unless running under a tty -- this is intended to
-	# reduce the amount of console output when running under CI
+	# disable curl progress meter unless running under a tty -- this is intended
+	# to reduce the amount of console output when running under CI
 	CURL_OPTS='-#'
 	if [[ ! -t 1 ]]; then
 		CURL_OPTS='-sS'
 	fi
 }
 
-miniconda::install() {
+n8l::miniconda::install() {
 	local py_ver=${1?python version is required}
 	local mini_ver=${2?miniconda version is required}
 	local prefix=${3?prefix is required}
@@ -379,7 +394,7 @@ miniconda::install() {
 			ana_platform="MacOSX-x86_64"
 			;;
 		*)
-			fail "Cannot install miniconda: unsupported platform $(uname -s)"
+			n8l::fail "Cannot install miniconda: unsupported platform $(uname -s)"
 			;;
 	esac
 
@@ -407,10 +422,8 @@ miniconda::install() {
 }
 
 # configure alt conda channel(s)
-miniconda::config_channels() {
-	local channels=$1
-
-	[[ -z $channels ]] && fail "channels param is required"
+n8l::miniconda::config_channels() {
+	local channels=${1?channels is required}
 
 	# remove any previously configured non-default channels
 	# XXX allowed to fail
@@ -429,7 +442,7 @@ miniconda::config_channels() {
 }
 
 # Install packages on which the stack is known to depend
-miniconda::lsst_env() {
+n8l::miniconda::lsst_env() {
 	local py_ver=${1?python version is required}
 	local ref=${2?lsstsw git ref is required}
 
@@ -441,7 +454,7 @@ miniconda::lsst_env() {
 			conda_packages="conda${py_ver}_packages-osx-64.txt"
 			;;
 		*)
-			fail "Cannot configure miniconda env: unsupported platform $(uname -s)"
+			n8l::fail "Cannot configure miniconda env: unsupported platform $(uname -s)"
 			;;
 	esac
 
@@ -484,14 +497,14 @@ miniconda::lsst_env() {
 #
 # Don't attempt to run diff when the script has been piped into the shell
 #
-up2date_check() {
+n8l::up2date_check() {
 	set +e
 
 	local amidiff
 	amidiff=$($CURL "$CURL_OPTS" -L "$NEWINSTALL_URL" | diff --brief - "$0")
 
 	if [[ $amidiff == *differ ]]; then
-		print_error "$(cat <<-EOF
+		n8l::print_error "$(cat <<-EOF
 			!!! This script differs from the official version on the distribution
 			server.  If this is not intentional, get the current version from here:
 			${NEWINSTALL_URL}
@@ -503,7 +516,8 @@ up2date_check() {
 }
 
 # Discuss the state of Git.
-git_check() {
+# XXX should probably fail if git version is insufficient under batch mode.
+n8l::git_check() {
 	if hash git 2>/dev/null; then
 		local gitvernum
 		gitvernum=$(git --version | cut -d\  -f 3)
@@ -546,7 +560,6 @@ git_check() {
 	else
 		echo "Detected $(git --version). OK."
 	fi
-	echo
 }
 
 n8l::pyverok() {
@@ -637,7 +650,7 @@ n8l::python_check() {
 					rerun this script to continue the installation.
 
 					EOF
-					fail
+					n8l::fail
 				fi
 				break;
 				;;
@@ -646,13 +659,27 @@ n8l::python_check() {
 	done
 }
 
-bootstrap_miniconda() {
-	local miniconda_base_path="${LSST_HOME}/python"
+#
+# boostrap a complete miniconda based env that includes configuring conda
+# channels and installation of the conda packages.
+#
+# this appears to be a bug in shellcheck
+# shellcheck disable=SC2120
+n8l::miniconda::bootstrap() {
+	local py_ver=${1?python version is required}
+	local mini_ver=${2?miniconda version is required}
+	local prefix=${3?prefix is required}
+	local __miniconda_path_result=${4?__miniconda_path_result is required}
+	local miniconda_base_url=${5:-https://repo.continuum.io/miniconda}
+	local lsstsw_ref=$6
+	local conda_channels=$7
+
+	local miniconda_base_path="${prefix}/python"
 	local miniconda_path
-	miniconda_path="${miniconda_base_path}/$(miniconda_slug)"
+	miniconda_path="${miniconda_base_path}/$(n8l::miniconda_slug)"
 
 	local miniconda_path_old
-	miniconda_path_old="${LSST_HOME}/$(miniconda_slug)"
+	miniconda_path_old="${prefix}/$(n8l::miniconda_slug)"
 
 	# remove old unnested miniconda -- the install has hard coded shebangs
 	if [[ -e $miniconda_path_old ]]; then
@@ -660,35 +687,39 @@ bootstrap_miniconda() {
 	fi
 
 	if [[ ! -e $miniconda_path ]]; then
-		miniconda::install \
-			"$LSST_PYTHON_VERSION" \
-			"$MINICONDA_VERSION" \
+		n8l::miniconda::install \
+			"$py_ver" \
+			"$mini_ver" \
 			"$miniconda_path" \
-			"$MINICONDA_BASE_URL"
+			"$miniconda_base_url"
 	fi
 
 	# update miniconda current symlink
-	ln_rel "$miniconda_path" current
+	n8l::ln_rel "$miniconda_path" current
 
 	export PATH="${miniconda_path}/bin:${PATH}"
 
-	if [[ -n $CONDA_CHANNELS ]]; then
-		miniconda::config_channels "$CONDA_CHANNELS"
+	if [[ -n $conda_channels ]]; then
+		n8l::miniconda::config_channels "$conda_channels"
 	fi
-	miniconda::lsst_env "$LSST_PYTHON_VERSION" "$LSSTSW_REF"
 
-	CMD_SETUP_MINICONDA_SH="export PATH=\"${miniconda_path}/bin:\${PATH}\""
-	CMD_SETUP_MINICONDA_CSH="setenv PATH ${miniconda_path}/bin:\$PATH"
+	if [[ -n $lsstsw_ref ]]; then
+		n8l::miniconda::lsst_env "$py_ver" "$lsstsw_ref"
+	fi
+
+	# bash 3.2 does not support `declare -g`
+	eval "$__miniconda_path_result=$miniconda_path"
 }
 
 #
 # $EUPS_PYTHON is the Python used to install/run EUPS.  It can be any Python >=
 # v2.6
 #
-install_eups() {
+# XXX this function should be broken up to enable better unit testing.
+n8l::install_eups() {
 	if [[ ! -x $EUPS_PYTHON ]]; then
-		fail "$(cat <<-EOF
-			Cannot find or execute \'${EUPS_PYTHON}\'.  Please set the EUPS_PYTHON
+		n8l::fail "$(cat <<-EOF
+			Cannot find or execute '${EUPS_PYTHON}'.  Please set the EUPS_PYTHON
 			environment variable or use the -P option to point to a functioning
 			Python >= 2.6 interpreter and rerun.
 			EOF
@@ -698,7 +729,7 @@ install_eups() {
 	local pyverok
 	pyverok=$($EUPS_PYTHON -c 'import sys; print("%i" % (sys.hexversion >= 0x02060000))')
 	if [[ $pyverok != 1 ]]; then
-		fail "$(cat <<-EOF
+		n8l::fail "$(cat <<-EOF
 			EUPS requires Python 2.6 or newer; we are using $("$EUPS_PYTHON" -V 2>&1)
 			from ${EUPS_PYTHON}.  Please set up a compatible python interpreter using
 			the EUPS_PYTHON environment variable or the -P command line option.
@@ -711,24 +742,24 @@ install_eups() {
 	fi
 
 	# if there is an existing, unversioned install, renamed it to "legacy"
-	if [[ -e "$(eups_base_dir)/Release_Notes" ]]; then
+	if [[ -e "$(n8l::eups_base_dir)/Release_Notes" ]]; then
 		local eups_legacy_dir
-		eups_legacy_dir="$(eups_base_dir)/legacy"
+		eups_legacy_dir="$(n8l::eups_base_dir)/legacy"
 		local eups_tmp_dir="${LSST_HOME}/eups-tmp"
 
 		echo "Moving old EUPS to ${eups_legacy_dir}"
 
-		mv "$(eups_base_dir)" "$eups_tmp_dir"
-		mkdir -p "$(eups_base_dir)"
+		mv "$(n8l::eups_base_dir)" "$eups_tmp_dir"
+		mkdir -p "$(n8l::eups_base_dir)"
 		mv "$eups_tmp_dir" "$eups_legacy_dir"
 	fi
 
-	echo -n "Installing EUPS ($(eups_slug))... "
+	echo -n "Installing EUPS ($(n8l::eups_slug))... "
 
 	# remove previous install
-	if [[ -e $(eups_dir) ]]; then
-		chmod -R +w "$(eups_dir)"
-		rm -rf "$(eups_dir)"
+	if [[ -e $(n8l::eups_dir) ]]; then
+		chmod -R +w "$(n8l::eups_dir)"
+		rm -rf "$(n8l::eups_dir)"
 	fi
 
 	local eups_build_dir="$LSST_HOME/_build"
@@ -749,14 +780,14 @@ install_eups() {
 		fi
 
 		$cmd ./configure \
-			--prefix="$(eups_dir)" \
-			--with-eups="$(eups_path)" \
+			--prefix="$(n8l::eups_dir)" \
+			--with-eups="$(n8l::eups_path)" \
 			--with-python="$EUPS_PYTHON"
 		$cmd make install
 	) > eupsbuild.log 2>&1 ; then
-		fail "$(cat <<-EOF
+		n8l::fail "$(cat <<-EOF
 			FAILED.
-			fail "See log in eupsbuild.log"
+			"See log in eupsbuild.log"
 			EOF
 		)"
 	fi
@@ -764,16 +795,66 @@ install_eups() {
 	# symlinks should be relative to support relocation of the newinstall root
 
 	# update $EUPS_DIR current symlink
-	ln_rel "$(eups_dir)" current
+	n8l::ln_rel "$(n8l::eups_dir)" current
 
 	# update EUPS_PATH current symlink
-	ln_rel "$(eups_path)" current
+	n8l::ln_rel "$(n8l::eups_path)" current
 
 	echo " done."
 }
 
-generate_loader_bash() {
-	local file_name=$1
+n8l::problem_vars() {
+	local problems=(
+		EUPS_PATH
+		EUPS_PKGROOT
+		REPOSITORY_PATH
+	)
+	local found=()
+
+	for v in ${problems[*]}; do
+		if [[ -n ${!v+1} ]]; then
+			found+=($v)
+		fi
+	done
+
+	echo -n "${found[@]}"
+}
+
+n8l::problem_vars_check() {
+	local problems=()
+	problems=($(n8l::problem_vars))
+
+	if [[ ${#problems} -gt 0 ]]; then
+		n8l::print_error "$(cat <<-EOF
+			WARNING: the following environment variables are defined that will affect
+			the operation of the LSST build tooling.\n
+			EOF
+		)"
+
+		for v in ${problems[*]}; do
+			n8l::print_error "${v}=\"${!v}\""
+		done
+
+		n8l::print_error "$(cat <<-EOF
+
+			It is recommended that they are undefined before running this script.
+
+			unset ${problems[*]}
+			EOF
+		)"
+
+		return 1
+	fi
+}
+
+n8l::generate_loader_bash() {
+	local file_name=${1?file_name is required}
+	local eups_pkgroot=${2?eups_pkgroot is required}
+	local miniconda_path=$3
+
+	if [[ -n $miniconda_path ]]; then
+		local cmd_setup_miniconda="export PATH=\"${miniconda_path}/bin:\${PATH}\""
+	fi
 
 	# shellcheck disable=SC2094
 	cat > "$file_name" <<-EOF
@@ -781,25 +862,25 @@ generate_loader_bash() {
 		# environment
 		# Usage: source $(basename "$file_name")
 
-		# Setup optional packages
-		${CMD_SETUP_MINICONDA_SH}
-
-		# If not already initialized, set LSST_HOME to the directory where this
-		# script is located
-		if [ "x\${LSST_HOME}" = "x" ]; then
-		   LSST_HOME="\$( cd "\$( dirname "\${BASH_SOURCE[0]}" )" && pwd )"
-		fi
+		${cmd_setup_miniconda}
+		LSST_HOME="\$( cd "\$( dirname "\${BASH_SOURCE[0]}" )" && pwd )"
 
 		# Bootstrap EUPS
-		EUPS_DIR="\${LSST_HOME}/eups/$(eups_slug)"
+		EUPS_DIR="\${LSST_HOME}/eups/$(n8l::eups_slug)"
 		source "\${EUPS_DIR}/bin/setups.sh"
 
-		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$EUPS_PKGROOT}
+		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$eups_pkgroot}
 	EOF
 }
 
-generate_loader_csh() {
-	local file_name=$1
+n8l::generate_loader_csh() {
+	local file_name=${1?file_name is required}
+	local eups_pkgroot=${2?eups_pkgroot is required}
+	local miniconda_path=$3
+
+	if [[ -n $miniconda_path ]]; then
+		local cmd_setup_miniconda="setenv PATH ${miniconda_path}/bin:\$PATH"
+	fi
 
 	# shellcheck disable=SC2094
 	cat > "$file_name" <<-EOF
@@ -807,28 +888,28 @@ generate_loader_csh() {
 		# environment
 		# Usage: source $(basename "$file_name")
 
-		# Setup optional packages
-		${CMD_SETUP_MINICONDA_CSH}
-
-		# If not already initialized, set LSST_HOME to the directory where this
-		# script is located
-		if ( ! \${?LSST_HOME} ) then
-		  set LSST_HOME = \`dirname \$0\`
-		  set LSST_HOME = \`cd \${LSST_HOME} && pwd\`
-		endif
+		${cmd_setup_miniconda}
+		set LSST_HOME = \`dirname \$0\`
+		set LSST_HOME = \`cd \${LSST_HOME} && pwd\`
 
 		# Bootstrap EUPS
-		set EUPS_DIR = "\${LSST_HOME}/eups/$(eups_slug)"
+		set EUPS_DIR = "\${LSST_HOME}/eups/$(n8l::eups_slug)"
 		source "\${EUPS_DIR}/bin/setups.csh"
 
 		if ( ! \${?EUPS_PKGROOT} ) then
-		  setenv EUPS_PKGROOT "$EUPS_PKGROOT"
+		  setenv EUPS_PKGROOT "$eups_pkgroot"
 		endif
 	EOF
 }
 
-generate_loader_ksh() {
-	local file_name=$1
+n8l::generate_loader_ksh() {
+	local file_name=${1?file_name is required}
+	local eups_pkgroot=${2?eups_pkgroot is required}
+	local miniconda_path=$3
+
+	if [[ -n $miniconda_path ]]; then
+		local cmd_setup_miniconda="export PATH=\"${miniconda_path}/bin:\${PATH}\""
+	fi
 
 	# shellcheck disable=SC2094
 	cat > "$file_name" <<-EOF
@@ -836,25 +917,25 @@ generate_loader_ksh() {
 		# environment
 		# Usage: source $(basename "$file_name")
 
-		# Setup optional packages
-		${CMD_SETUP_MINICONDA_SH}
-
-		# If not already initialized, set LSST_HOME to the directory where this
-		# script is located
-		if [ "x\${LSST_HOME}" = "x" ]; then
-		   LSST_HOME="\$( cd "\$( dirname "\${.sh.file}" )" && pwd )"
-		fi
+		${cmd_setup_miniconda}
+		LSST_HOME="\$( cd "\$( dirname "\${.sh.file}" )" && pwd )"
 
 		# Bootstrap EUPS
-		EUPS_DIR="\${LSST_HOME}/eups/$(eups_slug)"
+		EUPS_DIR="\${LSST_HOME}/eups/$(n8l::eups_slug)"
 		source "\${EUPS_DIR}/bin/setups.sh"
 
-		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$EUPS_PKGROOT}
+		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$eups_pkgroot}
 	EOF
 }
 
-generate_loader_zsh() {
-	local file_name=$1
+n8l::generate_loader_zsh() {
+	local file_name=${1?file_name is required}
+	local eups_pkgroot=${2?eups_pkgroot is required}
+	local miniconda_path=$3
+
+	if [[ -n $miniconda_path ]]; then
+		local cmd_setup_miniconda="export PATH=\"${miniconda_path}/bin:\${PATH}\""
+	fi
 
 	# shellcheck disable=SC2094
 	cat > "$file_name" <<-EOF
@@ -862,32 +943,34 @@ generate_loader_zsh() {
 		# environment
 		# Usage: source $(basename "$file_name")
 
-		# Setup optional packages
-		${CMD_SETUP_MINICONDA_SH}
-
-		# If not already initialized, set LSST_HOME to the directory where this
-		# script is located
-		if [[ -z \${LSST_HOME} ]]; then
-		   LSST_HOME=\`dirname "\$0:A"\`
-		fi
+		${cmd_setup_miniconda}
+		LSST_HOME=\`dirname "\$0:A"\`
 
 		# Bootstrap EUPS
-		EUPS_DIR="\${LSST_HOME}/eups/$(eups_slug)"
+		EUPS_DIR="\${LSST_HOME}/eups/$(n8l::eups_slug)"
 		source "\${EUPS_DIR}/bin/setups.zsh"
 
-		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$EUPS_PKGROOT}
+		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$eups_pkgroot}
 	EOF
 }
 
-create_load_scripts() {
+n8l::create_load_scripts() {
+	local prefix=${1?prefix is required}
+	local eups_pkgroot=${2?eups_pkgroot is required}
+	local miniconda_path=$3
+
 	for sfx in bash ksh csh zsh; do
 		echo -n "Creating startup scripts (${sfx}) ... "
-		generate_loader_$sfx "${LSST_HOME}/loadLSST.${sfx}"
+		# shellcheck disable=SC2086
+		n8l::generate_loader_$sfx \
+			"${prefix}/loadLSST.${sfx}" \
+			"$eups_pkgroot" \
+			$miniconda_path
 		echo "done."
 	done
 }
 
-print_greeting() {
+n8l::print_greeting() {
 	cat <<-EOF
 
 		Bootstrap complete. To continue installing (and to use) the LSST stack type
@@ -926,7 +1009,7 @@ print_greeting() {
 #
 # See: https://stackoverflow.com/a/12396228
 #
-am_I_sourced() {
+n8l::am_i_sourced() {
 	if [ "${FUNCNAME[1]}" = source ]; then
 		return 0
 	else
@@ -938,12 +1021,13 @@ am_I_sourced() {
 #
 # script main
 #
-main() {
-	config_curl
+n8l::main() {
+	n8l::config_curl
 
 	CONT_FLAG=false
 	BATCH_FLAG=false
 	NOOP_FLAG=false
+	PRESERVE_EUPS_PKGROOT_FLAG=false
 
 	n8l::parse_args "$@"
 
@@ -965,7 +1049,7 @@ main() {
 	# Refuse to run from a non-empty directory
 	if [[ $CONT_FLAG == false ]]; then
 		if [[ ! -z $(ls) && ! $(ls) == newinstall.sh ]]; then
-			fail "$(cat <<-EOF
+			n8l::fail "$(cat <<-EOF
 				Please run this script from an empty directory. The LSST stack will be
 				installed into it.
 				EOF
@@ -975,13 +1059,17 @@ main() {
 
 	# Warn if there's a different version on the server
 	if [[ -n $0 && $0 != bash ]]; then
-		up2date_check
+		n8l::up2date_check
 	fi
 
-	git_check
+	if [[ $BATCH_FLAG != true ]]; then
+		n8l::problem_vars_check
+	fi
+
+	n8l::git_check
 
 	# always use miniconda when in batch mode
-	if [[ $BATCH_FLAG = true ]]; then
+	if [[ $BATCH_FLAG == true ]]; then
 		WITH_MINICONDA=true
 	else
 		n8l::python_check
@@ -990,7 +1078,16 @@ main() {
 	# Bootstrap miniconda (optional)
 	# Note that this will add miniconda to the path
 	if [[ $WITH_MINICONDA == true ]]; then
-		bootstrap_miniconda
+		# this appears to be a bug in shellcheck
+		# shellcheck disable=SC2119
+		n8l::miniconda::bootstrap \
+			"$LSST_PYTHON_VERSION" \
+			"$MINICONDA_VERSION" \
+			"$LSST_HOME" \
+			'MINICONDA_PATH' \
+			"$MINICONDA_BASE_URL" \
+			"$LSSTSW_REF" \
+			"$CONDA_CHANNELS"
 	fi
 
 	# By default we use the PATH Python to bootstrap EUPS.  Set $EUPS_PYTHON to
@@ -999,24 +1096,36 @@ main() {
 	# being used to build the stack itself.
 	EUPS_PYTHON=${EUPS_PYTHON:-$(which python)}
 
-	EUPS_PKGROOT=${EUPS_PKGROOT:-$(default_eups_pkgroot $EUPS_USE_EUPSPKG $EUPS_USE_TARBALLS)}
-	print_error "Configured EUPS_PKGROOT: ${EUPS_PKGROOT}\n"
+	if [[ $PRESERVE_EUPS_PKGROOT_FLAG == true ]]; then
+		EUPS_PKGROOT=${EUPS_PKGROOT:-$(
+			n8l::default_eups_pkgroot $EUPS_USE_EUPSPKG $EUPS_USE_TARBALLS)}
+	else
+		EUPS_PKGROOT=$(
+			n8l::default_eups_pkgroot $EUPS_USE_EUPSPKG $EUPS_USE_TARBALLS)
+	fi
+	n8l::print_error "Configured EUPS_PKGROOT: ${EUPS_PKGROOT}\n"
 
 	# Install EUPS
-	install_eups
+	n8l::install_eups
 
 	# Create the environment loader scripts
-	create_load_scripts
+	# shellcheck disable=SC2153
+	# it can not know that MINICONDA_PATH is created by eval
+	# shellcheck disable=SC2086
+	n8l::create_load_scripts \
+		"$LSST_HOME" \
+		"$EUPS_PKGROOT" \
+		$MINICONDA_PATH
 
 	# Helpful message about what to do next
-	print_greeting
+	n8l::print_greeting
 }
 
 #
 # support being sourced as a lib or executed
 #
-if ! am_I_sourced; then
-	main "$@"
+if ! n8l::am_i_sourced; then
+	n8l::main "$@"
 fi
 
 # vim: tabstop=2 shiftwidth=2 noexpandtab
