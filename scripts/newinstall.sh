@@ -995,6 +995,9 @@ n8l::print_greeting() {
 
 			https://community.lsst.org/c/support
 
+		Note: Python 2 support is being deprecated. See http://ls.st/bnv
+		
+
 	                                       Thanks!
 	                                                -- The LSST Software Teams
 	                                                       http://dm.lsst.org/
