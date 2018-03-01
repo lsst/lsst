@@ -8,7 +8,7 @@ describe 'n8l::up2date_check' do
 
   context 'script matches master' do
     it 'prints nothing' do
-      stubbed_env.stub_command('diff').outputs('notta')
+      stubbed_env.stub_command('diff').returns_exitstatus(0)
 
       out, err, status = stubbed_env.execute_function(
         'scripts/newinstall.sh',
@@ -24,7 +24,7 @@ describe 'n8l::up2date_check' do
 
   context 'script out of sync with master' do
     it 'prints a non-fatal warning' do
-      stubbed_env.stub_command('diff').outputs('differ')
+      stubbed_env.stub_command('diff').returns_exitstatus(1)
 
       out, err, status = stubbed_env.execute_function(
         'scripts/newinstall.sh',
@@ -36,5 +36,21 @@ describe 'n8l::up2date_check' do
       expect(out).to eq('')
       expect(err).to match(/This script differs from the official version/)
     end
-  end # script matches master
+  end # script out of sync with master
+
+  context 'unknown error comparing source against master' do
+    it 'prints a non-fatal warning' do
+      stubbed_env.stub_command('diff').returns_exitstatus(2)
+
+      out, err, status = stubbed_env.execute_function(
+        'scripts/newinstall.sh',
+        func,
+        { 'CURL' => 'true' },
+      )
+
+      expect(status.exitstatus).to be 0
+      expect(out).to eq('')
+      expect(err).to match(/There is an error in comparing/)
+    end
+  end # unknown error comparing source against master
 end

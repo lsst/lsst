@@ -501,15 +501,24 @@ n8l::up2date_check() {
 	set +e
 
 	local amidiff
-	amidiff=$($CURL "$CURL_OPTS" -L "$NEWINSTALL_URL" | diff --brief - "$0")
+	diff --brief "$0" <($CURL "$CURL_OPTS" -L "$NEWINSTALL_URL") > /dev/null
+	amidiff=$?
 
-	if [[ $amidiff == *differ ]]; then
+	if [[ $amidiff = 1 ]] ; then
 		n8l::print_error "$(cat <<-EOF
 			!!! This script differs from the official version on the distribution
 			server.  If this is not intentional, get the current version from here:
 			${NEWINSTALL_URL}
 			EOF
 		)"
+	else
+		if [[ $amidiff != 0 ]] ; then
+			n8l::print_error "$(cat <<-EOF
+				!!! There is an error in comparing the official version with the local
+				copy of the script.
+				EOF
+			)"
+		fi
 	fi
 
 	set -e
