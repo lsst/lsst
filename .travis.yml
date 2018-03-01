@@ -66,11 +66,18 @@ matrix:
   #  - os: osx
   include:
     - os: linux
-      env:
+      env: RSPEC_BASH=true
       compiler:
       language: ruby
       rvm: '2.4'
       script: bundle exec rubocop && bundle exec rspec --format doc
+    - os: linux
+      env: SHELLCHECK=true
+      compiler:
+      services:
+        - docker
+      script:
+       - docker run -v $(pwd):/r koalaman/shellcheck-alpine:v0.4.6 /r/scripts/newinstall.sh
 branches:
   only:
   - master
