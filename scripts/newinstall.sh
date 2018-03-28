@@ -574,7 +574,7 @@ n8l::git_check() {
 n8l::pyverok() {
 	local py_interp=${1:-python}
 	local minver2=${2:-7}
-	local minver3=${3:-5}
+	local minver3=${3:-6}
 
 	$py_interp -c "import sys
 minver2=${minver2}
