@@ -21,7 +21,7 @@ describe 'n8l::pyverok' do
 
       expect(py).to be_called_with_arguments.times(1)
       expect(py).to be_called_with_arguments('-c', /minver2=7/)
-      expect(py).to be_called_with_arguments('-c', /minver3=5/)
+      expect(py).to be_called_with_arguments('-c', /minver3=6/)
     end
 
     it '3 params' do
