@@ -548,7 +548,7 @@ n8l::up2date_check() {
 # Discuss the state of Git.
 # XXX should probably fail if git version is insufficient under batch mode.
 n8l::git_check() {
-	if hash git 2>/dev/null; then
+	if n8l::has_cmd git; then
 		local gitvernum
 		gitvernum=$(git --version | cut -d\  -f 3)
 
