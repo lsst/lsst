@@ -100,6 +100,27 @@ n8l::has_cmd() {
 	command -v "$command" > /dev/null 2>&1
 }
 
+# check that all required cli programs are present
+n8l::require_cmds() {
+	local cmds=("${@?at least one command is required}")
+	local errors=()
+
+	# accumulate a list of all missing commands before failing to reduce end-user
+	# install/retry cycles
+	for c in "${cmds[@]}"; do
+		if ! n8l::has_cmd "$c"; then
+			errors+=("prog: ${c} is required")
+		fi
+	done
+
+	if [[ ${#errors[@]} -ne 0 ]]; then
+		for e in "${errors[@]}"; do
+			n8l::print_error "$e"
+		done
+		n8l::fail
+	fi
+}
+
 n8l::usage() {
 	n8l::fail "$(cat <<-EOF
 
