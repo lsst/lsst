@@ -100,6 +100,27 @@ n8l::has_cmd() {
 	command -v "$command" > /dev/null 2>&1
 }
 
+# check that all required cli programs are present
+n8l::require_cmds() {
+	local cmds=("${@?at least one command is required}")
+	local errors=()
+
+	# accumulate a list of all missing commands before failing to reduce end-user
+	# install/retry cycles
+	for c in "${cmds[@]}"; do
+		if ! n8l::has_cmd "$c"; then
+			errors+=("prog: ${c} is required")
+		fi
+	done
+
+	if [[ ${#errors[@]} -ne 0 ]]; then
+		for e in "${errors[@]}"; do
+			n8l::print_error "$e"
+		done
+		n8l::fail
+	fi
+}
+
 n8l::usage() {
 	n8l::fail "$(cat <<-EOF
 
@@ -398,6 +419,9 @@ n8l::miniconda::install() {
 			;;
 	esac
 
+	# the miniconda installer internally uses bzip2
+	n8l::require_cmds bzip2
+
 	miniconda_file_name="Miniconda${py_ver}-${mini_ver}-${ana_platform}.sh"
 	echo "::: Deploying ${miniconda_file_name}"
 
@@ -527,7 +551,7 @@ n8l::up2date_check() {
 # Discuss the state of Git.
 # XXX should probably fail if git version is insufficient under batch mode.
 n8l::git_check() {
-	if hash git 2>/dev/null; then
+	if n8l::has_cmd git; then
 		local gitvernum
 		gitvernum=$(git --version | cut -d\  -f 3)
 
@@ -772,6 +796,9 @@ n8l::install_eups() {
 	fi
 
 	local eups_build_dir="$LSST_HOME/_build"
+
+	# make is absent from many minimal linux images
+	n8l::require_cmds make "${CC:-cc}"
 
 	if ! ( set -e
 		mkdir "$eups_build_dir"
