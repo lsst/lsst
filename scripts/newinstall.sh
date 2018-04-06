@@ -646,8 +646,8 @@ n8l::python_check() {
 
 			Unable to locate python.
 
-			Please set up a compatible python interpreter, prepend it to your PATH, and
-			rerun this script.  Alternatively, we can set up the Miniconda Python
+			Please set up a compatible python interpreter, prepend it to your PATH,
+			and rerun this script.  Alternatively, we can set up the Miniconda Python
 			distribution for you.
 
 			EOF
