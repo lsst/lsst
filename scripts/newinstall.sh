@@ -798,7 +798,7 @@ n8l::install_eups() {
 	local eups_build_dir="$LSST_HOME/_build"
 
 	# make is absent from many minimal linux images
-	n8l::require_cmds make "${CC:-cc}"
+	n8l::require_cmds make "${CC:-cc}" which perl awk sed
 
 	if ! ( set -e
 		mkdir "$eups_build_dir"
