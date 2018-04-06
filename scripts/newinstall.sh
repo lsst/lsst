@@ -635,19 +635,21 @@ n8l::python_check() {
 
 	if [[ $pyverok != true ]]; then
 		if [[ $has_python == true ]]; then
-			cat <<-EOF
+			{
+				cat <<-EOF
 
-			LSST stack requires Python 2 (>=2.${minver2}) or 3 (>=3.${minver3}); you
-			seem to have $($py_interp -V 2>&1) on your path ($(which $py_interp)).
-
-			EOF
+				LSST stack requires Python 2 (>=2.${minver2}) or 3 (>=3.${minver3});
+				you seem to have $($py_interp -V 2>&1) on your path
+				($(command -v $py_interp)).
+				EOF
+			} | fmt -uw 78
 		else
 			cat <<-EOF
 
 			Unable to locate python.
 
-			Please set up a compatible python interpreter, prepend it to your PATH, and
-			rerun this script.  Alternatively, we can set up the Miniconda Python
+			Please set up a compatible python interpreter, prepend it to your PATH,
+			and rerun this script.  Alternatively, we can set up the Miniconda Python
 			distribution for you.
 
 			EOF
@@ -798,7 +800,7 @@ n8l::install_eups() {
 	local eups_build_dir="$LSST_HOME/_build"
 
 	# make is absent from many minimal linux images
-	n8l::require_cmds make "${CC:-cc}"
+	n8l::require_cmds make "${CC:-cc}" which perl awk sed
 
 	if ! ( set -e
 		mkdir "$eups_build_dir"
@@ -1130,7 +1132,7 @@ n8l::main() {
 	# override this or use the -P command line option.  $EUPS_PYTHON is used to
 	# install and run EUPS and will not necessarily be the python in the path
 	# being used to build the stack itself.
-	EUPS_PYTHON=${EUPS_PYTHON:-$(which python)}
+	EUPS_PYTHON=${EUPS_PYTHON:-$(command -v python)}
 
 	if [[ $PRESERVE_EUPS_PKGROOT_FLAG == true ]]; then
 		EUPS_PKGROOT=${EUPS_PKGROOT:-$(
