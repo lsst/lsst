@@ -121,6 +121,10 @@ n8l::require_cmds() {
 	fi
 }
 
+n8l::fmt() {
+	fmt -uw 78
+}
+
 n8l::usage() {
 	n8l::fail "$(cat <<-EOF
 
