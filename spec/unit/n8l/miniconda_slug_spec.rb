@@ -11,12 +11,11 @@ describe 'n8l::miniconda_slug' do
       'scripts/newinstall.sh',
       func,
       {
-        'LSST_PYTHON_VERSION' => '800',
-        'MINICONDA_VERSION'   => 'banana',
+        'MINICONDA_VERSION' => 'banana',
       },
     )
     expect(status.exitstatus).to be 0
-    expect(out).to match('miniconda800-banana')
+    expect(out).to match('miniconda3-banana')
     expect(err).to eq('')
   end
 end

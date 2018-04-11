@@ -34,8 +34,8 @@ EUPS_PKGROOT_BASE_URL=${EUPS_PKGROOT_BASE_URL:-https://eups.lsst.codes/stack}
 EUPS_USE_TARBALLS=${EUPS_USE_TARBALLS:-false}
 EUPS_USE_EUPSPKG=${EUPS_USE_EUPSPKG:-true}
 
-# Default to -3 (Python 3)
-LSST_PYTHON_VERSION=${LSST_PYTHON_VERSION:-3}
+# force Python 3
+LSST_PYTHON_VERSION=3
 MINICONDA_VERSION=${MINICONDA_VERSION:-4.3.21}
 # this git ref controls which set of conda packages are used to initialize the
 # the default conda env.
@@ -132,7 +132,7 @@ n8l::usage() {
 		 -n -- No-op. Go through the motions but echo commands instead of running
 		       them.
 		 -P [PATH_TO_PYTHON] -- Use a specific python interpreter for EUPS.
-		 -2 -- Use Python 2 if the script is installing its own Python.
+		 -2 -- use Python 2 (no longer supported -- fatal error)
 		 -3 -- Use Python 3 if the script is installing its own Python. (default)
 		 -t -- Use pre-compiled EUPS "tarball" packages, if available.
 		 -T -- DO NOT use pre-compiled EUPS "tarball" packages.
@@ -201,10 +201,10 @@ n8l::parse_args() {
 				EUPS_PYTHON=$OPTARG
 				;;
 			2)
-				LSST_PYTHON_VERSION=2
+				n8l::fail 'Python 2.x is no longer supported.'
 				;;
 			3)
-				LSST_PYTHON_VERSION=3
+				# noop
 				;;
 			t)
 				EUPS_USE_TARBALLS=true
