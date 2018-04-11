@@ -906,6 +906,8 @@ n8l::generate_loader_bash() {
 		# Bootstrap EUPS
 		EUPS_DIR="\${LSST_HOME}/eups/$(n8l::eups_slug)"
 		source "\${EUPS_DIR}/bin/setups.sh"
+		export -f setup
+		export -f unsetup
 
 		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$eups_pkgroot}
 	EOF
