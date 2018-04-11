@@ -533,19 +533,19 @@ n8l::up2date_check() {
 	amidiff=$?
 
 	if [[ $amidiff = 1 ]] ; then
-		n8l::print_error "$(cat <<-EOF
+		n8l::print_error "$({ cat <<-EOF
 			!!! This script differs from the official version on the distribution
 			server.  If this is not intentional, get the current version from here:
 			${NEWINSTALL_URL}
 			EOF
-		)"
+		} | n8l::fmt)"
 	else
 		if [[ $amidiff != 0 ]] ; then
-			n8l::print_error "$(cat <<-EOF
+			n8l::print_error "$({ cat <<-EOF
 				!!! There is an error in comparing the official version with the local
 				copy of the script.
 				EOF
-			)"
+			} | n8l::fmt)"
 		fi
 	fi
 
@@ -567,16 +567,17 @@ n8l::git_check() {
 
 	if [[ $gitver < 01-08-04 ]]; then
 		if [[ $BATCH_FLAG != true ]]; then
-			cat <<-EOF
-			Detected $(git --version).
+			{ cat <<-EOF
+				Detected $(git --version).
 
-			The git version control system is frequently used with LSST software.
-			While the LSST stack should build and work even in the absence of git, we
-			don\'t regularly run and test it in such environments. We therefore
-			recommend you have at least git 1.8.4 installed with your normal
-			package manager.
+				The git version control system is frequently used with LSST software.
+				While the LSST stack should build and work even in the absence of git, we
+				don\'t regularly run and test it in such environments. We therefore
+				recommend you have at least git 1.8.4 installed with your normal
+				package manager.
 
-			EOF
+				EOF
+			} | n8l::fmt
 
 			while true; do
 				read -r -p "Would you like to try continuing without git? " yn
@@ -870,11 +871,11 @@ n8l::problem_vars_check() {
 	problems=($(n8l::problem_vars))
 
 	if [[ ${#problems} -gt 0 ]]; then
-		n8l::print_error "$(cat <<-EOF
+		n8l::print_error "$({ cat <<-EOF
 			WARNING: the following environment variables are defined that will affect
 			the operation of the LSST build tooling.\n
 			EOF
-		)"
+		} | n8l::fmt)"
 
 		for v in ${problems[*]}; do
 			n8l::print_error "${v}=\"${!v}\""
@@ -1078,12 +1079,13 @@ n8l::main() {
 
 	n8l::parse_args "$@"
 
-	cat <<-EOF
+	{ cat <<-EOF
 
 		LSST Software Stack Builder
 		=======================================================================
 
-	EOF
+		EOF
+	} | n8l::fmt
 
 	# If no-op, prefix every install command with echo
 	if [[ $NOOP_FLAG == true ]]; then
@@ -1096,11 +1098,11 @@ n8l::main() {
 	# Refuse to run from a non-empty directory
 	if [[ $CONT_FLAG == false ]]; then
 		if [[ ! -z $(ls) && ! $(ls) == newinstall.sh ]]; then
-			n8l::fail "$(cat <<-EOF
+			n8l::fail "$({ cat <<-EOF
 				Please run this script from an empty directory. The LSST stack will be
 				installed into it.
 				EOF
-			)"
+			} | n8l::fmt)"
 		fi
 	fi
 
