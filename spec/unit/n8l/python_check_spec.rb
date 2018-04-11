@@ -18,7 +18,6 @@ describe 'n8l::python_check' do
       # XXX can't figure out how to mock `read` and have it set env vars
       expect(status.exitstatus).to_not be 0
       expect(out).to match(/Unable to locate python./m)
-      expect(out).to match(/Python 2 \(>=2.7\) or 3 \(>=3.6\)/m)
       expect(err).to eq('')
 
       expect(has_cmd).to be_called_with_arguments('python').times(1)
@@ -35,14 +34,14 @@ describe 'n8l::python_check' do
         )
 
         expect(status.exitstatus).to_not be 0
-        expect(out).to match(/Python 2 \(>=2.7\) or 3 \(>=3.6\)/m)
+        expect(out).to match(/In addition to Python >=/m)
         expect(err).to eq('')
 
         expect(out).to_not match(/Unable to locate python./m)
-        expect(out).to_not match(/LSST stack requires Python./m)
+        expect(out).to_not match(/LSST stack requires Python >=/m)
 
         expect(has_cmd).to be_called_with_arguments('python').times(1)
-        expect(pyverok).to be_called_with_arguments('python', '7', '6').times(1)
+        expect(pyverok).to be_called_with_arguments('3', '6', 'python').times(1)
       end
 
       it 'version BAD' do
@@ -55,14 +54,13 @@ describe 'n8l::python_check' do
         )
 
         expect(status.exitstatus).to_not be 0
-        expect(out).to match(/Python 2 \(>=2.7\) or 3 \(>=3.6\)/m)
-        expect(out).to match(/LSST stack requires Python./m)
+        expect(out).to match(/LSST stack requires Python >=/m)
         expect(err).to eq('')
 
         expect(out).to_not match(/Unable to locate python./m)
 
         expect(has_cmd).to be_called_with_arguments('python').times(1)
-        expect(pyverok).to be_called_with_arguments('python', '7', '6').times(1)
+        expect(pyverok).to be_called_with_arguments('3', '6', 'python').times(1)
       end
     end
   end
