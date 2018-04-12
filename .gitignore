@@ -1,12 +1,2 @@
-/autom4te.cache
-bin/
-_build.*
 .bundle/
-/config.log
-/configure
-doc/README.md
-etc/
-/.sconf_temp
-/.sconsign.dblite
 *.swp
-ups/*.cfgc
