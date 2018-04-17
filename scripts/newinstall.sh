@@ -34,8 +34,8 @@ EUPS_PKGROOT_BASE_URL=${EUPS_PKGROOT_BASE_URL:-https://eups.lsst.codes/stack}
 EUPS_USE_TARBALLS=${EUPS_USE_TARBALLS:-false}
 EUPS_USE_EUPSPKG=${EUPS_USE_EUPSPKG:-true}
 
-# Default to -3 (Python 3)
-LSST_PYTHON_VERSION=${LSST_PYTHON_VERSION:-3}
+# force Python 3
+LSST_PYTHON_VERSION=3
 MINICONDA_VERSION=${MINICONDA_VERSION:-4.3.21}
 # this git ref controls which set of conda packages are used to initialize the
 # the default conda env.
@@ -121,6 +121,10 @@ n8l::require_cmds() {
 	fi
 }
 
+n8l::fmt() {
+	fmt -uw 78
+}
+
 n8l::usage() {
 	n8l::fail "$(cat <<-EOF
 
@@ -132,7 +136,7 @@ n8l::usage() {
 		 -n -- No-op. Go through the motions but echo commands instead of running
 		       them.
 		 -P [PATH_TO_PYTHON] -- Use a specific python interpreter for EUPS.
-		 -2 -- Use Python 2 if the script is installing its own Python.
+		 -2 -- use Python 2 (no longer supported -- fatal error)
 		 -3 -- Use Python 3 if the script is installing its own Python. (default)
 		 -t -- Use pre-compiled EUPS "tarball" packages, if available.
 		 -T -- DO NOT use pre-compiled EUPS "tarball" packages.
@@ -201,10 +205,10 @@ n8l::parse_args() {
 				EUPS_PYTHON=$OPTARG
 				;;
 			2)
-				LSST_PYTHON_VERSION=2
+				n8l::fail 'Python 2.x is no longer supported.'
 				;;
 			3)
-				LSST_PYTHON_VERSION=3
+				# noop
 				;;
 			t)
 				EUPS_USE_TARBALLS=true
@@ -529,19 +533,19 @@ n8l::up2date_check() {
 	amidiff=$?
 
 	if [[ $amidiff = 1 ]] ; then
-		n8l::print_error "$(cat <<-EOF
+		n8l::print_error "$({ cat <<-EOF
 			!!! This script differs from the official version on the distribution
 			server.  If this is not intentional, get the current version from here:
 			${NEWINSTALL_URL}
 			EOF
-		)"
+		} | n8l::fmt)"
 	else
 		if [[ $amidiff != 0 ]] ; then
-			n8l::print_error "$(cat <<-EOF
+			n8l::print_error "$({ cat <<-EOF
 				!!! There is an error in comparing the official version with the local
 				copy of the script.
 				EOF
-			)"
+			} | n8l::fmt)"
 		fi
 	fi
 
@@ -563,16 +567,17 @@ n8l::git_check() {
 
 	if [[ $gitver < 01-08-04 ]]; then
 		if [[ $BATCH_FLAG != true ]]; then
-			cat <<-EOF
-			Detected $(git --version).
+			{ cat <<-EOF
+				Detected $(git --version).
 
-			The git version control system is frequently used with LSST software.
-			While the LSST stack should build and work even in the absence of git, we
-			don\'t regularly run and test it in such environments. We therefore
-			recommend you have at least git 1.8.4 installed with your normal
-			package manager.
+				The git version control system is frequently used with LSST software.
+				While the LSST stack should build and work even in the absence of git, we
+				don\'t regularly run and test it in such environments. We therefore
+				recommend you have at least git 1.8.4 installed with your normal
+				package manager.
 
-			EOF
+				EOF
+			} | n8l::fmt
 
 			while true; do
 				read -r -p "Would you like to try continuing without git? " yn
@@ -596,16 +601,16 @@ n8l::git_check() {
 }
 
 n8l::pyverok() {
-	local py_interp=${1:-python}
-	local minver2=${2:-7}
-	local minver3=${3:-6}
+	local min_major=${1?min_major is required}
+	local min_minor=${2?min_minor is required}
+	local py_interp=${3:-python}
 
 	$py_interp -c "import sys
-minver2=${minver2}
-minver3=${minver3}
+rmaj=${min_major}
+rmin=${min_minor}
 vmaj = sys.version_info[0]
 vmin = sys.version_info[1]
-if (vmaj == 2 and vmin >= minver2) or (vmaj == 3 and vmin >= minver3):
+if (vmaj >= rmaj) and (vmin >= rmin):
     sys.exit(0)
 else:
     sys.exit(1)"
@@ -615,62 +620,62 @@ else:
 #	Test/warn about Python versions, offer to get miniconda if not supported.
 #	LSST currently mandates specific versions of Python.  We assume that the
 #	python in PATH is the python that will be used to build the stack if
-#	miniconda(2/3) is not installed.
+#	miniconda is not installed.
 #
 n8l::python_check() {
 	# Check the version by running a small Python program (taken from the Python
 	# EUPS package) XXX this will break if python is not in $PATH
 	local py_interp=python
-	local minver2=7
-	local minver3=6
+	local min_major=3
+	local min_minor=6
 
 	local has_python=false
-	local pyverok=false
+	local pyok=false
 	if n8l::has_cmd $py_interp; then
 		has_python=true
-		if n8l::pyverok $py_interp $minver2 $minver3; then
-			pyverok=true
+		if n8l::pyverok $min_major $min_minor $py_interp; then
+			pyok=true
 		fi
 	fi
 
-	if [[ $pyverok != true ]]; then
+	if [[ $pyok != true ]]; then
 		if [[ $has_python == true ]]; then
-			{
-				cat <<-EOF
+			{ cat <<-EOF
 
-				LSST stack requires Python 2 (>=2.${minver2}) or 3 (>=3.${minver3});
-				you seem to have $($py_interp -V 2>&1) on your path
-				($(command -v $py_interp)).
+				LSST stack requires Python >= ${min_major}.${min_minor}; you seem to
+				have $($py_interp -V 2>&1) on your path ($(command -v $py_interp)).
 				EOF
-			} | fmt -uw 78
+			} | n8l::fmt
 		else
-			cat <<-EOF
+			{ cat <<-EOF
 
-			Unable to locate python.
+				Unable to locate python.
 
-			Please set up a compatible python interpreter, prepend it to your PATH,
-			and rerun this script.  Alternatively, we can set up the Miniconda Python
-			distribution for you.
+				Please set up a compatible python interpreter, prepend it to your PATH,
+				and rerun this script.  Alternatively, we can set up the Miniconda Python
+				distribution for you.
 
-			EOF
+				EOF
+			} | n8l::fmt
 		fi
 	fi
 
-	cat <<-EOF
+	{ cat <<-EOF
 
-	In addition to Python 2 (>=2.${minver2}) or 3 (>=3.${minver3}), some LSST
-	packages depend on recent versions of numpy, matplotlib, and scipy.  If you
-	do not have all of these, the installation may fail.  Using the Miniconda
-	Python distribution will ensure all these are set up.
+		In addition to Python >= ${min_major}.${min_minor}, some LSST packages
+		depend on recent versions of numpy, matplotlib, and scipy.  If you do not
+		have all of these, the installation may fail.  Using the Miniconda Python
+		distribution will ensure all these are set up.
 
-	EOF
+		EOF
+	} | n8l::fmt
 
 	while true; do
-		read -r -p "$(cat <<-EOF
+		read -r -p "$({ cat <<-EOF
 			Would you like us to install the Miniconda Python distribution (if
 			unsure, say yes)?
 			EOF
-		)" yn
+		} | n8l::fmt)" yn
 
 		case $yn in
 			[Yy]* )
@@ -678,13 +683,14 @@ n8l::python_check() {
 				break
 				;;
 			[Nn]* )
-				if [[ $pyverok != true ]]; then
-					cat <<-EOF
+				if [[ $pyok != true ]]; then
+					{ cat <<-EOF
 
-					Thanks. After you install the required version of Python and the
-					required modules, rerun this script to continue the installation.
+						Thanks. After you install the required version of Python and the
+						required modules, rerun this script to continue the installation.
 
-					EOF
+						EOF
+					} | n8l::fmt
 					n8l::fail
 				fi
 				break;
@@ -753,23 +759,25 @@ n8l::miniconda::bootstrap() {
 # XXX this function should be broken up to enable better unit testing.
 n8l::install_eups() {
 	if [[ ! -x $EUPS_PYTHON ]]; then
-		n8l::fail "$(cat <<-EOF
+		n8l::fail "$({ cat <<-EOF
 			Cannot find or execute '${EUPS_PYTHON}'.  Please set the EUPS_PYTHON
 			environment variable or use the -P option to point to a functioning
 			Python >= 2.6 interpreter and rerun.
 			EOF
-		)"
+		} | n8l::fmt)"
 	fi
 
-	local pyverok
-	pyverok=$($EUPS_PYTHON -c 'import sys; print("%i" % (sys.hexversion >= 0x02060000))')
-	if [[ $pyverok != 1 ]]; then
-		n8l::fail "$(cat <<-EOF
-			EUPS requires Python 2.6 or newer; we are using $("$EUPS_PYTHON" -V 2>&1)
-			from ${EUPS_PYTHON}.  Please set up a compatible python interpreter using
-			the EUPS_PYTHON environment variable or the -P command line option.
+	local min_major=2
+	local min_minor=6
+
+	if ! n8l::pyverok "$min_major" "$min_minor" "$EUPS_PYTHON"; then
+		n8l::fail "$({ cat <<-EOF
+			EUPS requires Python ${min_major}.${min_minor} or newer; we are using
+			$("$EUPS_PYTHON" -V 2>&1) from ${EUPS_PYTHON}.  Please set up a
+			compatible python interpreter using the EUPS_PYTHON environment variable
+			or the -P command line option.
 			EOF
-		)"
+		} | n8l::fmt)"
 	fi
 
 	if [[ $EUPS_PYTHON != /usr/bin/python ]]; then
@@ -863,11 +871,11 @@ n8l::problem_vars_check() {
 	problems=($(n8l::problem_vars))
 
 	if [[ ${#problems} -gt 0 ]]; then
-		n8l::print_error "$(cat <<-EOF
+		n8l::print_error "$({ cat <<-EOF
 			WARNING: the following environment variables are defined that will affect
 			the operation of the LSST build tooling.\n
 			EOF
-		)"
+		} | n8l::fmt)"
 
 		for v in ${problems[*]}; do
 			n8l::print_error "${v}=\"${!v}\""
@@ -1071,12 +1079,13 @@ n8l::main() {
 
 	n8l::parse_args "$@"
 
-	cat <<-EOF
+	{ cat <<-EOF
 
 		LSST Software Stack Builder
 		=======================================================================
 
-	EOF
+		EOF
+	} | n8l::fmt
 
 	# If no-op, prefix every install command with echo
 	if [[ $NOOP_FLAG == true ]]; then
@@ -1089,11 +1098,11 @@ n8l::main() {
 	# Refuse to run from a non-empty directory
 	if [[ $CONT_FLAG == false ]]; then
 		if [[ ! -z $(ls) && ! $(ls) == newinstall.sh ]]; then
-			n8l::fail "$(cat <<-EOF
+			n8l::fail "$({ cat <<-EOF
 				Please run this script from an empty directory. The LSST stack will be
 				installed into it.
 				EOF
-			)"
+			} | n8l::fmt)"
 		fi
 	fi
 

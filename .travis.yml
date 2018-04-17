@@ -52,9 +52,7 @@ script: |
   source loadLSST.bash
   eups distrib install python -t v14_0_rc2
 env:
-  - BATCH=true PYVER="2"
   - BATCH=true PYVER="3"
-  - BATCH=false PYVER="2"
   - BATCH=false PYVER="3"
   - BATCH=true PYVER="3" ANCIENT_BASH="3.2.57"
   - BATCH=false PYVER="3" ANCIENT_BASH="3.2.57"

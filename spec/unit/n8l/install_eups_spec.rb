@@ -24,6 +24,7 @@ describe 'n8l::install_eups' do
     context 'python below minimum version' do
       it 'should die' do
         stubbed_env.stub_command('git')
+        stubbed_env.stub_command('n8l::pyverok').returns_exitstatus(1)
 
         out, err, status = stubbed_env.execute_function(
           'scripts/newinstall.sh',
