@@ -78,6 +78,17 @@ matrix:
         - docker
       script:
        - docker run -v $(pwd):/r koalaman/shellcheck-alpine:v0.4.6 /r/scripts/newinstall.sh
+    - os: linux
+      env: TEST=markdownlint
+      services:
+        - docker
+      script: |
+        set -e
+        shopt -s globstar nullglob
+        CHECK=( **/*.md )
+        [[ ${#CHECK[@]} -eq 0 ]] && exit
+        docker run -ti -v $(pwd):$(pwd) -w $(pwd) \
+          mivok/markdownlint:0.4.0 "${CHECK[@]}"
 branches:
   only:
   - master
