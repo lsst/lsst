@@ -122,7 +122,7 @@ n8l::require_cmds() {
 }
 
 n8l::fmt() {
-	fmt -uw 78
+	fmt -w 78
 }
 
 n8l::usage() {
