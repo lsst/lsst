@@ -50,7 +50,7 @@ describe 'n8l::ln_rel' do
     expect(basename).to be_called_with_arguments('/dne/target').times(1)
     expect(cd).to be_called_with_arguments('/dne').times(1)
     expect(readlink).to be_called_with_arguments('target').times(1)
-    expect(rm).to be_called_with_arguments('-f', '/dne/name').times(1)
+    expect(rm).to be_called_with_arguments('-rf', '/dne/name').times(1)
     expect(ln).to be_called_with_arguments(
       '-sf', 'target', '/dne/name'
     ).times(1)

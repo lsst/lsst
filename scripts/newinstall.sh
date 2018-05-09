@@ -74,7 +74,8 @@ n8l::fail() {
 }
 
 #
-# create/update a *relative* symlink, in the basedir of the target
+# create/update a *relative* symlink, in the basedir of the target. An existing
+# file or directory will be *stomped on*.
 #
 n8l::ln_rel() {
 	local link_target=${1?link target is required}
@@ -89,7 +90,7 @@ n8l::ln_rel() {
 		if [[ $(readlink "$target_name") != "$link_name" ]]; then
 			# at least "ln (GNU coreutils) 8.25" will not change an abs symlink to be
 			# rel, even with `-f`
-			rm -f "$link_name"
+			rm -rf "$link_name"
 			ln -sf "$target_name" "$link_name"
 		fi
 	)
