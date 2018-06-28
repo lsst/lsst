@@ -18,7 +18,7 @@
 #	* Creating the loadLSST.xxx scripts
 #
 
-set -eo pipefail
+set -Eeo pipefail
 
 #
 # Note to developers: change these when the EUPS version we use changes
@@ -431,7 +431,7 @@ n8l::miniconda::install() {
 	echo "::: Deploying ${miniconda_file_name}"
 
 	(
-		set -eo pipefail
+		set -Eeo pipefail
 
 		# Create a temporary directory to download the installation script into
 		tmpdir=$(mktemp -d -t miniconda-XXXXXXXX)
@@ -494,7 +494,7 @@ n8l::miniconda::lsst_env() {
 	$cmd conda clean --lock
 
 	(
-		set -eo pipefail
+		set -Eeo pipefail
 
 		# disable conda progress meter unless running under a tty -- this is
 		# intended to reduce the amount of console output when running under CI
@@ -809,7 +809,7 @@ n8l::install_eups() {
 	# make is absent from many minimal linux images
 	n8l::require_cmds make "${CC:-cc}" which perl awk sed
 
-	if ! ( set -eo pipefail
+	if ! ( set -Eeo pipefail
 		mkdir "$eups_build_dir"
 		cd "$eups_build_dir"
 
