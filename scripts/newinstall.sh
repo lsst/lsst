@@ -18,7 +18,7 @@
 #	* Creating the loadLSST.xxx scripts
 #
 
-set -e
+set -Eeo pipefail
 
 #
 # Note to developers: change these when the EUPS version we use changes
@@ -431,7 +431,7 @@ n8l::miniconda::install() {
 	echo "::: Deploying ${miniconda_file_name}"
 
 	(
-		set -e
+		set -Eeo pipefail
 
 		# Create a temporary directory to download the installation script into
 		tmpdir=$(mktemp -d -t miniconda-XXXXXXXX)
@@ -456,9 +456,7 @@ n8l::miniconda::config_channels() {
 
 	# remove any previously configured non-default channels
 	# XXX allowed to fail
-	set +e
-	$cmd conda config --remove-key channels
-	set -e
+	$cmd conda config --remove-key channels || true
 
 	for c in $channels; do
 		$cmd conda config --add channels "$c"
@@ -496,7 +494,7 @@ n8l::miniconda::lsst_env() {
 	$cmd conda clean --lock
 
 	(
-		set -e
+		set -Eeo pipefail
 
 		# disable conda progress meter unless running under a tty -- this is
 		# intended to reduce the amount of console output when running under CI
@@ -527,30 +525,30 @@ n8l::miniconda::lsst_env() {
 # Don't attempt to run diff when the script has been piped into the shell
 #
 n8l::up2date_check() {
-	set +e
-
 	local amidiff
-	diff --brief "$0" <($CURL "$CURL_OPTS" -L "$NEWINSTALL_URL") > /dev/null
-	amidiff=$?
+	diff \
+		--brief "$0" \
+		<($CURL "$CURL_OPTS" -L "$NEWINSTALL_URL") > /dev/null \
+		&& amidiff=$? || amidiff=$?
 
-	if [[ $amidiff = 1 ]] ; then
-		n8l::print_error "$({ cat <<-EOF
-			!!! This script differs from the official version on the distribution
-			server.  If this is not intentional, get the current version from here:
-			${NEWINSTALL_URL}
-			EOF
-		} | n8l::fmt)"
-	else
-		if [[ $amidiff != 0 ]] ; then
+	case $amidiff in
+		0) ;;
+		1)
+			n8l::print_error "$({ cat <<-EOF
+				!!! This script differs from the official version on the distribution
+				server.  If this is not intentional, get the current version from here:
+				${NEWINSTALL_URL}
+				EOF
+			} | n8l::fmt)"
+			;;
+		2|*)
 			n8l::print_error "$({ cat <<-EOF
 				!!! There is an error in comparing the official version with the local
 				copy of the script.
 				EOF
 			} | n8l::fmt)"
-		fi
-	fi
-
-	set -e
+			;;
+	esac
 }
 
 # Discuss the state of Git.
@@ -811,7 +809,7 @@ n8l::install_eups() {
 	# make is absent from many minimal linux images
 	n8l::require_cmds make "${CC:-cc}" which perl awk sed
 
-	if ! ( set -e
+	if ! ( set -Eeo pipefail
 		mkdir "$eups_build_dir"
 		cd "$eups_build_dir"
 
