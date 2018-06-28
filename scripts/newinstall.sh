@@ -456,9 +456,7 @@ n8l::miniconda::config_channels() {
 
 	# remove any previously configured non-default channels
 	# XXX allowed to fail
-	set +e
-	$cmd conda config --remove-key channels
-	set -e
+	$cmd conda config --remove-key channels || true
 
 	for c in $channels; do
 		$cmd conda config --add channels "$c"
@@ -527,11 +525,11 @@ n8l::miniconda::lsst_env() {
 # Don't attempt to run diff when the script has been piped into the shell
 #
 n8l::up2date_check() {
-	set +e
-
 	local amidiff
-	diff --brief "$0" <($CURL "$CURL_OPTS" -L "$NEWINSTALL_URL") > /dev/null
-	amidiff=$?
+	diff \
+		--brief "$0" \
+		<($CURL "$CURL_OPTS" -L "$NEWINSTALL_URL") > /dev/null \
+		&& amidiff=$? || amidiff=$?
 
 	if [[ $amidiff = 1 ]] ; then
 		n8l::print_error "$({ cat <<-EOF
@@ -549,8 +547,6 @@ n8l::up2date_check() {
 			} | n8l::fmt)"
 		fi
 	fi
-
-	set -e
 }
 
 # Discuss the state of Git.
