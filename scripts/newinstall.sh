@@ -531,22 +531,24 @@ n8l::up2date_check() {
 		<($CURL "$CURL_OPTS" -L "$NEWINSTALL_URL") > /dev/null \
 		&& amidiff=$? || amidiff=$?
 
-	if [[ $amidiff = 1 ]] ; then
-		n8l::print_error "$({ cat <<-EOF
-			!!! This script differs from the official version on the distribution
-			server.  If this is not intentional, get the current version from here:
-			${NEWINSTALL_URL}
-			EOF
-		} | n8l::fmt)"
-	else
-		if [[ $amidiff != 0 ]] ; then
+	case $amidiff in
+		0) ;;
+		1)
+			n8l::print_error "$({ cat <<-EOF
+				!!! This script differs from the official version on the distribution
+				server.  If this is not intentional, get the current version from here:
+				${NEWINSTALL_URL}
+				EOF
+			} | n8l::fmt)"
+			;;
+		2|*)
 			n8l::print_error "$({ cat <<-EOF
 				!!! There is an error in comparing the official version with the local
 				copy of the script.
 				EOF
 			} | n8l::fmt)"
-		fi
-	fi
+			;;
+	esac
 }
 
 # Discuss the state of Git.
