@@ -27,7 +27,7 @@ LSST_EUPS_USE_EUPSPKG=${LSST_EUPS_USE_EUPSPKG:-true}
 
 # force Python 3
 LSST_PYTHON_VERSION=3
-LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-4.3.21}
+LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-4.5.4}
 # this git ref controls which set of conda packages are used to initialize the
 # the default conda env.
 LSST_LSSTSW_REF=${LSST_LSSTSW_REF:-10a4fa6}
