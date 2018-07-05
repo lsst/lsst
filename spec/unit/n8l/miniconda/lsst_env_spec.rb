@@ -66,14 +66,16 @@ describe 'n8l::miniconda::lsst_env' do
               instance_of(String)
             )
 
-            expect(conda).to be_called_with_arguments.times(2)
+            expect(conda).to be_called_with_arguments.times(3)
             expect(conda).to be_called_with_arguments('clean', '--lock')
             expect(conda).to be_called_with_arguments(
-              'install',
-              '--yes',
+              'env',
+              'update',
+              '--name',
+              /^lsst-scipipe/,
+              '--quiet',
               '--file',
               '/dne/file',
-              '--quiet',
             )
           end
         end

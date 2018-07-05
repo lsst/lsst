@@ -42,6 +42,7 @@ LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-4.3.21}
 LSST_LSSTSW_REF=${LSST_LSSTSW_REF:-10a4fa6}
 LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
 LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-}
+LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-lsst-scipipe-${LSST_LSSTSW_REF}}
 
 LSST_HOME="$PWD"
 
@@ -497,12 +498,6 @@ n8l::miniconda::lsst_env() {
 	(
 		set -Eeo pipefail
 
-		# disable conda progress meter unless running under a tty -- this is
-		# intended to reduce the amount of console output when running under CI
-		if [[ ! -t 1 ]]; then
-			conda_opts='--quiet'
-		fi
-
 		tmpfile=$(mktemp -t "${conda_packages//X/_}.XXXXXXXX")
 		# attempt to be a good citizen and not leave tmp files laying around
 		# after either a normal exit or an error condition
@@ -513,8 +508,23 @@ n8l::miniconda::lsst_env() {
 			"${baseurl}/${conda_packages}" \
 			--output "$tmpfile"
 
-		$cmd conda install --yes --file "$tmpfile" $conda_opts
+		args=()
+		args+=('env' 'update')
+		args+=('--name' "$LSST_CONDA_ENV_NAME")
+
+		# disable the conda install progress bar when not attached to a tty. Eg.,
+		# when running under CI
+		if [[ ! -t 1 ]]; then
+			args+=("--quiet")
+		fi
+
+		args+=("--file" "$tmpfile")
+
+		$cmd conda "${args[@]}"
 	)
+
+	# shellcheck disable=SC1091
+	source activate "$LSST_CONDA_ENV_NAME"
 }
 
 #
@@ -899,7 +909,14 @@ n8l::generate_loader_bash() {
 	local miniconda_path=$3
 
 	if [[ -n $miniconda_path ]]; then
-		local cmd_setup_miniconda="export PATH=\"${miniconda_path}/bin:\${PATH}\""
+		local cmd_setup_miniconda
+		cmd_setup_miniconda="$(cat <<-EOF
+			export PATH="${miniconda_path}/bin:\${PATH}"
+			export LSST_CONDA_ENV_NAME=\${LSST_CONDA_ENV_NAME:-${LSST_CONDA_ENV_NAME}}
+			# shellcheck disable=SC1091
+			source activate "\$LSST_CONDA_ENV_NAME"
+		EOF
+		)"
 	fi
 
 	# shellcheck disable=SC2094
@@ -927,7 +944,16 @@ n8l::generate_loader_csh() {
 	local miniconda_path=$3
 
 	if [[ -n $miniconda_path ]]; then
-		local cmd_setup_miniconda="setenv PATH ${miniconda_path}/bin:\$PATH"
+		local cmd_setup_miniconda
+		cmd_setup_miniconda="$(cat <<-EOF
+				setenv PATH "${miniconda_path}/bin:\$PATH"
+				if ( ! \$?LSST_CONDA_ENV_NAME ) then
+					set LSST_CONDA_ENV_NAME="${LSST_CONDA_ENV_NAME}"
+				endif
+				source "${miniconda_path}/etc/profile.d/conda.csh"
+				conda activate "\$LSST_CONDA_ENV_NAME"
+			EOF
+		)"
 	fi
 
 	# shellcheck disable=SC2094
@@ -956,7 +982,15 @@ n8l::generate_loader_ksh() {
 	local miniconda_path=$3
 
 	if [[ -n $miniconda_path ]]; then
-		local cmd_setup_miniconda="export PATH=\"${miniconda_path}/bin:\${PATH}\""
+		# XXX untested
+		local cmd_setup_miniconda
+		cmd_setup_miniconda="$(cat <<-EOF
+			export PATH="${miniconda_path}/bin:\${PATH}"
+			export LSST_CONDA_ENV_NAME=\${LSST_CONDA_ENV_NAME:-${LSST_CONDA_ENV_NAME}}
+			# shellcheck disable=SC1091
+			source activate "\$LSST_CONDA_ENV_NAME"
+		EOF
+		)"
 	fi
 
 	# shellcheck disable=SC2094
@@ -982,7 +1016,14 @@ n8l::generate_loader_zsh() {
 	local miniconda_path=$3
 
 	if [[ -n $miniconda_path ]]; then
-		local cmd_setup_miniconda="export PATH=\"${miniconda_path}/bin:\${PATH}\""
+		# XXX untested
+		local cmd_setup_miniconda
+		cmd_setup_miniconda="$(cat <<-EOF
+			export PATH="${miniconda_path}/bin:\${PATH}"
+			export LSST_CONDA_ENV_NAME=\${LSST_CONDA_ENV_NAME:-${LSST_CONDA_ENV_NAME}}
+			source activate "\$LSST_CONDA_ENV_NAME"
+		EOF
+		)"
 	fi
 
 	# shellcheck disable=SC2094
