@@ -859,7 +859,7 @@ n8l::problem_vars() {
 
 	for v in ${problems[*]}; do
 		if [[ -n ${!v+1} ]]; then
-			found+=($v)
+			found+=("$v")
 		fi
 	done
 
