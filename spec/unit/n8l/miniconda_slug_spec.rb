@@ -11,7 +11,7 @@ describe 'n8l::miniconda_slug' do
       'scripts/newinstall.sh',
       func,
       {
-        'MINICONDA_VERSION' => 'banana',
+        'LSST_MINICONDA_VERSION' => 'banana',
       },
     )
     expect(status.exitstatus).to be 0

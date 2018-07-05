@@ -24,24 +24,24 @@ set -Eeo pipefail
 # Note to developers: change these when the EUPS version we use changes
 #
 
-EUPS_VERSION=${EUPS_VERSION:-2.1.4}
+LSST_EUPS_VERSION=${LSST_EUPS_VERSION:-2.1.4}
 
-EUPS_GITREV=${EUPS_GITREV:-}
-EUPS_GITREPO=${EUPS_GITREPO:-https://github.com/RobertLuptonTheGood/eups.git}
-EUPS_TARURL=${EUPS_TARURL:-https://github.com/RobertLuptonTheGood/eups/archive/$EUPS_VERSION.tar.gz}
+LSST_EUPS_GITREV=${LSST_EUPS_GITREV:-}
+LSST_EUPS_GITREPO=${LSST_EUPS_GITREPO:-https://github.com/RobertLuptonTheGood/eups.git}
+LSST_EUPS_TARURL=${LSST_EUPS_TARURL:-https://github.com/RobertLuptonTheGood/eups/archive/${LSST_EUPS_VERSION}.tar.gz}
 
-EUPS_PKGROOT_BASE_URL=${EUPS_PKGROOT_BASE_URL:-https://eups.lsst.codes/stack}
-EUPS_USE_TARBALLS=${EUPS_USE_TARBALLS:-false}
-EUPS_USE_EUPSPKG=${EUPS_USE_EUPSPKG:-true}
+LSST_EUPS_PKGROOT_BASE_URL=${LSST_EUPS_PKGROOT_BASE_URL:-https://eups.lsst.codes/stack}
+LSST_EUPS_USE_TARBALLS=${LSST_EUPS_USE_TARBALLS:-false}
+LSST_EUPS_USE_EUPSPKG=${LSST_EUPS_USE_EUPSPKG:-true}
 
 # force Python 3
 LSST_PYTHON_VERSION=3
-MINICONDA_VERSION=${MINICONDA_VERSION:-4.3.21}
+LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-4.3.21}
 # this git ref controls which set of conda packages are used to initialize the
 # the default conda env.
-LSSTSW_REF=${LSSTSW_REF:-10a4fa6}
-MINICONDA_BASE_URL=${MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
-CONDA_CHANNELS=${CONDA_CHANNELS:-}
+LSST_LSSTSW_REF=${LSST_LSSTSW_REF:-10a4fa6}
+LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
+LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-}
 
 LSST_HOME="$PWD"
 
@@ -151,18 +151,18 @@ n8l::usage() {
 }
 
 n8l::miniconda_slug() {
-	echo "miniconda${LSST_PYTHON_VERSION}-${MINICONDA_VERSION}"
+	echo "miniconda${LSST_PYTHON_VERSION}-${LSST_MINICONDA_VERSION}"
 }
 
 n8l::python_env_slug() {
-	echo "$(n8l::miniconda_slug)-${LSSTSW_REF}"
+	echo "$(n8l::miniconda_slug)-${LSST_LSSTSW_REF}"
 }
 
 n8l::eups_slug() {
-	local eups_slug=$EUPS_VERSION
+	local eups_slug=$LSST_EUPS_VERSION
 
-	if [[ -n $EUPS_GITREV ]]; then
-		eups_slug=$EUPS_GITREV
+	if [[ -n $LSST_EUPS_GITREV ]]; then
+		eups_slug=$LSST_EUPS_GITREV
 	fi
 
 	echo "$eups_slug"
@@ -212,16 +212,16 @@ n8l::parse_args() {
 				# noop
 				;;
 			t)
-				EUPS_USE_TARBALLS=true
+				LSST_EUPS_USE_TARBALLS=true
 				;;
 			T)
-				EUPS_USE_TARBALLS=false
+				LSST_EUPS_USE_TARBALLS=false
 				;;
 			s)
-				EUPS_USE_EUPSPKG=true
+				LSST_EUPS_USE_EUPSPKG=true
 				;;
 			S)
-				EUPS_USE_EUPSPKG=false
+				LSST_EUPS_USE_EUPSPKG=false
 				;;
 			p)
 				PRESERVE_EUPS_PKGROOT_FLAG=true
@@ -360,6 +360,7 @@ n8l::default_eups_pkgroot() {
 	local platform
 	local target_cc
 	declare -a roots
+	local base_url=$LSST_EUPS_PKGROOT_BASE_URL
 
 	local pyslug
 	pyslug=$(n8l::python_env_slug)
@@ -373,14 +374,14 @@ n8l::default_eups_pkgroot() {
 		n8l::sys::platform "$osfamily" "$release" platform target_cc
 	fi
 
-	if [[ -n $EUPS_PKGROOT_BASE_URL ]]; then
+	if [[ -n $base_url ]]; then
 		if [[ -n $platform && -n $target_cc ]]; then
 			# binary "tarball" pkgroot
-			roots+=( "${EUPS_PKGROOT_BASE_URL}/${osfamily}/${platform}/${target_cc}/${pyslug}" )
+			roots+=( "${base_url}/${osfamily}/${platform}/${target_cc}/${pyslug}" )
 		fi
 
 		if [[ $use_eupspkg == true ]]; then
-			roots+=( "${EUPS_PKGROOT_BASE_URL}/src" )
+			roots+=( "${base_url}/src" )
 		fi
 	fi
 
@@ -813,15 +814,15 @@ n8l::install_eups() {
 		mkdir "$eups_build_dir"
 		cd "$eups_build_dir"
 
-		if [[ -z $EUPS_GITREV ]]; then
+		if [[ -z $LSST_EUPS_GITREV ]]; then
 			# Download tarball from github
-			$cmd "$CURL" "$CURL_OPTS" -L "$EUPS_TARURL" | tar xzvf -
-			$cmd cd "eups-${EUPS_VERSION}"
+			$cmd "$CURL" "$CURL_OPTS" -L "$LSST_EUPS_TARURL" | tar xzvf -
+			$cmd cd "eups-${LSST_EUPS_VERSION}"
 		else
 			# Clone from git repository
 			$cmd git clone "$EUPS_GITREPO" eups
 			$cmd cd eups
-			$cmd git checkout "$EUPS_GITREV"
+			$cmd git checkout "$LSST_EUPS_GITREV"
 		fi
 
 		$cmd ./configure \
@@ -1130,12 +1131,12 @@ n8l::main() {
 		# shellcheck disable=SC2119
 		n8l::miniconda::bootstrap \
 			"$LSST_PYTHON_VERSION" \
-			"$MINICONDA_VERSION" \
+			"$LSST_MINICONDA_VERSION" \
 			"$LSST_HOME" \
 			'MINICONDA_PATH' \
-			"$MINICONDA_BASE_URL" \
-			"$LSSTSW_REF" \
-			"$CONDA_CHANNELS"
+			"$LSST_MINICONDA_BASE_URL" \
+			"$LSST_LSSTSW_REF" \
+			"$LSST_CONDA_CHANNELS"
 	fi
 
 	# By default we use the PATH Python to bootstrap EUPS.  Set $EUPS_PYTHON to
@@ -1146,12 +1147,18 @@ n8l::main() {
 
 	if [[ $PRESERVE_EUPS_PKGROOT_FLAG == true ]]; then
 		EUPS_PKGROOT=${EUPS_PKGROOT:-$(
-			n8l::default_eups_pkgroot $EUPS_USE_EUPSPKG $EUPS_USE_TARBALLS)}
+			n8l::default_eups_pkgroot \
+				$LSST_EUPS_USE_EUPSPKG \
+				$LSST_EUPS_USE_TARBALLS
+		)}
 	else
 		EUPS_PKGROOT=$(
-			n8l::default_eups_pkgroot $EUPS_USE_EUPSPKG $EUPS_USE_TARBALLS)
+			n8l::default_eups_pkgroot \
+				$LSST_EUPS_USE_EUPSPKG \
+				$LSST_EUPS_USE_TARBALLS
+		)
 	fi
-	n8l::print_error "Configured EUPS_PKGROOT: ${EUPS_PKGROOT}\n"
+	n8l::print_error "Configured EUPS_PKGROOT: ${LSST_EUPS_PKGROOT}\n"
 
 	# Install EUPS
 	n8l::install_eups
