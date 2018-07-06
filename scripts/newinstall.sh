@@ -132,7 +132,7 @@ n8l::usage() {
 
 		usage: newinstall.sh [-b] [-f] [-h] [-n] [-3|-2] [-t|-T] [-s|-S] [-p]
                          [-P <path-to-python>]
-		 -b -- Run in batch mode. Don\'t ask any questions and install all extra
+		 -b -- Run in batch mode. Do not ask any questions and install all extra
 		       packages.
 		 -c -- Attempt to continue a previously failed install.
 		 -n -- No-op. Go through the motions but echo commands instead of running
@@ -574,7 +574,7 @@ n8l::git_check() {
 
 		local gitver
 		# shellcheck disable=SC2046 disable=SC2183
-		gitver=$(printf "%02d-%02d-%02d\n" \
+		gitver=$(printf "%02d-%02d-%02d\\n" \
 			$(echo "$gitvernum" | cut -d. -f1-3 | tr . ' '))
 	fi
 
@@ -585,7 +585,7 @@ n8l::git_check() {
 
 				The git version control system is frequently used with LSST software.
 				While the LSST stack should build and work even in the absence of git, we
-				don\'t regularly run and test it in such environments. We therefore
+				don not regularly run and test it in such environments. We therefore
 				recommend you have at least git 1.8.4 installed with your normal
 				package manager.
 
@@ -881,12 +881,12 @@ n8l::problem_vars() {
 
 n8l::problem_vars_check() {
 	local problems=()
-	problems=($(n8l::problem_vars))
+	IFS=" " read -r -a problems <<< "$(n8l::problem_vars)"
 
 	if [[ ${#problems} -gt 0 ]]; then
 		n8l::print_error "$({ cat <<-EOF
 			WARNING: the following environment variables are defined that will affect
-			the operation of the LSST build tooling.\n
+			the operation of the LSST build tooling.
 			EOF
 		} | n8l::fmt)"
 
@@ -1202,7 +1202,7 @@ n8l::main() {
 				$LSST_EUPS_USE_TARBALLS
 		)
 	fi
-	n8l::print_error "Configured EUPS_PKGROOT: ${LSST_EUPS_PKGROOT}\n"
+	n8l::print_error "Configured EUPS_PKGROOT: ${LSST_EUPS_PKGROOT}"
 
 	# Install EUPS
 	n8l::install_eups
