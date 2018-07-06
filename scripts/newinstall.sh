@@ -525,6 +525,9 @@ n8l::miniconda::lsst_env() {
 
 	# shellcheck disable=SC1091
 	source activate "$LSST_CONDA_ENV_NAME"
+
+	# report packages in the current conda env
+	conda env export
 }
 
 #
