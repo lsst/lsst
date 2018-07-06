@@ -12,9 +12,9 @@ describe 'n8l::trim' do
       "#{func} foobarbaz",
     )
 
-    expect(status.exitstatus).to be 0
     expect(out).to match('foobarbaz')
     expect(err).to eq('')
+    expect(status.exitstatus).to be 0
   end
 
   it 'trims string passed as one param' do
@@ -23,9 +23,9 @@ describe 'n8l::trim' do
       "#{func} \"  foo  bar  baz  \"",
     )
 
-    expect(status.exitstatus).to be 0
     expect(out).to match('foo  bar  baz')
     expect(err).to eq('')
+    expect(status.exitstatus).to be 0
   end
 
   it 'trims string(s) passed as multiple params' do
@@ -34,8 +34,8 @@ describe 'n8l::trim' do
       "#{func} \"  foo \" \" bar \" \" baz  \"",
     )
 
-    expect(status.exitstatus).to be 0
     expect(out).to match('foo   bar   baz')
     expect(err).to eq('')
+    expect(status.exitstatus).to be 0
   end
 end

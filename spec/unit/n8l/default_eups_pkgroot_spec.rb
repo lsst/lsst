@@ -15,9 +15,9 @@ describe 'n8l::default_eups_pkgroot' do
       func,
     )
 
-    expect(status.exitstatus).to be 0
     expect(out).to match(%r{https://eups.lsst.codes/stack/src})
     expect(err).to eq('')
+    expect(status.exitstatus).to be 0
   end
 
   it 'returns default src pkgroot' do
@@ -26,9 +26,9 @@ describe 'n8l::default_eups_pkgroot' do
       "#{func} true",
     )
 
-    expect(status.exitstatus).to be 0
     expect(out).to match(%r{https://eups.lsst.codes/stack/src})
     expect(err).to eq('')
+    expect(status.exitstatus).to be 0
   end
 
   it 'does not return the default src pkgroot' do
@@ -37,8 +37,8 @@ describe 'n8l::default_eups_pkgroot' do
       "#{func} false",
     )
 
-    expect(status.exitstatus).to be 0
     expect(out).to eq('')
     expect(err).to eq('')
+    expect(status.exitstatus).to be 0
   end
 end

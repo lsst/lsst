@@ -13,9 +13,9 @@ describe 'n8l::print_error' do
       'n8l::print_error "lp is on fire!"',
     )
 
-    expect(status.exitstatus).to be 0
     expect(out).to eq('')
     expect(err).to match('lp is on fire!')
+    expect(status.exitstatus).to be 0
   end
 
   it 'prints multiple params to stderr' do
@@ -24,8 +24,8 @@ describe 'n8l::print_error' do
       "#{func} 'lp' 'is' 'on' 'fire!'",
     )
 
-    expect(status.exitstatus).to be 0
     expect(out).to eq('')
     expect(err).to match('lp is on fire!')
+    expect(status.exitstatus).to be 0
   end
 end

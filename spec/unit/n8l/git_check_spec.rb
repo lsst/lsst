@@ -16,9 +16,9 @@ describe 'n8l::git_check' do
         func,
       )
 
-      expect(status.exitstatus).to be 0
       expect(out).to eq("Detected git version 2.13.4. OK.\n")
       expect(err).to eq('')
+      expect(status.exitstatus).to be 0
     end
 
     context 'batch mode' do
@@ -32,9 +32,9 @@ describe 'n8l::git_check' do
           { 'BATCH_FLAG' => 'true' },
         )
 
-        expect(status.exitstatus).to be 0
         expect(out).to eq("Detected git version 2.13.4. OK.\n")
         expect(err).to eq('')
+        expect(status.exitstatus).to be 0
       end
     end
   end
@@ -50,10 +50,10 @@ describe 'n8l::git_check' do
         func,
         { 'yn' => 'y' },
       )
-      expect(status.exitstatus).to be 0
       expect(out).to match('Detected git version 1.8.2')
       expect(out).to match('Continuing without git')
       expect(err).to eq('')
+      expect(status.exitstatus).to be 0
     end
 
     it 'prints warning' do
@@ -66,10 +66,10 @@ describe 'n8l::git_check' do
         func,
         { 'yn' => 'n' },
       )
-      expect(status.exitstatus).to be 0
       expect(out).to match('Detected git version 1.8.2')
       expect(out).to match('Okay install git and rerun the script.')
       expect(err).to eq('')
+      expect(status.exitstatus).to be 0
     end
 
     context 'batch mode' do
@@ -83,9 +83,9 @@ describe 'n8l::git_check' do
           { 'BATCH_FLAG' => 'true' },
         )
 
-        expect(status.exitstatus).to be 0
         expect(out).to eq('')
         expect(err).to eq('')
+        expect(status.exitstatus).to be 0
       end
     end
   end

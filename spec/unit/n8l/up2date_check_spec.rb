@@ -16,9 +16,9 @@ describe 'n8l::up2date_check' do
         { 'CURL' => 'true' },
       )
 
-      expect(status.exitstatus).to be 0
       expect(out).to eq('')
       expect(err).to eq('')
+      expect(status.exitstatus).to be 0
     end
   end # script matches master
 
@@ -32,9 +32,9 @@ describe 'n8l::up2date_check' do
         { 'CURL' => 'true' },
       )
 
-      expect(status.exitstatus).to be 0
       expect(out).to eq('')
       expect(err).to match(/This script differs from the official version/)
+      expect(status.exitstatus).to be 0
     end
   end # script out of sync with master
 
@@ -48,9 +48,9 @@ describe 'n8l::up2date_check' do
         { 'CURL' => 'true' },
       )
 
-      expect(status.exitstatus).to be 0
       expect(out).to eq('')
       expect(err).to match(/There is an error in comparing/)
+      expect(status.exitstatus).to be 0
     end
   end # unknown error comparing source against master
 end

@@ -14,8 +14,8 @@ describe 'n8l::eups_dir' do
       'scripts/newinstall.sh',
       func,
     )
-    expect(status.exitstatus).to be 0
     expect(out).to match('/dne/eups/banana')
     expect(err).to eq('')
+    expect(status.exitstatus).to be 0
   end
 end

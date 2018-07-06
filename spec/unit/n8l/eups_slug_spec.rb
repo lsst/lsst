@@ -12,9 +12,9 @@ describe 'n8l::eups_slug' do
       func,
       { 'LSST_EUPS_VERSION' => 'banana' },
     )
-    expect(status.exitstatus).to be 0
     expect(out).to match('banana')
     expect(err).to eq('')
+    expect(status.exitstatus).to be 0
   end
 
   it '$LSST_EUPS_GITREV overrides $LSST_EUPS_VERSION' do
@@ -26,8 +26,8 @@ describe 'n8l::eups_slug' do
         'LSST_EUPS_GITREV'  => 'apple',
       },
     )
-    expect(status.exitstatus).to be 0
     expect(out).to match('apple')
     expect(err).to eq('')
+    expect(status.exitstatus).to be 0
   end
 end

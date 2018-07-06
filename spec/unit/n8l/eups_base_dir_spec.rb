@@ -12,8 +12,8 @@ describe 'n8l::eups_base_dir' do
       # LSST_HOME should be set after script is sourced
       "LSST_HOME=/dne/home #{func}",
     )
-    expect(status.exitstatus).to be 0
     expect(out).to match('/dne/home/eups')
     expect(err).to eq('')
+    expect(status.exitstatus).to be 0
   end
 end

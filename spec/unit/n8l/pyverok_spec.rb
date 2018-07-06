@@ -15,9 +15,9 @@ describe 'n8l::pyverok' do
           func,
         )
 
-        expect(status.exitstatus).to_not be 0
         expect(out).to eq('')
         expect(err).to match('min_major is required')
+        expect(status.exitstatus).to_not be 0
 
         expect(py).to_not be_called_with_arguments
       end
@@ -31,9 +31,9 @@ describe 'n8l::pyverok' do
           "#{func} 42",
         )
 
-        expect(status.exitstatus).to_not be 0
         expect(out).to eq('')
         expect(err).to match('min_minor is required')
+        expect(status.exitstatus).to_not be 0
 
         expect(py).to_not be_called_with_arguments
       end
@@ -48,9 +48,9 @@ describe 'n8l::pyverok' do
             "#{func} 42 7",
           )
 
-          expect(status.exitstatus).to be 0
           expect(out).to eq('')
           expect(err).to eq('')
+          expect(status.exitstatus).to be 0
 
           expect(py).to be_called_with_arguments.times(1)
         end
@@ -64,9 +64,9 @@ describe 'n8l::pyverok' do
             "#{func} 42 7 foo",
           )
 
-          expect(status.exitstatus).to be 0
           expect(out).to eq('')
           expect(err).to eq('')
+          expect(status.exitstatus).to be 0
 
           expect(py).to_not be_called_with_arguments
 
@@ -87,9 +87,9 @@ describe 'n8l::pyverok' do
         "#{func} 42 7",
       )
 
-      expect(status.exitstatus).to be 1
       expect(out).to eq('')
       expect(err).to eq('')
+      expect(status.exitstatus).to be 1
 
       expect(py).to be_called_with_arguments.times(1)
     end

@@ -53,9 +53,9 @@ describe 'n8l::miniconda::lsst_env' do
               { 'CURL' => 'curl' },
             )
 
-            expect(status.exitstatus).to be 0
             expect(out).to eq('')
             expect(err).to eq('')
+            expect(status.exitstatus).to be 0
 
             expect(curl).to be_called_with_arguments.times(1)
             expect(curl).to be_called_with_arguments(
@@ -90,11 +90,11 @@ describe 'n8l::miniconda::lsst_env' do
         "#{func} foo bar",
       )
 
-      expect(status.exitstatus).to_not be 0
       expect(out).to eq('')
       expect(err).to match(
         'Cannot configure miniconda env: unsupported platform foo'
       )
+      expect(status.exitstatus).to_not be 0
     end
   end # uname
 end
