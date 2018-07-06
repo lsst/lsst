@@ -75,7 +75,7 @@ matrix:
       services:
         - docker
       script:
-       - docker run -v $(pwd):/r koalaman/shellcheck-alpine:v0.4.6 /r/scripts/newinstall.sh
+       - docker run -v $(pwd):/r koalaman/shellcheck-alpine:v0.4.7 /r/scripts/newinstall.sh
     - os: linux
       env: TEST=markdownlint
       services:
