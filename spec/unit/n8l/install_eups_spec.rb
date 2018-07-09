@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rspec/bash'
 
 describe 'n8l::install_eups' do
@@ -13,9 +15,9 @@ describe 'n8l::install_eups' do
         "EUPS_PYTHON=/dne/foo/bar #{func}",
       )
 
-      expect(status.exitstatus).to_not be 0
       expect(out).to eq('')
       expect(err).to match("Cannot find or execute '/dne/foo/bar'.")
+      expect(status.exitstatus).to_not be 0
     end
   end
 
@@ -33,9 +35,9 @@ describe 'n8l::install_eups' do
           "EUPS_PYTHON=/usr/bin/true #{func}",
         )
 
-        expect(status.exitstatus).to_not be 0
         expect(out).to eq('')
         expect(err).to match('EUPS requires Python 2.6 or newer')
+        expect(status.exitstatus).to_not be 0
       end
     end
   end

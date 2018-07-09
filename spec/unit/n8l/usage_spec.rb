@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rspec/bash'
 
 describe 'n8l::usage' do
@@ -11,8 +13,8 @@ describe 'n8l::usage' do
       'scripts/newinstall.sh',
       func,
     )
-    expect(status.exitstatus).to_not be 0
     expect(out).to eq('')
     expect(err).to match(/usage: newinstall.sh/)
+    expect(status.exitstatus).to_not be 0
   end
 end

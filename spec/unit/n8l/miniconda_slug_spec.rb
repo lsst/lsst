@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rspec/bash'
 
 describe 'n8l::miniconda_slug' do
@@ -11,11 +13,11 @@ describe 'n8l::miniconda_slug' do
       'scripts/newinstall.sh',
       func,
       {
-        'MINICONDA_VERSION' => 'banana',
+        'LSST_MINICONDA_VERSION' => 'banana',
       },
     )
-    expect(status.exitstatus).to be 0
     expect(out).to match('miniconda3-banana')
     expect(err).to eq('')
+    expect(status.exitstatus).to be 0
   end
 end

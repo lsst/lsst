@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rspec/bash'
 
 describe 'n8l::am_i_sourced' do
@@ -13,9 +15,9 @@ describe 'n8l::am_i_sourced' do
         func,
       )
 
-      expect(status.exitstatus).to_not be 0
       expect(out).to eq('')
       expect(err).to eq('')
+      expect(status.exitstatus).to_not be 0
     end
   end
 end

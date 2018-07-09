@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rspec/bash'
 
 describe 'n8l::ln_rel' do
@@ -14,9 +16,9 @@ describe 'n8l::ln_rel' do
           func,
         )
 
-        expect(status.exitstatus).to_not be 0
         expect(out).to eq('')
         expect(err).to match(/link target is required/)
+        expect(status.exitstatus).to_not be 0
       end
     end
     context '$2/link_name' do
@@ -26,9 +28,9 @@ describe 'n8l::ln_rel' do
           "#{func} /dne",
         )
 
-        expect(status.exitstatus).to_not be 0
         expect(out).to eq('')
         expect(err).to match(/link name is required/)
+        expect(status.exitstatus).to_not be 0
       end
     end
   end # parameters
@@ -55,9 +57,9 @@ describe 'n8l::ln_rel' do
       '-sf', 'target', '/dne/name'
     ).times(1)
 
-    expect(status.exitstatus).to be 0
     expect(out).to eq('')
     expect(err).to eq('')
+    expect(status.exitstatus).to be 0
   end
 
   it 'does nothing if symlink exists' do
@@ -80,8 +82,8 @@ describe 'n8l::ln_rel' do
     expect(rm).to_not be_called
     expect(ln).to_not be_called
 
-    expect(status.exitstatus).to be 0
     expect(out).to eq('')
     expect(err).to eq('')
+    expect(status.exitstatus).to be 0
   end
 end

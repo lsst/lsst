@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rspec/bash'
 
 describe 'n8l::eups_path' do
@@ -13,8 +15,8 @@ describe 'n8l::eups_path' do
       'scripts/newinstall.sh',
       "LSST_HOME=/dne/home #{func}",
     )
-    expect(status.exitstatus).to be 0
     expect(out).to match('/dne/home/stack/banana')
     expect(err).to eq('')
+    expect(status.exitstatus).to be 0
   end
 end
