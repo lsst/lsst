@@ -1,95 +1,66 @@
-language: cpp
-os:
-  - linux
-  #- osx
-# the default precise linux container has gcc 4.6
-sudo: required
-dist: trusty
-compiler:
-  - clang
-  - gcc
-addons:
-  apt:
-    packages:
-    - tcsh
-script: |
-  set -e
-  if [[ -n ${ANCIENT_BASH+1} ]]; then
-    VER="bash-${ANCIENT_BASH}"
-    curl -sSLO "http://ftp.gnu.org/gnu/bash/${VER}.tar.gz"
-    tar -xf "${VER}.tar.gz"
-    cd "$VER"
-    ./configure
-    make -j
-    export PATH="$(pwd):$PATH"
-    cd ..
-    bash --version
-  fi
-
-  if [[ $BATCH == true ]]; then
-    echo -e "*** testing batch mode in Python version $PYVER ***\n"
-    bash -x ./scripts/newinstall.sh -cb -${PYVER}
-  else
-    echo -e "*** testing interactive mode in Python version $PYVER ***\n"
-    echo -e "yes\nyes" | bash -x ./scripts/newinstall.sh -c -${PYVER}
-  fi
-
-  echo -e "*** Testing initializaion of shell environment ***\n"
-  case $MANGLER in
-    tcsh)
-      # csh_20110502-2ubuntu2_amd64.deb from ubuntu:trusty (travis) opens a new
-      # shell interactive shell when passed--version
-      tcsh --version
-      tcsh -ec 'source loadLSST.csh && echo $EUPS_PKGROOT'
-      ;;
-    *)
-      bash --version
-      bash -ec 'source loadLSST.bash && echo $EUPS_PKGROOT'
-      ;;
-  esac
-
-  echo -e "*** Sanity checking EUPS_PKGROOT construction ***\n"
-  source loadLSST.bash
-  eups distrib install python -t v14_0_rc2
-env:
-  - BATCH=true PYVER="3"
-  - BATCH=false PYVER="3"
-  - BATCH=true PYVER="3" ANCIENT_BASH="3.2.57"
-  - BATCH=false PYVER="3" ANCIENT_BASH="3.2.57"
-  - MANGLER=tcsh BATCH=true PYVER="3"
+---
+sudo: false
+language: c
 matrix:
+  include:
+    - &accept
+      os: linux
+      env: BATCH=false PYVER="3"
+      services:
+        - docker
+      script: ./tests/docker-acceptance.sh
+
+    - <<: *accept
+      env: BATCH=true PYVER="3"
+
+    - <<: *accept
+      env: BATCH=true PYVER="3" ANCIENT_BASH="3.2.57"
+
+    - <<: *accept
+      env: BATCH=false PYVER="3" ANCIENT_BASH="3.2.57"
+
+    - <<: *accept
+      env: MANGLER=tcsh BATCH=true PYVER="3"
+
+    - &ruby
+      env: TEST=rubocop
+      language: ruby
+      rvm: '2.5'
+      script: bundle exec rubocop
+
+    - <<: *ruby
+      env: TEST=rspec-bash
+      script: bundle exec rspec --format doc
+
+    - &plumb
+      env: TEST=markdownlint
+      language: c
+      services:
+        - docker
+      script: ./tests/mdl.sh
+
+    - <<: *plumb
+      env: TEST=yamllint
+      script: ./tests/yamllint.sh
+
+    - <<: *plumb
+      env: TEST=shellcheck
+      script: ./tests/shellcheck.sh
+
+    - <<: *plumb
+      env: TEST=hadolint
+      script: ./tests/hadolint.sh
+
+    - env: TEST=make
+      script: ./tests/make.sh
   # osx builds are often very slow to start due to high demand
   fast_finish: true
-  #allow_failures:
+  # allow_failures:
   #  - os: osx
-  include:
-    - os: linux
-      env: RSPEC_BASH=true
-      compiler:
-      language: ruby
-      rvm: '2.4'
-      script: bundle exec rubocop && bundle exec rspec --format doc
-    - os: linux
-      env: SHELLCHECK=true
-      compiler:
-      services:
-        - docker
-      script:
-       - docker run -v $(pwd):/r koalaman/shellcheck-alpine:v0.4.6 /r/scripts/newinstall.sh
-    - os: linux
-      env: TEST=markdownlint
-      services:
-        - docker
-      script: |
-        set -e
-        shopt -s globstar nullglob
-        CHECK=( **/*.md )
-        [[ ${#CHECK[@]} -eq 0 ]] && exit
-        docker run -ti -v $(pwd):$(pwd) -w $(pwd) \
-          mivok/markdownlint:0.4.0 "${CHECK[@]}"
 branches:
   only:
-  - master
-  - /^\d+\.\d+(\.\d+)?$/
+    - master
+    # also matched against tag pushes
+    - /^\d+\.\d+(\.\d+)?$/
 notifications:
   email: false

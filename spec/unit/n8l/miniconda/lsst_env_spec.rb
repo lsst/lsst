@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rspec/bash'
 
 describe 'n8l::miniconda::lsst_env' do
@@ -46,6 +48,9 @@ describe 'n8l::miniconda::lsst_env' do
             stubbed_env.stub_command('mktemp').outputs('/dne/file')
             curl = stubbed_env.stub_command('curl')
             conda = stubbed_env.stub_command('conda')
+            source = stubbed_env.stub_command('source')
+            # stubbed only to be found by n8l::require_cmd
+            stubbed_env.stub_command('activate')
 
             out, err, status = stubbed_env.execute_function(
               'scripts/newinstall.sh',
@@ -53,9 +58,9 @@ describe 'n8l::miniconda::lsst_env' do
               { 'CURL' => 'curl' },
             )
 
-            expect(status.exitstatus).to be 0
             expect(out).to eq('')
             expect(err).to eq('')
+            expect(status.exitstatus).to be 0
 
             expect(curl).to be_called_with_arguments.times(1)
             expect(curl).to be_called_with_arguments(
@@ -66,14 +71,23 @@ describe 'n8l::miniconda::lsst_env' do
               instance_of(String)
             )
 
-            expect(conda).to be_called_with_arguments.times(2)
+            expect(conda).to be_called_with_arguments.times(3)
             expect(conda).to be_called_with_arguments('clean', '--lock')
             expect(conda).to be_called_with_arguments(
-              'install',
-              '--yes',
+              'env',
+              'update',
+              '--name',
+              /^lsst-scipipe/,
+              '--quiet',
               '--file',
               '/dne/file',
-              '--quiet',
+            )
+            expect(conda).to be_called_with_arguments('env', 'export')
+
+            expect(source).to be_called_with_arguments.times(1)
+            expect(source).to be_called_with_arguments(
+              'activate',
+              /^lsst-scipipe-/,
             )
           end
         end
@@ -82,17 +96,20 @@ describe 'n8l::miniconda::lsst_env' do
 
     it '(unknown)' do
       stubbed_env.stub_command('uname').outputs('foo')
+      # stubbed only to be found by n8l::require_cmd
+      stubbed_env.stub_command('conda')
+      stubbed_env.stub_command('activate')
 
       out, err, status = stubbed_env.execute_function(
         'scripts/newinstall.sh',
         "#{func} foo bar",
       )
 
-      expect(status.exitstatus).to_not be 0
       expect(out).to eq('')
       expect(err).to match(
         'Cannot configure miniconda env: unsupported platform foo'
       )
+      expect(status.exitstatus).to_not be 0
     end
   end # uname
 end

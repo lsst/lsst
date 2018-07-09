@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rspec/bash'
 
 describe 'n8l::print_greeting' do
@@ -12,8 +14,8 @@ describe 'n8l::print_greeting' do
       func,
     )
 
-    expect(status.exitstatus).to be 0
     expect(out).to match('Bootstrap complete.')
     expect(err).to eq('')
+    expect(status.exitstatus).to be 0
   end
 end

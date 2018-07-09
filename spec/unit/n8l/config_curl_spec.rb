@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rspec/bash'
 
 describe 'n8l::config_curl' do
@@ -19,9 +21,9 @@ describe 'n8l::config_curl' do
       { 'CURL' => '/dne/curl' }
     )
 
-    expect(status.exitstatus).to be 0
     expect(out).to match('CURL=/dne/curl')
     expect(out).to match(/(CURL_OPTS=-sS)|(-#)/)
     expect(err).to eq('')
+    expect(status.exitstatus).to be 0
   end
 end

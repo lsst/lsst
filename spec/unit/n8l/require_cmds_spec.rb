@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rspec/bash'
 
 describe 'n8l::require_cmds' do
@@ -14,9 +16,9 @@ describe 'n8l::require_cmds' do
           func,
         )
 
-        expect(status.exitstatus).to_not be 0
         expect(out).to eq('')
         expect(err).to match(/at least one command is required/)
+        expect(status.exitstatus).to_not be 0
       end
 
       it 'is passed to `command`' do
@@ -27,9 +29,9 @@ describe 'n8l::require_cmds' do
           "#{func} foo",
         )
 
-        expect(status.exitstatus).to be 0
         expect(out).to eq('')
         expect(err).to eq('')
+        expect(status.exitstatus).to be 0
 
         expect(haz_cmd).to be_called_with_arguments.times(1)
         expect(haz_cmd).to be_called_with_arguments('foo')
@@ -43,9 +45,9 @@ describe 'n8l::require_cmds' do
           "#{func} foo bar baz",
         )
 
-        expect(status.exitstatus).to be 0
         expect(out).to eq('')
         expect(err).to eq('')
+        expect(status.exitstatus).to be 0
 
         expect(haz_cmd).to be_called_with_arguments.times(3)
         %w[foo bar baz].each do |cmd|
@@ -61,9 +63,9 @@ describe 'n8l::require_cmds' do
           "#{func} foo",
         )
 
-        expect(status.exitstatus).to_not be 0
         expect(out).to eq('')
         expect(err).to match('prog: foo is required')
+        expect(status.exitstatus).to_not be 0
         expect(haz_cmd).to be_called_with_arguments.times(1)
         expect(haz_cmd).to be_called_with_arguments('foo')
       end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rspec/bash'
 
 describe 'n8l::python_env_slug' do
@@ -12,10 +14,10 @@ describe 'n8l::python_env_slug' do
     out, err, status = stubbed_env.execute_function(
       'scripts/newinstall.sh',
       func,
-      { 'LSSTSW_REF' => 'banana' },
+      { 'LSST_LSSTSW_REF' => 'banana' },
     )
-    expect(status.exitstatus).to be 0
     expect(out).to match('miniconda9-apple-banana')
     expect(err).to eq('')
+    expect(status.exitstatus).to be 0
   end
 end

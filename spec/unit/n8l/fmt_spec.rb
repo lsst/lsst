@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rspec/bash'
 
 describe 'n8l::fmt' do
@@ -16,9 +18,9 @@ describe 'n8l::fmt' do
       }
     )
 
-    expect(status.exitstatus).to be 0
     expect(out).to eq(text + "\n")
     expect(err).to eq('')
+    expect(status.exitstatus).to be 0
   end
 
   it 'does not split continous strings' do
@@ -31,9 +33,9 @@ describe 'n8l::fmt' do
       }
     )
 
-    expect(status.exitstatus).to be 0
     expect(out).to eq(text + "\n")
     expect(err).to eq('')
+    expect(status.exitstatus).to be 0
   end
 
   it 'backfills multiple short lines' do
@@ -46,9 +48,9 @@ describe 'n8l::fmt' do
       }
     )
 
-    expect(status.exitstatus).to be 0
     expect(out).to eq("a b c d e f g\n")
     expect(err).to eq('')
+    expect(status.exitstatus).to be 0
   end
 
   it 'splits at 78 chars' do
@@ -62,8 +64,8 @@ describe 'n8l::fmt' do
       }
     )
 
-    expect(status.exitstatus).to be 0
     expect(out).to eq(text.tr(' ', "\n") + "\n")
     expect(err).to eq('')
+    expect(status.exitstatus).to be 0
   end
 end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rspec/bash'
 
 describe 'n8l::join' do
@@ -12,9 +14,9 @@ describe 'n8l::join' do
       func,
     )
 
-    expect(status.exitstatus).to_not be 0
     expect(out).to eq('')
     expect(err).to match(/separator is required/)
+    expect(status.exitstatus).to_not be 0
   end
 
   it 'separator param only is noop' do
@@ -23,9 +25,9 @@ describe 'n8l::join' do
       "#{func} '@'",
     )
 
-    expect(status.exitstatus).to be 0
     expect(out).to eq('')
     expect(err).to eq('')
+    expect(status.exitstatus).to be 0
   end
 
   it 'separator param only is noop' do
@@ -34,8 +36,8 @@ describe 'n8l::join' do
       "#{func} '@' a b c d",
     )
 
-    expect(status.exitstatus).to be 0
     expect(out).to eq('a@b@c@d')
     expect(err).to eq('')
+    expect(status.exitstatus).to be 0
   end
 end
