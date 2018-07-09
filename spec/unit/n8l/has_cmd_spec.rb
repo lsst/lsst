@@ -20,6 +20,8 @@ describe 'n8l::has_cmd' do
       end
 
       it 'is passed to `command`' do
+        pending('stubbing `command` unsupported post rspec-bash 0.1.0')
+
         command = stubbed_env.stub_command('command')
 
         out, err, status = stubbed_env.execute_function(
