@@ -46,6 +46,9 @@ describe 'n8l::miniconda::lsst_env' do
             stubbed_env.stub_command('mktemp').outputs('/dne/file')
             curl = stubbed_env.stub_command('curl')
             conda = stubbed_env.stub_command('conda')
+            source = stubbed_env.stub_command('source')
+            # stubbed only to be found by n8l::require_cmd
+            stubbed_env.stub_command('activate')
 
             out, err, status = stubbed_env.execute_function(
               'scripts/newinstall.sh',
@@ -77,6 +80,13 @@ describe 'n8l::miniconda::lsst_env' do
               '--file',
               '/dne/file',
             )
+            expect(conda).to be_called_with_arguments('env', 'export')
+
+            expect(source).to be_called_with_arguments.times(1)
+            expect(source).to be_called_with_arguments(
+              'activate',
+              /^lsst-scipipe-/,
+            )
           end
         end
       end
@@ -84,6 +94,9 @@ describe 'n8l::miniconda::lsst_env' do
 
     it '(unknown)' do
       stubbed_env.stub_command('uname').outputs('foo')
+      # stubbed only to be found by n8l::require_cmd
+      stubbed_env.stub_command('conda')
+      stubbed_env.stub_command('activate')
 
       out, err, status = stubbed_env.execute_function(
         'scripts/newinstall.sh',

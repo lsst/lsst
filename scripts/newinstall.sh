@@ -456,6 +456,8 @@ n8l::miniconda::install() {
 n8l::miniconda::config_channels() {
 	local channels=${1?channels is required}
 
+	n8l::require_cmds conda
+
 	# remove any previously configured non-default channels
 	# XXX allowed to fail
 	$cmd conda config --remove-key channels || true
@@ -474,6 +476,8 @@ n8l::miniconda::config_channels() {
 n8l::miniconda::lsst_env() {
 	local py_ver=${1?python version is required}
 	local ref=${2?lsstsw git ref is required}
+
+	n8l::require_cmds conda activate
 
 	case $(uname -s) in
 		Linux*)
