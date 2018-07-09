@@ -2,7 +2,7 @@
 
 set -Eeo pipefail
 
-if [[ -n ${ANCIENT_BASH+1} ]]; then
+if [[ -n ${ANCIENT_BASH} ]]; then
   VER="bash-${ANCIENT_BASH}"
   curl -sSLO "http://ftp.gnu.org/gnu/bash/${VER}.tar.gz"
   tar -xf "${VER}.tar.gz"
@@ -29,11 +29,13 @@ case $MANGLER in
     # csh_20110502-2ubuntu2_amd64.deb from ubuntu:trusty (travis) opens a new
     # shell interactive shell when passed--version
     tcsh --version
+    cat loadLSST.csh
     # shellcheck disable=SC2016
     tcsh -ec 'source loadLSST.csh && echo "$EUPS_PKGROOT"'
     ;;
   *)
     bash --version
+    cat loadLSST.bash
     bash -ec 'source loadLSST.bash && echo "$EUPS_PKGROOT"'
     ;;
 esac
