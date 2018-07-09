@@ -2,18 +2,9 @@
 
 # Please preserve tabs as indenting whitespace at Mario's request
 # to keep heredocs nice (--fe)
-# Use 4-character tabs to match python indent look
-#
-# **** This file should not be edited in place ****
-# It is maintained in a repository at
-# git@github.com:lsst/lsst.git
-#
-# If the file must be modified, clone the repository
-# and edit there.
-# *************************************************
 #
 # Bootstrap lsst stack install by:
-#	* Installing Miniconda2 Python distribution, if necessary
+#	* Installing Miniconda Python distribution, if necessary
 #	* Installing EUPS
 #	* Creating the loadLSST.xxx scripts
 #
