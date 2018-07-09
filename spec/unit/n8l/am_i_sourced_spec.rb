@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rspec/bash'
 
 describe 'n8l::am_i_sourced' do

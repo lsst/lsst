@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rspec/bash'
 
 describe 'n8l::up2date_check' do

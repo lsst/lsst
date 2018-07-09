@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rspec/bash'
 
 describe 'n8l::eups_path' do
