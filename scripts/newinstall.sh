@@ -30,7 +30,7 @@ LSST_PYTHON_VERSION=3
 LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-4.5.4}
 # this git ref controls which set of conda packages are used to initialize the
 # the default conda env.
-LSST_LSSTSW_REF=${LSST_LSSTSW_REF:-5444e5c}
+LSST_LSSTSW_REF=${LSST_LSSTSW_REF:-fcd27eb}
 LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
 LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-}
 LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-lsst-scipipe-${LSST_LSSTSW_REF}}
