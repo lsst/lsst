@@ -318,7 +318,7 @@ n8l::sys::platform() {
 				# XXX bash 3.2 on osx does not support case fall-through
 				10.9.* | 10.1?.*)
 					__platform=10.9
-					__target_cc=clang-800.0.42.1
+					__target_cc=clang-802.0.42
 					;;
 				*)
 					[[ $__debug == true ]] && n8l::print_error "unsupported release: $__release"
