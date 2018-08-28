@@ -35,6 +35,14 @@ LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://repo.continuum.io/min
 LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-}
 LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-lsst-scipipe-${LSST_LSSTSW_REF}}
 
+# these optional env vars may be used by functions but should be considered
+# unstable and for internal testing only.
+#
+# LSST_OS_FAMILY
+# LSST_OS_RELEASE
+# LSST_PLATFORM
+# LSST_COMPILER
+
 LSST_HOME="$PWD"
 
 # the canonical source of this script
@@ -362,9 +370,15 @@ n8l::default_eups_pkgroot() {
 		n8l::sys::osfamily osfamily release
 	fi
 
+	osfamily=${LSST_OS_FAMILY:-$osfamily}
+	release=${LSST_OS_RELEASE:-$release}
+
 	if [[ -n $osfamily && -n $release ]]; then
 		n8l::sys::platform "$osfamily" "$release" platform target_cc
 	fi
+
+	platform=${LSST_PLATFORM:-$platform}
+	target_cc=${LSST_COMPILER:-$target_cc}
 
 	if [[ -n $base_url ]]; then
 		if [[ -n $platform && -n $target_cc ]]; then

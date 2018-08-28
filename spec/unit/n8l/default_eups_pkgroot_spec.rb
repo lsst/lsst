@@ -43,4 +43,26 @@ describe 'n8l::default_eups_pkgroot' do
     expect(err).to eq('')
     expect(status.exitstatus).to be 0
   end
+
+  context 'use tarballs' do
+    it 'uses LSST_* env vars instead of "probed" values' do
+      # prevent probing for system info which might fail
+      stubbed_env.stub_command('n8l::sys::osfamily').returns_exitstatus(0)
+
+      out, err, status = stubbed_env.execute_function(
+        'scripts/newinstall.sh',
+        "#{func} false true",
+        {
+          'LSST_OS_FAMILY'  => 'redhat',
+          'LSST_OS_RELEASE' => '7',
+          'LSST_PLATFORM'   => 'el7',
+          'LSST_COMPILER'   => 'very-unlikely-string',
+        },
+      )
+
+      expect(out).to match(%(redhat/el7/very-unlikely-string))
+      expect(err).to eq('')
+      expect(status.exitstatus).to be 0
+    end
+  end
 end
