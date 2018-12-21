@@ -31,9 +31,10 @@ LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-4.5.4}
 # this git ref controls which set of conda packages are used to initialize the
 # the default conda env.
 LSST_LSSTSW_REF=${LSST_LSSTSW_REF:-fcd27eb}
+LSST_SPLENV_REF=${LSST_SPLENV_REF:-d8778d3}
 LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
 LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-}
-LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-lsst-scipipe-${LSST_LSSTSW_REF}}
+LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-lsst-scipipe-${LSST_SPLENV_REF}}
 
 # these optional env vars may be used by functions but should be considered
 # unstable and for internal testing only.
@@ -496,7 +497,7 @@ n8l::miniconda::lsst_env() {
 			;;
 	esac
 
-	local baseurl="https://raw.githubusercontent.com/lsst/lsstsw/${ref}/etc/"
+	local baseurl="https://raw.githubusercontent.com/lsst/scipipe_conda_env/${ref}/etc/"
 	local tmpfile
 
 	# conda may leave behind lock files from an uncompleted package installation
@@ -1188,7 +1189,7 @@ n8l::main() {
 			"$LSST_HOME" \
 			'MINICONDA_PATH' \
 			"$LSST_MINICONDA_BASE_URL" \
-			"$LSST_LSSTSW_REF" \
+			"$LSST_SPLENV_REF" \
 			"$LSST_CONDA_CHANNELS"
 	fi
 
