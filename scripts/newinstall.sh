@@ -28,9 +28,10 @@ LSST_EUPS_USE_EUPSPKG=${LSST_EUPS_USE_EUPSPKG:-true}
 # force Python 3
 LSST_PYTHON_VERSION=3
 LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-4.5.4}
-# this git ref controls which set of conda packages are used to initialize the
-# the default conda env.
+# this git ref controls the lsstsw to be used for the build
 LSST_LSSTSW_REF=${LSST_LSSTSW_REF:-fcd27eb}
+# this git ref controls which set of conda packages are used to initialize the
+# the default conda env defined in scipipe_conda_env git package (RFC-553).
 LSST_SPLENV_REF=${LSST_SPLENV_REF:-d8778d3}
 LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
 LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-}
