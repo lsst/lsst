@@ -28,11 +28,9 @@ LSST_EUPS_USE_EUPSPKG=${LSST_EUPS_USE_EUPSPKG:-true}
 # force Python 3
 LSST_PYTHON_VERSION=3
 LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-4.5.4}
-# this git ref controls the lsstsw to be used for the build
-LSST_LSSTSW_REF=${LSST_LSSTSW_REF:-fcd27eb}
 # this git ref controls which set of conda packages are used to initialize the
 # the default conda env defined in scipipe_conda_env git package (RFC-553).
-LSST_SPLENV_REF=${LSST_SPLENV_REF:-d8778d3}
+LSST_SPLENV_REF=${LSST_SPLENV_REF:-fcd27eb}
 LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
 LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-}
 LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-lsst-scipipe-${LSST_SPLENV_REF}}
@@ -157,7 +155,7 @@ n8l::miniconda_slug() {
 }
 
 n8l::python_env_slug() {
-	echo "$(n8l::miniconda_slug)-${LSST_LSSTSW_REF}"
+	echo "$(n8l::miniconda_slug)-${LSST_SPLENV_REF}"
 }
 
 n8l::eups_slug() {
@@ -736,7 +734,7 @@ n8l::miniconda::bootstrap() {
 	local prefix=${3?prefix is required}
 	local __miniconda_path_result=${4?__miniconda_path_result is required}
 	local miniconda_base_url=${5:-https://repo.continuum.io/miniconda}
-	local lsstsw_ref=$6
+	local splenv_ref=$6
 	local conda_channels=$7
 
 	local miniconda_base_path="${prefix}/python"
@@ -768,8 +766,8 @@ n8l::miniconda::bootstrap() {
 		n8l::miniconda::config_channels "$conda_channels"
 	fi
 
-	if [[ -n $lsstsw_ref ]]; then
-		n8l::miniconda::lsst_env "$py_ver" "$lsstsw_ref"
+	if [[ -n $splenv_ref ]]; then
+		n8l::miniconda::lsst_env "$py_ver" "$splenv_ref"
 	fi
 
 	# bash 3.2 does not support `declare -g`
