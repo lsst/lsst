@@ -14,7 +14,7 @@ describe 'n8l::python_env_slug' do
     out, err, status = stubbed_env.execute_function(
       'scripts/newinstall.sh',
       func,
-      { 'LSST_LSSTSW_REF' => 'banana' },
+      { 'LSST_SPLENV_REF' => 'banana' },
     )
     expect(out).to match('miniconda9-apple-banana')
     expect(err).to eq('')
