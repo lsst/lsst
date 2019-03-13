@@ -15,7 +15,7 @@ set -Eeo pipefail
 # Note to developers: change these when the EUPS version we use changes
 #
 
-LSST_EUPS_VERSION=${LSST_EUPS_VERSION:-2.1.4}
+LSST_EUPS_VERSION=${LSST_EUPS_VERSION:-2.1.5}
 
 LSST_EUPS_GITREV=${LSST_EUPS_GITREV:-}
 LSST_EUPS_GITREPO=${LSST_EUPS_GITREPO:-https://github.com/RobertLuptonTheGood/eups.git}
