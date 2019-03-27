@@ -15,7 +15,7 @@ set -Eeo pipefail
 # Note to developers: change these when the EUPS version we use changes
 #
 
-LSST_EUPS_VERSION=${LSST_EUPS_VERSION:-2.1.4}
+LSST_EUPS_VERSION=${LSST_EUPS_VERSION:-2.1.5}
 
 LSST_EUPS_GITREV=${LSST_EUPS_GITREV:-}
 LSST_EUPS_GITREPO=${LSST_EUPS_GITREPO:-https://github.com/RobertLuptonTheGood/eups.git}
@@ -27,10 +27,10 @@ LSST_EUPS_USE_EUPSPKG=${LSST_EUPS_USE_EUPSPKG:-true}
 
 # force Python 3
 LSST_PYTHON_VERSION=3
-LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-4.5.4}
+LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-4.5.12}
 # this git ref controls which set of conda packages are used to initialize the
 # the default conda env defined in scipipe_conda_env git package (RFC-553).
-LSST_SPLENV_REF=${LSST_SPLENV_REF:-${LSST_LSSTSW_REF:-fcd27eb}}
+LSST_SPLENV_REF=${LSST_SPLENV_REF:-${LSST_LSSTSW_REF:-1172c30}}
 LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
 LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-}
 LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-lsst-scipipe-${LSST_SPLENV_REF}}
@@ -486,10 +486,10 @@ n8l::miniconda::lsst_env() {
 
 	case $(uname -s) in
 		Linux*)
-			conda_packages="conda${py_ver}_packages-linux-64.txt"
+			conda_packages="conda${py_ver}_packages-linux-64.yml"
 			;;
 		Darwin*)
-			conda_packages="conda${py_ver}_packages-osx-64.txt"
+			conda_packages="conda${py_ver}_packages-osx-64.yml"
 			;;
 		*)
 			n8l::fail "Cannot configure miniconda env: unsupported platform $(uname -s)"
