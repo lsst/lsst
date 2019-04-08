@@ -142,7 +142,7 @@ describe 'n8l::sys::platform' do
 
             expect(status.exitstatus).to be 0
             expect(out).to match(/PLATFORM=10.9/)
-            expect(out).to match(/TARGET_CC=clang-802.0.42/)
+            expect(out).to match(/TARGET_CC=clang-1000.10.44.4/)
             expect(err).to eq('')
           end
         end
