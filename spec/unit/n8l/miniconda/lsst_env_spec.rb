@@ -40,8 +40,8 @@ describe 'n8l::miniconda::lsst_env' do
     %w[2 3].each do |pyver|
       context "py#{pyver}" do
         {
-          Linux: "conda#{pyver}_packages-linux-64.txt",
-          Darwin: "conda#{pyver}_packages-osx-64.txt",
+          Linux: "conda#{pyver}_packages-linux-64.yml",
+          Darwin: "conda#{pyver}_packages-osx-64.yml",
         }.each do |uname, envfile|
           it uname do
             stubbed_env.stub_command('uname').outputs(uname)
