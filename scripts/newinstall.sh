@@ -310,11 +310,11 @@ n8l::sys::platform() {
 			case $__release in
 				6)
 					__platform=el6
-					__target_cc=devtoolset-6
+					__target_cc=devtoolset-8
 					;;
 				7)
 					__platform=el7
-					__target_cc=devtoolset-6
+					__target_cc=devtoolset-8
 					;;
 				*)
 					[[ $__debug == true ]] && n8l::print_error "unsupported release: $__release"

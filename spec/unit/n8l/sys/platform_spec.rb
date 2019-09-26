@@ -103,7 +103,7 @@ describe 'n8l::sys::platform' do
 
           expect(status.exitstatus).to be 0
           expect(out).to match(/PLATFORM=el6/)
-          expect(out).to match(/TARGET_CC=devtoolset-6/)
+          expect(out).to match(/TARGET_CC=devtoolset-8/)
           expect(err).to eq('')
         end
       end
@@ -121,7 +121,7 @@ describe 'n8l::sys::platform' do
 
           expect(status.exitstatus).to be 0
           expect(out).to match(/PLATFORM=el7/)
-          expect(out).to match(/TARGET_CC=devtoolset-6/)
+          expect(out).to match(/TARGET_CC=devtoolset-8/)
           expect(err).to eq('')
         end
       end
