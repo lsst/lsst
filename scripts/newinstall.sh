@@ -27,7 +27,7 @@ LSST_EUPS_USE_EUPSPKG=${LSST_EUPS_USE_EUPSPKG:-true}
 
 # force Python 3
 LSST_PYTHON_VERSION=3
-LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-4.5.12}
+LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-4.7.10}
 # this git ref controls which set of conda packages are used to initialize the
 # the default conda env defined in scipipe_conda_env git package (RFC-553).
 LSST_SPLENV_REF=${LSST_SPLENV_REF:-${LSST_LSSTSW_REF:-4d7b902}}
@@ -499,15 +499,11 @@ n8l::miniconda::lsst_env() {
 	local baseurl="https://raw.githubusercontent.com/lsst/scipipe_conda_env/${ref}/etc/"
 	local tmpfile
 
-	# conda may leave behind lock files from an uncompleted package installation
-	# attempt.  These need to be cleaned up before [re]attempting to install
-	# packages.
-	$cmd conda clean --lock
-
 	(
 		set -Eeo pipefail
 
 		tmpfile=$(mktemp -t "${conda_packages//X/_}.XXXXXXXX")
+		tmpfile="${tmpfile}.yml"
 		# attempt to be a good citizen and not leave tmp files laying around
 		# after either a normal exit or an error condition
 		# shellcheck disable=SC2064
