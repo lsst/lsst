@@ -46,7 +46,7 @@ LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-lsst-scipipe-${LSST_SPLENV_REF}}
 LSST_HOME="$PWD"
 
 # the canonical source of this script
-NEWINSTALL_URL="https://raw.githubusercontent.com/lsst/lsst/master/scripts/newinstall.sh"
+NEWINSTALL_URL="https://raw.githubusercontent.com/lsst/lsst/19.0.x/scripts/newinstall.sh"
 
 #
 # removing leading/trailing whitespace from a string
