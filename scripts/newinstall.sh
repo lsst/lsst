@@ -919,10 +919,9 @@ n8l::generate_loader_bash() {
 	if [[ -n $miniconda_path ]]; then
 		local cmd_setup_miniconda
 		cmd_setup_miniconda="$(cat <<-EOF
-			export PATH="${miniconda_path}/bin:\${PATH}"
 			export LSST_CONDA_ENV_NAME=\${LSST_CONDA_ENV_NAME:-${LSST_CONDA_ENV_NAME}}
 			# shellcheck disable=SC1091
-			source activate "\$LSST_CONDA_ENV_NAME"
+			source "${miniconda_path}/bin/activate" "\$LSST_CONDA_ENV_NAME"
 		EOF
 		)"
 	fi
@@ -954,7 +953,6 @@ n8l::generate_loader_csh() {
 	if [[ -n $miniconda_path ]]; then
 		local cmd_setup_miniconda
 		cmd_setup_miniconda="$(cat <<-EOF
-				setenv PATH "${miniconda_path}/bin:\$PATH"
 				if ( ! \$?LSST_CONDA_ENV_NAME ) then
 					set LSST_CONDA_ENV_NAME="${LSST_CONDA_ENV_NAME}"
 				endif
@@ -993,10 +991,9 @@ n8l::generate_loader_ksh() {
 		# XXX untested
 		local cmd_setup_miniconda
 		cmd_setup_miniconda="$(cat <<-EOF
-			export PATH="${miniconda_path}/bin:\${PATH}"
 			export LSST_CONDA_ENV_NAME=\${LSST_CONDA_ENV_NAME:-${LSST_CONDA_ENV_NAME}}
 			# shellcheck disable=SC1091
-			source activate "\$LSST_CONDA_ENV_NAME"
+			source "${miniconda_path}/bin/activate" "\$LSST_CONDA_ENV_NAME"
 		EOF
 		)"
 	fi
@@ -1027,9 +1024,8 @@ n8l::generate_loader_zsh() {
 		# XXX untested
 		local cmd_setup_miniconda
 		cmd_setup_miniconda="$(cat <<-EOF
-			export PATH="${miniconda_path}/bin:\${PATH}"
 			export LSST_CONDA_ENV_NAME=\${LSST_CONDA_ENV_NAME:-${LSST_CONDA_ENV_NAME}}
-			source activate "\$LSST_CONDA_ENV_NAME"
+			source "${miniconda_path}/bin/activate" "\$LSST_CONDA_ENV_NAME"
 		EOF
 		)"
 	fi
