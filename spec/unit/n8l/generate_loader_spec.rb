@@ -63,13 +63,6 @@ describe 'n8l::generate_loader_*' do
                     "This script is intended to be used with.*#{sh}"
                   )
                   expect(loader).to match('/dne/banana')
-
-                  case have
-                  when 'with'
-                    expect(loader).to match('PATH')
-                  when 'without'
-                    expect(loader).to_not match('PATH')
-                  end
                 end
               end
             end # $3/miniconda_path
