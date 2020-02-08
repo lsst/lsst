@@ -9,7 +9,7 @@ if [[ -n ${ANCIENT_BASH} ]]; then
   ( set -Eeo pipefail
     cd "$VER"
     ./configure
-    make -j
+    make
   )
   export PATH="${VER}:${PATH}"
   bash --version
