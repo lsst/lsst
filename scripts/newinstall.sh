@@ -431,9 +431,6 @@ n8l::miniconda::install() {
 			;;
 	esac
 
-	# the miniconda installer internally uses bzip2
-	n8l::require_cmds bzip2
-
 	miniconda_file_name="Miniconda${py_ver}-${mini_ver}-${ana_platform}.sh"
 	echo "::: Deploying ${miniconda_file_name}"
 
