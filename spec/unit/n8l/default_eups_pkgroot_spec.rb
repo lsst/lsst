@@ -53,10 +53,11 @@ describe 'n8l::default_eups_pkgroot' do
         'scripts/newinstall.sh',
         "#{func} false true",
         {
-          'LSST_OS_FAMILY'  => 'redhat',
-          'LSST_OS_RELEASE' => '7',
-          'LSST_PLATFORM'   => 'el7',
-          'LSST_COMPILER'   => 'very-unlikely-string',
+          'LSST_OS_FAMILY'        => 'redhat',
+          'LSST_OS_RELEASE'       => '7',
+          'LSST_PLATFORM'         => 'el7',
+          'LSST_COMPILER'         => 'very-unlikely-string',
+          'LSST_USE_CONDA_SYSTEM' => 'false',
         },
       )
 
