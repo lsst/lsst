@@ -51,13 +51,12 @@ describe 'n8l::default_eups_pkgroot' do
 
       out, err, status = stubbed_env.execute_function(
         'scripts/newinstall.sh',
-        "#{func} false true",
+        "#{func} false true false",
         {
           'LSST_OS_FAMILY'        => 'redhat',
           'LSST_OS_RELEASE'       => '7',
           'LSST_PLATFORM'         => 'el7',
           'LSST_COMPILER'         => 'very-unlikely-string',
-          'LSST_USE_CONDA_SYSTEM' => 'false',
         },
       )
 
