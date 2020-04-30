@@ -34,7 +34,7 @@ LSST_SPLENV_REF=${LSST_SPLENV_REF:-${LSST_LSSTSW_REF:-1cd356f}}
 LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
 LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-}
 LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-lsst-scipipe-${LSST_SPLENV_REF}}
-LSST_USE_CONDA_SYSTEM=${LSST_USE_CONDA_SYS:-true}
+LSST_USE_CONDA_SYSTEM=${LSST_USE_CONDA_SYSTEM:-true}
 
 # these optional env vars may be used by functions but should be considered
 # unstable and for internal testing only.
