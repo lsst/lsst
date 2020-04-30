@@ -30,10 +30,11 @@ LSST_PYTHON_VERSION=3
 LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-4.7.12}
 # this git ref controls which set of conda packages are used to initialize the
 # the default conda env defined in scipipe_conda_env git package (RFC-553).
-LSST_SPLENV_REF=${LSST_SPLENV_REF:-${LSST_LSSTSW_REF:-984c9f7}}
+LSST_SPLENV_REF=${LSST_SPLENV_REF:-${LSST_LSSTSW_REF:-2deae7a}}
 LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
 LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-}
 LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-lsst-scipipe-${LSST_SPLENV_REF}}
+LSST_USE_CONDA_SYSTEM=${LSST_USE_CONDA_SYSTEM:-true}
 
 # these optional env vars may be used by functions but should be considered
 # unstable and for internal testing only.
@@ -129,7 +130,7 @@ n8l::fmt() {
 n8l::usage() {
 	n8l::fail "$(cat <<-EOF
 
-		usage: newinstall.sh [-b] [-f] [-h] [-n] [-3|-2] [-t|-T] [-s|-S] [-p]
+		usage: newinstall.sh [-b] [-c] [-f] [-h] [-n] [-3|-2] [-g|-G] [-t|-T] [-s|-S] [-p]
                          [-P <path-to-python>]
 		 -b -- Run in batch mode. Do not ask any questions and install all extra
 		       packages.
@@ -139,6 +140,8 @@ n8l::usage() {
 		 -P [PATH_TO_PYTHON] -- Use a specific python interpreter for EUPS.
 		 -2 -- use Python 2 (no longer supported -- fatal error)
 		 -3 -- Use Python 3 if the script is installing its own Python. (default)
+		 -g -- Preserve LSST_COMPILER or use platform compilers for tarballs (deprecated)
+		 -G -- Target conda compilers for tarballs (default)
 		 -t -- Use pre-compiled EUPS "tarball" packages, if available.
 		 -T -- DO NOT use pre-compiled EUPS "tarball" packages.
 		 -s -- Use EUPS source "eupspkg" packages, if available.
@@ -191,7 +194,7 @@ n8l::parse_args() {
 	local OPTIND
 	local opt
 
-	while getopts cbhnP:32tTsSp opt; do
+	while getopts cbhnP:32gGtTsSp opt; do
 		case $opt in
 			b)
 				BATCH_FLAG=true
@@ -209,6 +212,12 @@ n8l::parse_args() {
 				n8l::fail 'Python 2.x is no longer supported.'
 				;;
 			3)
+				# noop
+				;;
+			g)
+				LSST_USE_CONDA_SYSTEM=false
+				;;
+			G)
 				# noop
 				;;
 			t)
@@ -354,6 +363,7 @@ n8l::join() {
 n8l::default_eups_pkgroot() {
 	local use_eupspkg=${1:-true}
 	local use_tarballs=${2:-false}
+	local use_conda_system=${3:-true}
 
 	local osfamily
 	local release
@@ -378,6 +388,9 @@ n8l::default_eups_pkgroot() {
 	fi
 
 	platform=${LSST_PLATFORM:-$platform}
+	if [[ $use_conda_system == true ]]; then
+		LSST_COMPILER=conda-system
+	fi
 	target_cc=${LSST_COMPILER:-$target_cc}
 
 	if [[ -n $base_url ]]; then
@@ -430,9 +443,6 @@ n8l::miniconda::install() {
 			n8l::fail "Cannot install miniconda: unsupported platform $(uname -s)"
 			;;
 	esac
-
-	# the miniconda installer internally uses bzip2
-	n8l::require_cmds bzip2
 
 	miniconda_file_name="Miniconda${py_ver}-${mini_ver}-${ana_platform}.sh"
 	echo "::: Deploying ${miniconda_file_name}"
@@ -530,6 +540,10 @@ n8l::miniconda::lsst_env() {
 
 	# shellcheck disable=SC1091
 	source activate "$LSST_CONDA_ENV_NAME"
+
+	if [[ $LSST_USE_CONDA_SYSTEM == true ]]; then
+		n8l::require_cmds "cc"
+	fi
 
 	# report packages in the current conda env
 	conda env export
@@ -826,7 +840,11 @@ n8l::install_eups() {
 	local eups_build_dir="$LSST_HOME/_build"
 
 	# make is absent from many minimal linux images
-	n8l::require_cmds make "${CC:-cc}" which perl awk sed
+	n8l::require_cmds make awk sed
+
+	if [[ $LSST_USE_CONDA_SYSTEM != true ]]; then
+		n8l::require_cmds "${CC:-cc}"
+	fi
 
 	if ! ( set -Eeo pipefail
 		mkdir "$eups_build_dir"
@@ -1194,13 +1212,15 @@ n8l::main() {
 		EUPS_PKGROOT=${EUPS_PKGROOT:-$(
 			n8l::default_eups_pkgroot \
 				$LSST_EUPS_USE_EUPSPKG \
-				$LSST_EUPS_USE_TARBALLS
+				$LSST_EUPS_USE_TARBALLS \
+				$LSST_USE_CONDA_SYSTEM
 		)}
 	else
 		EUPS_PKGROOT=$(
 			n8l::default_eups_pkgroot \
 				$LSST_EUPS_USE_EUPSPKG \
-				$LSST_EUPS_USE_TARBALLS
+				$LSST_EUPS_USE_TARBALLS \
+				$LSST_USE_CONDA_SYSTEM
 		)
 	fi
 	n8l::print_error "Configured EUPS_PKGROOT: ${LSST_EUPS_PKGROOT}"
