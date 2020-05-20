@@ -32,7 +32,7 @@ LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-4.7.12}
 # the default conda env defined in scipipe_conda_env git package (RFC-553).
 LSST_SPLENV_REF=${LSST_SPLENV_REF:-${LSST_LSSTSW_REF:-973126a}}
 LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
-LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-}
+LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-"conda-forge"}
 LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-lsst-scipipe-${LSST_SPLENV_REF}}
 LSST_USE_CONDA_SYSTEM=${LSST_USE_CONDA_SYSTEM:-true}
 
@@ -475,16 +475,14 @@ n8l::miniconda::config_channels() {
 
 	# remove any previously configured non-default channels
 	# XXX allowed to fail
-	$cmd conda config --remove-key channels || true
+	$cmd conda config --env --remove-key channels || true
 
 	for c in $channels; do
-		$cmd conda config --add channels "$c"
+		$cmd conda config --env --add channels "$c"
 	done
 
-	# remove the default channels
-	$cmd conda config --remove channels defaults
-
-	$cmd conda config --show
+	$cmd conda config --env --set channel_priority strict
+	$cmd conda config --env --show
 }
 
 # Install packages on which the stack is known to depend

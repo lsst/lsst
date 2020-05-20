@@ -34,7 +34,7 @@ describe 'n8l::miniconda::config_channels' do
 
         %w[a b c].each do |chan|
           expect(conda).to be_called_with_arguments(
-            'config', '--add', 'channels', chan
+            'config', '--env', '--add', 'channels', chan
           )
         end
       end
