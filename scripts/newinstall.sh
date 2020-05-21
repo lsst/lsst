@@ -537,6 +537,7 @@ n8l::miniconda::lsst_env() {
 		args+=("--file" "$tmpfile")
 
 		$cmd conda "${args[@]}"
+		$cmd conda clean -ya
 	)
 
 	# shellcheck disable=SC1091
