@@ -525,7 +525,9 @@ n8l::miniconda::lsst_env() {
 		args+=("--file" "$tmpfile")
 
 		$cmd conda "${args[@]}"
-		$cmd conda clean -ya
+		echo "Cleaning conda environment..."
+		conda clean -y -a > /dev/null
+		echo "done"
 	)
 
 	# Switch to installed conda environment
@@ -707,9 +709,6 @@ n8l::miniconda::bootstrap() {
 	# Activate the base conda environment before continuing
 	source $miniconda_path/bin/activate
 
-	if [[ -n $conda_channels ]]; then
-		n8l::miniconda::config_channels "$conda_channels"
-	fi
 
 	if [[ -n $splenv_ref ]]; then
 		n8l::miniconda::lsst_env "$splenv_ref" "$miniconda_path" "$conda_channels"
