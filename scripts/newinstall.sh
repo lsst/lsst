@@ -574,54 +574,6 @@ n8l::up2date_check() {
 	esac
 }
 
-# Discuss the state of Git.
-# XXX should probably fail if git version is insufficient under batch mode.
-n8l::git_check() {
-	if n8l::has_cmd git; then
-		local gitvernum
-		gitvernum=$(git --version | cut -d\  -f 3)
-
-		local gitver
-		# shellcheck disable=SC2046 disable=SC2183
-		gitver=$(printf "%02d-%02d-%02d\\n" \
-			$(echo "$gitvernum" | cut -d. -f1-3 | tr . ' '))
-	fi
-
-	if [[ $gitver < 01-08-04 ]]; then
-		if [[ $BATCH_FLAG != true ]]; then
-			{ cat <<-EOF
-				Detected $(git --version).
-
-				The git version control system is frequently used with LSST software.
-				While the LSST stack should build and work even in the absence of git, we
-				don not regularly run and test it in such environments. We therefore
-				recommend you have at least git 1.8.4 installed with your normal
-				package manager.
-
-				EOF
-			} | n8l::fmt
-
-			while true; do
-				read -r -p "Would you like to try continuing without git? " yn
-				case $yn in
-					[Yy]* )
-						echo "Continuing without git"
-						break
-						;;
-					[Nn]* )
-						echo "Okay install git and rerun the script."
-						exit
-						break;
-						;;
-					* ) echo "Please answer yes or no.";;
-				esac
-			done
-		fi
-	else
-		echo "Detected $(git --version). OK."
-	fi
-}
-
 #
 #	Test/warn about Python versions, offer to get miniconda if not supported.
 #	LSST currently mandates specific versions of Python.  We assume that the
@@ -766,6 +718,7 @@ n8l::install_eups() {
 			$cmd "$CURL" "$CURL_OPTS" -L "$LSST_EUPS_TARURL" | tar xzvf -
 			$cmd cd "eups-${LSST_EUPS_VERSION}"
 		else
+		  n8l::require_cmds git
 			# Clone from git repository
 			$cmd git clone "$EUPS_GITREPO" eups
 			$cmd cd eups
