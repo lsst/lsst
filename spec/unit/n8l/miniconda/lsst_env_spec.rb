@@ -9,24 +9,11 @@ describe 'n8l::miniconda::lsst_env' do
   subject(:func) { 'n8l::miniconda::lsst_env' }
 
   context 'parameters' do
-    context '$1/py_ver' do
+    context '$1/ref' do
       it 'is required' do
         out, err, status = stubbed_env.execute_function(
           'scripts/newinstall.sh',
           func,
-        )
-
-        expect(status.exitstatus).to_not be 0
-        expect(out).to eq('')
-        expect(err).to match(/python version is required/)
-      end
-    end
-
-    context '$2/ref' do
-      it 'is required' do
-        out, err, status = stubbed_env.execute_function(
-          'scripts/newinstall.sh',
-          "#{func} foo",
         )
 
         expect(status.exitstatus).to_not be 0
@@ -37,59 +24,58 @@ describe 'n8l::miniconda::lsst_env' do
   end # parameters
 
   context 'uname' do
-    %w[2 3].each do |pyver|
-      context "py#{pyver}" do
-        {
-          Linux: "conda#{pyver}_packages-linux-64.yml",
-          Darwin: "conda#{pyver}_packages-osx-64.yml",
-        }.each do |uname, envfile|
-          it uname do
-            stubbed_env.stub_command('uname').outputs(uname)
-            stubbed_env.stub_command('mktemp').outputs('/dne/file')
-            curl = stubbed_env.stub_command('curl')
-            conda = stubbed_env.stub_command('conda')
-            source = stubbed_env.stub_command('source')
-            # stubbed only to be found by n8l::require_cmd
-            stubbed_env.stub_command('activate')
+    {
+      Linux: 'conda-linux-64.lock',
+      Darwin: 'conda-osx-64.lock',
+    }.each do |uname, envfile|
+      it uname do
+        stubbed_env.stub_command('uname').outputs(uname)
+        stubbed_env.stub_command('mktemp').outputs('/dne/file')
+        curl = stubbed_env.stub_command('curl')
+        conda = stubbed_env.stub_command('conda')
+        config_channels = stubbed_env.stub_command(
+          'n8l::miniconda::config_channels'
+        )
+        # stubbed only to be found by n8l::require_cmd
+        stubbed_env.stub_command('activate')
 
-            out, err, status = stubbed_env.execute_function(
-              'scripts/newinstall.sh',
-              "#{func} #{pyver} foo",
-              { 'CURL' => 'curl' },
-            )
+        out, err, status = stubbed_env.execute_function(
+          'scripts/newinstall.sh',
+          "#{func} '' foo 'bar baz'",
+          { 'CURL' => 'curl' },
+        )
 
-            expect(out).to eq('')
-            expect(err).to eq('')
-            expect(status.exitstatus).to be 0
+        # Notice that we cleaned the environment should be printed
+        expect(out).to eq("Cleaning conda environment...\ndone\n")
+        expect(err).to eq('')
+        expect(status.exitstatus).to be 0
 
-            expect(curl).to be_called_with_arguments.times(1)
-            expect(curl).to be_called_with_arguments(
-              '', # empty $CURL_OPTS
-              '-L',
-              /#{envfile}/,
-              '--output',
-              instance_of(String)
-            )
+        expect(curl).to be_called_with_arguments.times(1)
+        expect(curl).to be_called_with_arguments(
+          '', # empty $CURL_OPTS
+          '-L',
+          /#{envfile}/,
+          '--output',
+          instance_of(String)
+        )
 
-            expect(conda).to be_called_with_arguments.times(2)
-            expect(conda).to be_called_with_arguments(
-              'env',
-              'update',
-              '--name',
-              /^lsst-scipipe/,
-              '--quiet',
-              '--file',
-              '/dne/file.yml',
-            )
-            expect(conda).to be_called_with_arguments('env', 'export')
+        expect(conda).to be_called_with_arguments.times(5)
+        expect(conda).to be_called_with_arguments(
+          'create',
+          '--name',
+          /^lsst-scipipe/,
+          '--quiet',
+          '--file',
+          '/dne/file.yml',
+        )
+        expect(conda).to be_called_with_arguments('clean', '-y', '-a')
+        expect(conda).to be_called_with_arguments('activate', /^lsst-scipipe/)
+        expect(conda).to be_called_with_arguments('env', 'export')
 
-            expect(source).to be_called_with_arguments.times(1)
-            expect(source).to be_called_with_arguments(
-              'activate',
-              /^lsst-scipipe-/,
-            )
-          end
-        end
+        expect(config_channels).to be_called_with_arguments.times(1)
+        expect(config_channels).to be_called_with_arguments('bar baz')
+
+        expect(conda).to be_called_with_arguments('deactivate')
       end
     end
 
