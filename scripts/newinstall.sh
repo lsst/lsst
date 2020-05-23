@@ -482,10 +482,10 @@ n8l::miniconda::lsst_env() {
 
 	case $(uname -s) in
 		Linux*)
-			conda_packages="conda3_packages-linux-64.yml"
+			conda_packages="conda-linux-64.lock"
 			;;
 		Darwin*)
-			conda_packages="conda3_packages-osx-64.yml"
+			conda_packages="conda-osx-64.lock"
 			;;
 		*)
 			n8l::fail "Cannot configure miniconda env: unsupported platform $(uname -s)"
@@ -513,7 +513,7 @@ n8l::miniconda::lsst_env() {
 			--output "$tmpfile"
 
 		args=()
-		args+=('env' 'update')
+		args+=('create')
 		args+=('--name' "$LSST_CONDA_ENV_NAME")
 
 		# disable the conda install progress bar when not attached to a tty. Eg.,
@@ -596,15 +596,13 @@ n8l::conda_check() {
 				break
 				;;
 			[Nn]* )
-				if [[ $pyok != true ]]; then
-					{ cat <<-EOF
-						Thanks. After you install the required version of Conda and the
-						required modules, rerun this script with the -P [PATH_TO_CONDA]
-						to continue the installation.
-						EOF
-					} | n8l::fmt
-					n8l::fail
-				fi
+				{ cat <<-EOF
+					Thanks. After you install the required version of conda,
+					rerun this script with the -P [PATH_TO_CONDA] to continue
+					the installation.
+					EOF
+				} | n8l::fmt
+				n8l::fail
 				break;
 				;;
 			* ) echo "Please answer yes or no.";;
@@ -659,8 +657,12 @@ n8l::miniconda::bootstrap() {
 	fi
 
 	# Activate the base conda environment before continuing
+	# shellcheck disable=SC1090
 	source $miniconda_path/bin/activate
 
+	if [[ -e ${miniconda_path}/envs/${LSST_CONDA_ENV_NAME} ]]; then
+	  echo "An environment named ${LSST_CONDA_ENV_NAME} already exists"
+  fi
 
 	if [[ -n $splenv_ref ]]; then
 		n8l::miniconda::lsst_env "$splenv_ref" "$miniconda_path" "$conda_channels"
@@ -1041,7 +1043,9 @@ n8l::main() {
 
 	if [[ $BATCH_FLAG != true ]]; then
 		n8l::problem_vars_check
-		n8l::conda_check
+		if [[ -z $LSST_CONDA_BASE ]]; then
+			n8l::conda_check
+		fi
 	fi
 
 	# Bootstrap miniconda (optional)
@@ -1058,6 +1062,7 @@ n8l::main() {
 		"$LSST_CONDA_CHANNELS"
 
 	# Use conda base environment's python
+	# shellcheck disable=SC2153
 	EUPS_PYTHON=${MINICONDA_PATH}/bin/python
 
 	if [[ $PRESERVE_EUPS_PKGROOT_FLAG == true ]]; then
