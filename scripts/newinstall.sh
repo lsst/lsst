@@ -511,6 +511,8 @@ n8l::miniconda::lsst_env() {
 		set -Eeo pipefail
 
 		tmpfile=$(mktemp -t "${conda_packages//X/_}.XXXXXXXX")
+		# remove unneccesary timefile, is name is used to create a .yml tmpfile
+		rm -rf "${tmpfile}"
 		tmpfile="${tmpfile}.yml"
 		# attempt to be a good citizen and not leave tmp files laying around
 		# after either a normal exit or an error condition
