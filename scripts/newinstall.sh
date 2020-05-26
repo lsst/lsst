@@ -658,7 +658,7 @@ n8l::miniconda::bootstrap() {
 
 	# Activate the base conda environment before continuing
 	# shellcheck disable=SC1090
-	source $miniconda_path/bin/activate
+	source "$miniconda_path/bin/activate"
 
 	if [[ -e ${miniconda_path}/envs/${LSST_CONDA_ENV_NAME} ]]; then
 	  echo "An environment named ${LSST_CONDA_ENV_NAME} already exists"
