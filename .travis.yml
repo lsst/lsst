@@ -5,22 +5,22 @@ matrix:
   include:
     - &accept
       os: linux
-      env: BATCH=false PYVER="3"
+      env: BATCH=false
       services:
         - docker
       script: ./tests/docker-acceptance.sh
 
     - <<: *accept
-      env: BATCH=true PYVER="3"
+      env: BATCH=true
 
     - <<: *accept
-      env: BATCH=true PYVER="3" ANCIENT_BASH="3.2.57"
+      env: BATCH=true ANCIENT_BASH="3.2.57"
 
     - <<: *accept
-      env: BATCH=false PYVER="3" ANCIENT_BASH="3.2.57"
+      env: BATCH=false ANCIENT_BASH="3.2.57"
 
     - <<: *accept
-      env: MANGLER=tcsh BATCH=true PYVER="3"
+      env: MANGLER=tcsh BATCH=true
 
     - &ruby
       env: TEST=rubocop
