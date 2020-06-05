@@ -464,7 +464,7 @@ n8l::miniconda::config_channels() {
 
 	# remove any previously configured non-default channels
 	# XXX allowed to fail
-	$cmd conda config --env --remove-key channels || true
+	$cmd conda config --env --remove-key channels 2>/dev/null || true
 
 	for c in $channels; do
 		$cmd conda config --env --add channels "$c"
