@@ -683,6 +683,7 @@ n8l::miniconda::bootstrap() {
 n8l::install_eups() {
 	# We have already verified conda is installed - no need to check
 	echo "Using python at ${EUPS_PYTHON} to install EUPS"
+	conda activate "$LSST_CONDA_ENV_NAME"
 
 	# if there is an existing, unversioned install, renamed it to "legacy"
 	if [[ -e "$(n8l::eups_base_dir)/Release_Notes" ]]; then
@@ -750,6 +751,8 @@ n8l::install_eups() {
 
 	# update EUPS_PATH current symlink
 	n8l::ln_rel "$(n8l::eups_path)" current
+
+	conda deactivate
 
 	echo " done."
 }
