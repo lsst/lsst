@@ -8,8 +8,10 @@ if [[ -n ${ANCIENT_BASH} ]]; then
   tar -xf "${VER}.tar.gz"
   ( set -Eeo pipefail
     cd "$VER"
+    yum install -y gcc make
     ./configure
     make
+    yum remove -y gcc make
   )
   export PATH="${VER}:${PATH}"
   bash --version
