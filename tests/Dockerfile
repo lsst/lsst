@@ -1,4 +1,4 @@
-FROM lsstsqre/centos:7-stackbase-devtoolset-8
+FROM lsstdm/scipipe-base:7
 
 ARG     D_USER
 ARG     D_UID
