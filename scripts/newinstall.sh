@@ -464,7 +464,7 @@ n8l::miniconda::config_channels() {
 
 	# remove any previously configured non-default channels
 	# XXX allowed to fail
-	$cmd conda config --env --remove-key channels || true
+	$cmd conda config --env --remove-key channels 2>/dev/null || true
 
 	for c in $channels; do
 		$cmd conda config --env --add channels "$c"
@@ -683,6 +683,7 @@ n8l::miniconda::bootstrap() {
 n8l::install_eups() {
 	# We have already verified conda is installed - no need to check
 	echo "Using python at ${EUPS_PYTHON} to install EUPS"
+	conda activate "$LSST_CONDA_ENV_NAME"
 
 	# if there is an existing, unversioned install, renamed it to "legacy"
 	if [[ -e "$(n8l::eups_base_dir)/Release_Notes" ]]; then
@@ -750,6 +751,8 @@ n8l::install_eups() {
 
 	# update EUPS_PATH current symlink
 	n8l::ln_rel "$(n8l::eups_path)" current
+
+	conda deactivate
 
 	echo " done."
 }
