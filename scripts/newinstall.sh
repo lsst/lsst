@@ -25,12 +25,10 @@ LSST_EUPS_PKGROOT_BASE_URL=${LSST_EUPS_PKGROOT_BASE_URL:-https://eups.lsst.codes
 LSST_EUPS_USE_TARBALLS=${LSST_EUPS_USE_TARBALLS:-false}
 LSST_EUPS_USE_EUPSPKG=${LSST_EUPS_USE_EUPSPKG:-true}
 
-# force Python 3
-LSST_PYTHON_VERSION=3
 LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-4.7.12}
 # this git ref controls which set of conda packages are used to initialize the
 # the default conda env defined in scipipe_conda_env git package (RFC-553).
-LSST_SPLENV_REF=${LSST_SPLENV_REF:-${LSST_LSSTSW_REF:-41fdbc2}}
+LSST_SPLENV_REF=${LSST_SPLENV_REF:-${LSST_LSSTSW_REF:-1a1d771}}
 LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
 LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-"conda-forge"}
 LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-lsst-scipipe-${LSST_SPLENV_REF}}
@@ -130,16 +128,14 @@ n8l::fmt() {
 n8l::usage() {
 	n8l::fail "$(cat <<-EOF
 
-		usage: newinstall.sh [-b] [-c] [-f] [-h] [-n] [-3|-2] [-g|-G] [-t|-T] [-s|-S] [-p]
-                         [-P <path-to-python>]
+		usage: newinstall.sh [-b] [-c] [-f] [-h] [-n] [-g|-G] [-t|-T] [-s|-S] [-p]
+                         [-P <path-to-conda>]
 		 -b -- Run in batch mode. Do not ask any questions and install all extra
 		       packages.
 		 -c -- Attempt to continue a previously failed install.
 		 -n -- No-op. Go through the motions but echo commands instead of running
 		       them.
-		 -P [PATH_TO_PYTHON] -- Use a specific python interpreter for EUPS.
-		 -2 -- use Python 2 (no longer supported -- fatal error)
-		 -3 -- Use Python 3 if the script is installing its own Python. (default)
+		 -P [PATH_TO_CONDA] -- Use a specific miniconda installation at path.
 		 -g -- Preserve LSST_COMPILER or use platform compilers for tarballs (deprecated)
 		 -G -- Target conda compilers for tarballs (default)
 		 -t -- Use pre-compiled EUPS "tarball" packages, if available.
@@ -154,7 +150,7 @@ n8l::usage() {
 }
 
 n8l::miniconda_slug() {
-	echo "miniconda${LSST_PYTHON_VERSION}-${LSST_MINICONDA_VERSION}"
+	echo "miniconda3-${LSST_MINICONDA_VERSION}"
 }
 
 n8l::python_env_slug() {
@@ -194,7 +190,7 @@ n8l::parse_args() {
 	local OPTIND
 	local opt
 
-	while getopts cbhnP:32gGtTsSp opt; do
+	while getopts cbhnP:gGtTsSp opt; do
 		case $opt in
 			b)
 				BATCH_FLAG=true
@@ -206,13 +202,7 @@ n8l::parse_args() {
 				NOOP_FLAG=true
 				;;
 			P)
-				EUPS_PYTHON=$OPTARG
-				;;
-			2)
-				n8l::fail 'Python 2.x is no longer supported.'
-				;;
-			3)
-				# noop
+				LSST_CONDA_BASE=$OPTARG
 				;;
 			g)
 				LSST_USE_CONDA_SYSTEM=false
@@ -427,10 +417,9 @@ n8l::config_curl() {
 }
 
 n8l::miniconda::install() {
-	local py_ver=${1?python version is required}
-	local mini_ver=${2?miniconda version is required}
-	local prefix=${3?prefix is required}
-	local miniconda_base_url=${4:-https://repo.continuum.io/miniconda}
+	local mini_ver=${1?miniconda version is required}
+	local prefix=${2?prefix is required}
+	local miniconda_base_url=${3:-https://repo.continuum.io/miniconda}
 
 	case $(uname -s) in
 		Linux*)
@@ -444,7 +433,7 @@ n8l::miniconda::install() {
 			;;
 	esac
 
-	miniconda_file_name="Miniconda${py_ver}-${mini_ver}-${ana_platform}.sh"
+	miniconda_file_name="Miniconda3-${mini_ver}-${ana_platform}.sh"
 	echo "::: Deploying ${miniconda_file_name}"
 
 	(
@@ -487,17 +476,16 @@ n8l::miniconda::config_channels() {
 
 # Install packages on which the stack is known to depend
 n8l::miniconda::lsst_env() {
-	local py_ver=${1?python version is required}
-	local ref=${2?lsstsw git ref is required}
-
-	n8l::require_cmds conda activate
+	local ref=${1?lsstsw git ref is required}
+	local miniconda_path=${2?miniconda path is required}
+	local conda_channels=${3}
 
 	case $(uname -s) in
 		Linux*)
-			conda_packages="conda${py_ver}_packages-linux-64.yml"
+			conda_packages="conda-linux-64.lock"
 			;;
 		Darwin*)
-			conda_packages="conda${py_ver}_packages-osx-64.yml"
+			conda_packages="conda-osx-64.lock"
 			;;
 		*)
 			n8l::fail "Cannot configure miniconda env: unsupported platform $(uname -s)"
@@ -525,7 +513,7 @@ n8l::miniconda::lsst_env() {
 			--output "$tmpfile"
 
 		args=()
-		args+=('env' 'update')
+		args+=('create')
 		args+=('--name' "$LSST_CONDA_ENV_NAME")
 
 		# disable the conda install progress bar when not attached to a tty. Eg.,
@@ -537,17 +525,21 @@ n8l::miniconda::lsst_env() {
 		args+=("--file" "$tmpfile")
 
 		$cmd conda "${args[@]}"
+		echo "Cleaning conda environment..."
+		conda clean -y -a > /dev/null
+		echo "done"
 	)
 
-	# shellcheck disable=SC1091
-	source activate "$LSST_CONDA_ENV_NAME"
+	# Switch to installed conda environment
+	conda activate "$LSST_CONDA_ENV_NAME"
 
-	if [[ $LSST_USE_CONDA_SYSTEM == true ]]; then
-		n8l::require_cmds "cc"
+	if [[ -n $conda_channels ]]; then
+		n8l::miniconda::config_channels "$conda_channels"
 	fi
 
 	# report packages in the current conda env
 	conda env export
+	conda deactivate
 }
 
 #
@@ -585,153 +577,39 @@ n8l::up2date_check() {
 	esac
 }
 
-# Discuss the state of Git.
-# XXX should probably fail if git version is insufficient under batch mode.
-n8l::git_check() {
-	if n8l::has_cmd git; then
-		local gitvernum
-		gitvernum=$(git --version | cut -d\  -f 3)
-
-		local gitver
-		# shellcheck disable=SC2046 disable=SC2183
-		gitver=$(printf "%02d-%02d-%02d\\n" \
-			$(echo "$gitvernum" | cut -d. -f1-3 | tr . ' '))
-	fi
-
-	if [[ $gitver < 01-08-04 ]]; then
-		if [[ $BATCH_FLAG != true ]]; then
-			{ cat <<-EOF
-				Detected $(git --version).
-
-				The git version control system is frequently used with LSST software.
-				While the LSST stack should build and work even in the absence of git, we
-				don not regularly run and test it in such environments. We therefore
-				recommend you have at least git 1.8.4 installed with your normal
-				package manager.
-
-				EOF
-			} | n8l::fmt
-
-			while true; do
-				read -r -p "Would you like to try continuing without git? " yn
-				case $yn in
-					[Yy]* )
-						echo "Continuing without git"
-						break
-						;;
-					[Nn]* )
-						echo "Okay install git and rerun the script."
-						exit
-						break;
-						;;
-					* ) echo "Please answer yes or no.";;
-				esac
-			done
-		fi
-	else
-		echo "Detected $(git --version). OK."
-	fi
-}
-
-n8l::pyverok() {
-	local min_major=${1?min_major is required}
-	local min_minor=${2?min_minor is required}
-	local py_interp=${3:-python}
-
-	$py_interp -c "import sys
-rmaj=${min_major}
-rmin=${min_minor}
-vmaj = sys.version_info[0]
-vmin = sys.version_info[1]
-if (vmaj >= rmaj) and (vmin >= rmin):
-    sys.exit(0)
-else:
-    sys.exit(1)"
-}
-
 #
 #	Test/warn about Python versions, offer to get miniconda if not supported.
 #	LSST currently mandates specific versions of Python.  We assume that the
 #	python in PATH is the python that will be used to build the stack if
 #	miniconda is not installed.
 #
-n8l::python_check() {
-	# Check the version by running a small Python program (taken from the Python
-	# EUPS package) XXX this will break if python is not in $PATH
-	local py_interp=python
-	local min_major=3
-	local min_minor=6
-
-	local has_python=false
-	local pyok=false
-	if n8l::has_cmd $py_interp; then
-		has_python=true
-		if n8l::pyverok $min_major $min_minor $py_interp; then
-			pyok=true
-		fi
-	fi
-
-	if [[ $pyok != true ]]; then
-		if [[ $has_python == true ]]; then
-			{ cat <<-EOF
-
-				LSST stack requires Python >= ${min_major}.${min_minor}; you seem to
-				have $($py_interp -V 2>&1) on your path ($(command -v $py_interp)).
-				EOF
-			} | n8l::fmt
-		else
-			{ cat <<-EOF
-
-				Unable to locate python.
-
-				Please set up a compatible python interpreter, prepend it to your PATH,
-				and rerun this script.  Alternatively, we can set up the Miniconda Python
-				distribution for you.
-
-				EOF
-			} | n8l::fmt
-		fi
-	fi
-
-	{ cat <<-EOF
-
-		In addition to Python >= ${min_major}.${min_minor}, some LSST packages
-		depend on recent versions of numpy, matplotlib, and scipy.  If you do not
-		have all of these, the installation may fail.  Using the Miniconda Python
-		distribution will ensure all these are set up.
-
-		EOF
-	} | n8l::fmt
-
+n8l::conda_check() {
 	while true; do
 		read -r -p "$({ cat <<-EOF
-			Would you like us to install the Miniconda Python distribution (if
+			Would you like us to install Miniconda distribution (if
 			unsure, say yes)?
 			EOF
 		} | n8l::fmt)" yn
 
 		case $yn in
 			[Yy]* )
-				WITH_MINICONDA=true
 				break
 				;;
 			[Nn]* )
-				if [[ $pyok != true ]]; then
-					{ cat <<-EOF
-
-						Thanks. After you install the required version of Python and the
-						required modules, rerun this script to continue the installation.
-
-						EOF
-					} | n8l::fmt
-					n8l::fail
-				fi
+				{ cat <<-EOF
+					Thanks. After you install the required version of conda,
+					rerun this script with the -P [PATH_TO_CONDA] to continue
+					the installation.
+					EOF
+				} | n8l::fmt
+				n8l::fail
 				break;
 				;;
 			* ) echo "Please answer yes or no.";;
 		esac
 	done
 }
+
 
 #
 # boostrap a complete miniconda based env that includes configuring conda
@@ -740,7 +618,7 @@ n8l::python_check() {
 # this appears to be a bug in shellcheck
 # shellcheck disable=SC2120
 n8l::miniconda::bootstrap() {
-	local py_ver=${1?python version is required}
+	local miniconda_path=${1?miniconda path is required}
 	local mini_ver=${2?miniconda version is required}
 	local prefix=${3?prefix is required}
 	local __miniconda_path_result=${4?__miniconda_path_result is required}
@@ -748,38 +626,50 @@ n8l::miniconda::bootstrap() {
 	local splenv_ref=$6
 	local conda_channels=$7
 
-	local miniconda_base_path="${prefix}/python"
-	local miniconda_path
-	miniconda_path="${miniconda_base_path}/$(n8l::miniconda_slug)"
+	local do_install=false
 
-	local miniconda_path_old
-	miniconda_path_old="${prefix}/$(n8l::miniconda_slug)"
+	# Clear arguments for source
+	while (( "$#" )); do
+		shift
+	done
 
-	# remove old unnested miniconda -- the install has hard coded shebangs
-	if [[ -e $miniconda_path_old ]]; then
-		rm -rf "$miniconda_path_old"
+	if [[ -z $miniconda_path ]]; then
+		local miniconda_base_path="${prefix}/conda"
+		miniconda_path="${miniconda_base_path}/$(n8l::miniconda_slug)"
+		echo "Installing conda at ${miniconda_path}"
+		do_install=true
+	else
+		# Check commands in supplied conda environment
+		(
+			export PATH="${miniconda_path}/bin:${PATH}"
+			n8l::require_cmds conda
+		)
+		echo "Using conda at ${miniconda_path}"
 	fi
 
-	if [[ ! -e $miniconda_path ]]; then
+	if [[ $do_install == true ]]; then
 		n8l::miniconda::install \
-			"$py_ver" \
 			"$mini_ver" \
 			"$miniconda_path" \
 			"$miniconda_base_url"
+		# only miniconda current symlink if we installed miniconda
+		n8l::ln_rel "$miniconda_path" current
 	fi
 
-	# update miniconda current symlink
-	n8l::ln_rel "$miniconda_path" current
+	# Activate the base conda environment before continuing
+	# shellcheck disable=SC1090
+	source "$miniconda_path/bin/activate"
 
-	export PATH="${miniconda_path}/bin:${PATH}"
-
-	if [[ -n $conda_channels ]]; then
-		n8l::miniconda::config_channels "$conda_channels"
-	fi
+	if [[ -e ${miniconda_path}/envs/${LSST_CONDA_ENV_NAME} ]]; then
+	  echo "An environment named ${LSST_CONDA_ENV_NAME} already exists"
+  fi
 
 	if [[ -n $splenv_ref ]]; then
-		n8l::miniconda::lsst_env "$py_ver" "$splenv_ref"
+		n8l::miniconda::lsst_env "$splenv_ref" "$miniconda_path" "$conda_channels"
 	fi
+
+	# Deactivate conda
+	conda deactivate
 
 	# bash 3.2 does not support `declare -g`
 	eval "$__miniconda_path_result=$miniconda_path"
@@ -791,31 +681,8 @@ n8l::miniconda::bootstrap() {
 #
 # XXX this function should be broken up to enable better unit testing.
 n8l::install_eups() {
-	if [[ ! -x $EUPS_PYTHON ]]; then
-		n8l::fail "$({ cat <<-EOF
-			Cannot find or execute '${EUPS_PYTHON}'.  Please set the EUPS_PYTHON
-			environment variable or use the -P option to point to a functioning
-			Python >= 2.6 interpreter and rerun.
-			EOF
-		} | n8l::fmt)"
-	fi
-
-	local min_major=2
-	local min_minor=6
-
-	if ! n8l::pyverok "$min_major" "$min_minor" "$EUPS_PYTHON"; then
-		n8l::fail "$({ cat <<-EOF
-			EUPS requires Python ${min_major}.${min_minor} or newer; we are using
-			$("$EUPS_PYTHON" -V 2>&1) from ${EUPS_PYTHON}.  Please set up a
-			compatible python interpreter using the EUPS_PYTHON environment variable
-			or the -P command line option.
-			EOF
-		} | n8l::fmt)"
-	fi
-
-	if [[ $EUPS_PYTHON != /usr/bin/python ]]; then
-		echo "Using python at ${EUPS_PYTHON} to install EUPS"
-	fi
+	# We have already verified conda is installed - no need to check
+	echo "Using python at ${EUPS_PYTHON} to install EUPS"
 
 	# if there is an existing, unversioned install, renamed it to "legacy"
 	if [[ -e "$(n8l::eups_base_dir)/Release_Notes" ]]; then
@@ -856,6 +723,7 @@ n8l::install_eups() {
 			$cmd "$CURL" "$CURL_OPTS" -L "$LSST_EUPS_TARURL" | tar xzvf -
 			$cmd cd "eups-${LSST_EUPS_VERSION}"
 		else
+		  n8l::require_cmds git
 			# Clone from git repository
 			$cmd git clone "$EUPS_GITREPO" eups
 			$cmd cd eups
@@ -919,9 +787,7 @@ n8l::problem_vars_check() {
 		done
 
 		n8l::print_error "$(cat <<-EOF
-
 			It is recommended that they are undefined before running this script.
-
 			unset ${problems[*]}
 			EOF
 		)"
@@ -1177,37 +1043,27 @@ n8l::main() {
 
 	if [[ $BATCH_FLAG != true ]]; then
 		n8l::problem_vars_check
-	fi
-
-	n8l::git_check
-
-	# always use miniconda when in batch mode
-	if [[ $BATCH_FLAG == true ]]; then
-		WITH_MINICONDA=true
-	else
-		n8l::python_check
+		if [[ -z $LSST_CONDA_BASE ]]; then
+			n8l::conda_check
+		fi
 	fi
 
 	# Bootstrap miniconda (optional)
 	# Note that this will add miniconda to the path
-	if [[ $WITH_MINICONDA == true ]]; then
-		# this appears to be a bug in shellcheck
-		# shellcheck disable=SC2119
-		n8l::miniconda::bootstrap \
-			"$LSST_PYTHON_VERSION" \
-			"$LSST_MINICONDA_VERSION" \
-			"$LSST_HOME" \
-			'MINICONDA_PATH' \
-			"$LSST_MINICONDA_BASE_URL" \
-			"$LSST_SPLENV_REF" \
-			"$LSST_CONDA_CHANNELS"
-	fi
+	# this appears to be a bug in shellcheck
+	# shellcheck disable=SC2119
+	n8l::miniconda::bootstrap \
+		"$LSST_CONDA_BASE" \
+		"$LSST_MINICONDA_VERSION" \
+		"$LSST_HOME" \
+		'MINICONDA_PATH' \
+		"$LSST_MINICONDA_BASE_URL" \
+		"$LSST_SPLENV_REF" \
+		"$LSST_CONDA_CHANNELS"
 
-	# By default we use the PATH Python to bootstrap EUPS.  Set $EUPS_PYTHON to
-	# override this or use the -P command line option.  $EUPS_PYTHON is used to
-	# install and run EUPS and will not necessarily be the python in the path
-	# being used to build the stack itself.
-	EUPS_PYTHON=${EUPS_PYTHON:-$(command -v python)}
+	# Use conda base environment's python
+	# shellcheck disable=SC2153
+	EUPS_PYTHON=${MINICONDA_PATH}/bin/python
 
 	if [[ $PRESERVE_EUPS_PKGROOT_FLAG == true ]]; then
 		EUPS_PKGROOT=${EUPS_PKGROOT:-$(

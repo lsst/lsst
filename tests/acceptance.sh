@@ -16,11 +16,11 @@ if [[ -n ${ANCIENT_BASH} ]]; then
 fi
 
 if [[ $BATCH == true ]]; then
-  echo "*** testing batch mode in Python version $PYVER ***"
-  bash -x ./scripts/newinstall.sh -cb "-${PYVER}"
+  echo "*** testing batch mode  ***"
+  bash -x ./scripts/newinstall.sh -cb
 else
-  echo "*** testing interactive mode in Python version $PYVER ***"
-  echo -e "yes\\nyes" | bash -x ./scripts/newinstall.sh -c "-${PYVER}"
+  echo "*** testing interactive mode***"
+  echo -e "yes\\nyes" | bash -x ./scripts/newinstall.sh -c
 fi
 
 echo '*** Testing initializaion of shell environment ***'

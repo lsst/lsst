@@ -10,7 +10,7 @@ describe 'n8l::parse_args' do
 
   context 'cli options' do
     context 'without arguments' do
-      %w[b c n 3 t T s S p].each do |flag|
+      %w[b c n t T s S p].each do |flag|
         context "-#{flag}" do
           it 'should not die' do
             out, err, status = stubbed_env.execute_function(
@@ -94,17 +94,4 @@ describe 'n8l::parse_args' do
       end
     end # context "-p"
   end # context 'cli options'
-
-  context '-2' do
-    it 'should die' do
-      out, err, status = stubbed_env.execute_function(
-        'scripts/newinstall.sh',
-        "#{func} -2",
-      )
-
-      expect(out).to eq('')
-      expect(err).to match(/Python 2.x is no longer supported./)
-      expect(status.exitstatus).to_not be 0
-    end
-  end # context -2
 end

@@ -9,24 +9,11 @@ describe 'n8l::miniconda::install' do
   subject(:func) { 'n8l::miniconda::install' }
 
   context 'parameters' do
-    context '$1/py_ver' do
+    context '$1/mini_ver' do
       it 'is required' do
         out, err, status = stubbed_env.execute_function(
           'scripts/newinstall.sh',
-          func,
-        )
-
-        expect(status.exitstatus).to_not be 0
-        expect(out).to eq('')
-        expect(err).to match(/python version is required/)
-      end
-    end
-
-    context '$2/mini_ver' do
-      it 'is required' do
-        out, err, status = stubbed_env.execute_function(
-          'scripts/newinstall.sh',
-          "#{func} foo",
+          "#{func} ",
         )
 
         expect(status.exitstatus).to_not be 0
@@ -35,11 +22,11 @@ describe 'n8l::miniconda::install' do
       end
     end
 
-    context '$3/prefix' do
+    context '$2/prefix' do
       it 'is required' do
         out, err, status = stubbed_env.execute_function(
           'scripts/newinstall.sh',
-          "#{func} foo bar",
+          "#{func} foo",
         )
 
         expect(status.exitstatus).to_not be 0
@@ -48,7 +35,7 @@ describe 'n8l::miniconda::install' do
       end
     end
 
-    context '$4/miniconda_base_url' do
+    context '$3/miniconda_base_url' do
       it 'is optional' do
         stubbed_env.stub_command('uname').outputs('Linux')
         curl = stubbed_env.stub_command('curl')
@@ -56,12 +43,12 @@ describe 'n8l::miniconda::install' do
 
         out, err, status = stubbed_env.execute_function(
           'scripts/newinstall.sh',
-          "#{func} foo bar baz",
+          "#{func} foo bar",
           { 'CURL' => 'curl' },
         )
 
         expect(status.exitstatus).to be 0
-        expect(out).to match(/Deploying Minicondafoo-bar-Linux-x86_64.sh/)
+        expect(out).to match(/Deploying Miniconda3-foo-Linux-x86_64.sh/)
         expect(err).to eq('')
 
         expect(curl).to be_called_with_arguments.times(1)
@@ -74,7 +61,7 @@ describe 'n8l::miniconda::install' do
         )
         expect(bash).to be_called_with_arguments.times(1)
         expect(bash).to be_called_with_arguments(
-          %r{Minicondafoo-bar-Linux-x86_64.sh},
+          %r{Miniconda3-foo-Linux-x86_64.sh},
           '-b',
           '-p',
           instance_of(String)
@@ -88,12 +75,12 @@ describe 'n8l::miniconda::install' do
 
         out, err, status = stubbed_env.execute_function(
           'scripts/newinstall.sh',
-          "#{func} foo bar baz https://example.org",
+          "#{func} foo bar https://example.org",
           { 'CURL' => 'curl' },
         )
 
         expect(status.exitstatus).to be 0
-        expect(out).to match(/Deploying Minicondafoo-bar-Linux-x86_64.sh/)
+        expect(out).to match(/Deploying Miniconda3-foo-Linux-x86_64.sh/)
         expect(err).to eq('')
 
         expect(curl).to be_called_with_arguments.times(1)
@@ -105,7 +92,7 @@ describe 'n8l::miniconda::install' do
           instance_of(String)
         )
         expect(bash).to be_called_with_arguments(
-          %r{Minicondafoo-bar-Linux-x86_64.sh},
+          %r{Miniconda3-foo-Linux-x86_64.sh},
           '-b',
           '-p',
           instance_of(String)
@@ -120,7 +107,7 @@ describe 'n8l::miniconda::install' do
       'Darwin': 'MacOSX-x86_64',
     }.each do |k, v|
       it k do
-        installer = "Minicondafoo-bar-#{v}.sh"
+        installer = "Miniconda3-foo-#{v}.sh"
 
         stubbed_env.stub_command('uname').outputs(k)
         stubbed_env.stub_command('mktemp')
@@ -153,7 +140,7 @@ describe 'n8l::miniconda::install' do
 
       out, err, status = stubbed_env.execute_function(
         'scripts/newinstall.sh',
-        "#{func} foo bar baz",
+        "#{func} foo bar",
       )
 
       expect(status.exitstatus).to_not be 0
