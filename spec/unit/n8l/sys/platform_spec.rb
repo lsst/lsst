@@ -90,19 +90,19 @@ describe 'n8l::sys::platform' do
 
   context 'osfamily' do
     context 'redhat' do
-      context '6' do
+      context '8' do
         it 'computes' do
           out, err, status = stubbed_env.execute_function(
             'scripts/newinstall.sh',
             <<-SCRIPT
-              #{func} redhat 6 baz quix
+              #{func} redhat 8 baz quix
               echo PLATFORM=$baz
               echo TARGET_CC=$quix
             SCRIPT
           )
 
           expect(status.exitstatus).to be 0
-          expect(out).to match(/PLATFORM=el6/)
+          expect(out).to match(/PLATFORM=el8/)
           expect(out).to match(/TARGET_CC=devtoolset-8/)
           expect(err).to eq('')
         end

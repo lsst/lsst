@@ -307,12 +307,12 @@ n8l::sys::platform() {
 	case $__osfamily in
 		redhat)
 			case $__release in
-				6)
-					__platform=el6
-					__target_cc=devtoolset-8
-					;;
 				7)
 					__platform=el7
+					__target_cc=devtoolset-8
+					;;
+				8)
+					__platform=el8
 					__target_cc=devtoolset-8
 					;;
 				*)
