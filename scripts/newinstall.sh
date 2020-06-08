@@ -636,18 +636,10 @@ n8l::miniconda::bootstrap() {
 	if [[ -z $miniconda_path ]]; then
 		local miniconda_base_path="${prefix}/conda"
 		miniconda_path="${miniconda_base_path}/$(n8l::miniconda_slug)"
-	fi
-
-	if [[ ! -e $miniconda_path ]]; then
-		echo "Installing conda at ${miniconda_path}"
-		do_install=true
-	else
-		# Check commands in supplied conda environment
-		(
-			export PATH="${miniconda_path}/bin:${PATH}"
-			n8l::require_cmds conda
-		)
-		echo "Using conda at ${miniconda_path}"
+		if [[ ! -e $miniconda_path ]]; then
+			echo "Installing conda at ${miniconda_path}"
+			do_install=true
+    fi
 	fi
 
 	if [[ $do_install == true ]]; then
@@ -657,6 +649,12 @@ n8l::miniconda::bootstrap() {
 			"$miniconda_base_url"
 		# only miniconda current symlink if we installed miniconda
 		n8l::ln_rel "$miniconda_path" current
+  else
+		(
+			export PATH="${miniconda_path}/bin:${PATH}"
+			n8l::require_cmds conda
+		)
+		echo "Using conda at ${miniconda_path}"
 	fi
 
 	# Activate the base conda environment before continuing
