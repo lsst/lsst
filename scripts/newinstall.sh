@@ -639,7 +639,7 @@ n8l::miniconda::bootstrap() {
 		if [[ ! -e $miniconda_path ]]; then
 			echo "Installing conda at ${miniconda_path}"
 			do_install=true
-    fi
+		fi
 	fi
 
 	if [[ $do_install == true ]]; then
@@ -649,7 +649,7 @@ n8l::miniconda::bootstrap() {
 			"$miniconda_base_url"
 		# only miniconda current symlink if we installed miniconda
 		n8l::ln_rel "$miniconda_path" current
-  else
+	else
 		(
 			export PATH="${miniconda_path}/bin:${PATH}"
 			n8l::require_cmds conda
@@ -662,8 +662,8 @@ n8l::miniconda::bootstrap() {
 	source "$miniconda_path/bin/activate"
 
 	if [[ -e ${miniconda_path}/envs/${LSST_CONDA_ENV_NAME} ]]; then
-	  echo "An environment named ${LSST_CONDA_ENV_NAME} already exists"
-  fi
+		echo "An environment named ${LSST_CONDA_ENV_NAME} already exists"
+	fi
 
 	if [[ -n $splenv_ref ]]; then
 		n8l::miniconda::lsst_env "$splenv_ref" "$miniconda_path" "$conda_channels"
