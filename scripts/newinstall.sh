@@ -636,6 +636,9 @@ n8l::miniconda::bootstrap() {
 	if [[ -z $miniconda_path ]]; then
 		local miniconda_base_path="${prefix}/conda"
 		miniconda_path="${miniconda_base_path}/$(n8l::miniconda_slug)"
+	fi
+
+	if [[ ! -e $miniconda_path ]]; then
 		echo "Installing conda at ${miniconda_path}"
 		do_install=true
 	else
