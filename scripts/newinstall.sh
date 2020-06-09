@@ -626,8 +626,6 @@ n8l::miniconda::bootstrap() {
 	local splenv_ref=$6
 	local conda_channels=$7
 
-	local do_install=false
-
 	# Clear arguments for source
 	while (( "$#" )); do
 		shift
@@ -636,33 +634,30 @@ n8l::miniconda::bootstrap() {
 	if [[ -z $miniconda_path ]]; then
 		local miniconda_base_path="${prefix}/conda"
 		miniconda_path="${miniconda_base_path}/$(n8l::miniconda_slug)"
-		echo "Installing conda at ${miniconda_path}"
-		do_install=true
-	else
-		# Check commands in supplied conda environment
-		(
-			export PATH="${miniconda_path}/bin:${PATH}"
-			n8l::require_cmds conda
-		)
-		echo "Using conda at ${miniconda_path}"
+		if [[ ! -e $miniconda_path ]]; then
+			echo "Installing conda at ${miniconda_path}"
+			n8l::miniconda::install \
+				"$mini_ver" \
+				"$miniconda_path" \
+				"$miniconda_base_url"
+			# only miniconda current symlink if we installed miniconda
+			n8l::ln_rel "$miniconda_path" current
+		fi
 	fi
 
-	if [[ $do_install == true ]]; then
-		n8l::miniconda::install \
-			"$mini_ver" \
-			"$miniconda_path" \
-			"$miniconda_base_url"
-		# only miniconda current symlink if we installed miniconda
-		n8l::ln_rel "$miniconda_path" current
-	fi
+	(
+		export PATH="${miniconda_path}/bin:${PATH}"
+		n8l::require_cmds conda
+	)
+	echo "Using conda at ${miniconda_path}"
 
 	# Activate the base conda environment before continuing
 	# shellcheck disable=SC1090
 	source "$miniconda_path/bin/activate"
 
 	if [[ -e ${miniconda_path}/envs/${LSST_CONDA_ENV_NAME} ]]; then
-	  echo "An environment named ${LSST_CONDA_ENV_NAME} already exists"
-  fi
+		echo "An environment named ${LSST_CONDA_ENV_NAME} already exists"
+	fi
 
 	if [[ -n $splenv_ref ]]; then
 		n8l::miniconda::lsst_env "$splenv_ref" "$miniconda_path" "$conda_channels"
