@@ -626,7 +626,7 @@ n8l::miniconda::bootstrap() {
 	local splenv_ref=$6
 	local conda_channels=$7
 
-	local do_install=false
+	local performed_install=false
 
 	# Clear arguments for source
 	while (( "$#" )); do
@@ -638,18 +638,17 @@ n8l::miniconda::bootstrap() {
 		miniconda_path="${miniconda_base_path}/$(n8l::miniconda_slug)"
 		if [[ ! -e $miniconda_path ]]; then
 			echo "Installing conda at ${miniconda_path}"
-			do_install=true
+			n8l::miniconda::install \
+				"$mini_ver" \
+				"$miniconda_path" \
+				"$miniconda_base_url"
+			# only miniconda current symlink if we installed miniconda
+			n8l::ln_rel "$miniconda_path" current
+			performed_install=true
 		fi
 	fi
 
-	if [[ $do_install == true ]]; then
-		n8l::miniconda::install \
-			"$mini_ver" \
-			"$miniconda_path" \
-			"$miniconda_base_url"
-		# only miniconda current symlink if we installed miniconda
-		n8l::ln_rel "$miniconda_path" current
-	else
+	if [[ $performed_install == false ]]; then
 		(
 			export PATH="${miniconda_path}/bin:${PATH}"
 			n8l::require_cmds conda
