@@ -1078,7 +1078,7 @@ n8l::main() {
 				$LSST_USE_CONDA_SYSTEM
 		)
 	fi
-	n8l::print_error "Configured EUPS_PKGROOT: ${LSST_EUPS_PKGROOT}"
+	n8l::print_error "Configured EUPS_PKGROOT: ${EUPS_PKGROOT}"
 
 	# Install EUPS
 	n8l::install_eups
