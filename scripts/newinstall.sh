@@ -25,7 +25,7 @@ LSST_EUPS_PKGROOT_BASE_URL=${LSST_EUPS_PKGROOT_BASE_URL:-https://eups.lsst.codes
 LSST_EUPS_USE_TARBALLS=${LSST_EUPS_USE_TARBALLS:-false}
 LSST_EUPS_USE_EUPSPKG=${LSST_EUPS_USE_EUPSPKG:-true}
 
-LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-4.7.12}
+LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-py37_4.8.2}
 # this git ref controls which set of conda packages are used to initialize the
 # the default conda env defined in scipipe_conda_env git package (RFC-553).
 LSST_SPLENV_REF=${LSST_SPLENV_REF:-${LSST_LSSTSW_REF:-1a1d771}}
