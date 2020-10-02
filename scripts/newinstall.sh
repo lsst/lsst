@@ -28,7 +28,7 @@ LSST_EUPS_USE_EUPSPKG=${LSST_EUPS_USE_EUPSPKG:-true}
 LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-py37_4.8.2}
 # this git ref controls which set of conda packages are used to initialize the
 # the default conda env defined in scipipe_conda_env git package (RFC-553).
-LSST_SPLENV_REF=${LSST_SPLENV_REF:-${LSST_LSSTSW_REF:-cb4e2dc}}
+LSST_SPLENV_REF=${LSST_SPLENV_REF:-${LSST_LSSTSW_REF:-0.1.0}}
 LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
 LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-"conda-forge"}
 LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-lsst-scipipe-${LSST_SPLENV_REF}}
@@ -480,40 +480,12 @@ n8l::miniconda::lsst_env() {
 	local miniconda_path=${2?miniconda path is required}
 	local conda_channels=${3}
 
-	case $(uname -s) in
-		Linux*)
-			conda_packages="conda-linux-64.lock"
-			;;
-		Darwin*)
-			conda_packages="conda-osx-64.lock"
-			;;
-		*)
-			n8l::fail "Cannot configure miniconda env: unsupported platform $(uname -s)"
-			;;
-	esac
-
-	local baseurl="https://raw.githubusercontent.com/lsst/scipipe_conda_env/${ref}/etc/"
-	local tmpfile
-
 	(
 		set -Eeo pipefail
 
-		tmpfile=$(mktemp -t "${conda_packages//X/_}.XXXXXXXX")
-		# remove unneccesary tmpfile created by mktemp, the (unique) tmpfile name provided by mktemp 
-		# is used to create a different tmpfile with extension .yml
-		rm -rf "${tmpfile}"
-		tmpfile="${tmpfile}.yml"
-		# attempt to be a good citizen and not leave tmp files laying around
-		# after either a normal exit or an error condition
-		# shellcheck disable=SC2064
-		trap "{ rm -rf $tmpfile; }" EXIT
-		$cmd "$CURL" "$CURL_OPTS" \
-			-L \
-			"${baseurl}/${conda_packages}" \
-			--output "$tmpfile"
-
 		args=()
 		args+=('create')
+		args+=('-y')
 		args+=('--name' "$LSST_CONDA_ENV_NAME")
 
 		# disable the conda install progress bar when not attached to a tty. Eg.,
@@ -522,8 +494,10 @@ n8l::miniconda::lsst_env() {
 			args+=("--quiet")
 		fi
 
-		args+=("--file" "$tmpfile")
+		args+=("-c conda-forge")
+		args+=("rubinenv=${ref}")
 
+		echo "conda ${args[@]}"
 		$cmd conda "${args[@]}"
 		echo "Cleaning conda environment..."
 		conda clean -y -a > /dev/null
