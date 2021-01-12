@@ -33,7 +33,6 @@ LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://repo.continuum.io/min
 LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-"conda-forge"}
 LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-lsst-scipipe-${LSST_SPLENV_REF}}
 LSST_USE_CONDA_SYSTEM=${LSST_USE_CONDA_SYSTEM:-true}
-LSST_ENV_WITH_EUPS=true
 
 # these optional env vars may be used by functions but should be considered
 # unstable and for internal testing only.
@@ -645,15 +644,14 @@ n8l::miniconda::bootstrap() {
 	eval "$__miniconda_path_result=$miniconda_path"
 }
 
-#
-# $EUPS_PYTHON is the Python used to install/run EUPS.  It can be any Python >=
-# v2.6
+# 
+# Renamed from install_eups to prepare_eups
+# Since Jan 2021 eups is provided with rubin-env
+# This function is used to rename all eups installation to legacy
+#  and to set-up the proper eups_path
 #
 # XXX this function should be broken up to enable better unit testing.
-n8l::install_eups() {
-	# We have already verified conda is installed - no need to check
-	echo "Using python at ${EUPS_PYTHON} to install EUPS"
-	conda activate "$LSST_CONDA_ENV_NAME"
+n8l::prepare_eups() {
 
 	# if there is an existing, unversioned install, renamed it to "legacy"
 	if [[ -e "$(n8l::eups_base_dir)/Release_Notes" ]]; then
@@ -671,22 +669,6 @@ n8l::install_eups() {
 	# if there is an old eups installation, built from GitHub, renamed to "legacy"
 	if [[ -e "$(n8l::eups_dir)/Release_Notes" ]]; then
 		mv "$(n8l::eups_base_dir)" "${LSST_HOME}/eups-legacy"
-	fi
-
-	echo -n "Checking EUPS Installation "
-
-	# if eups is not available in the active environment, made it available in an auxiliary env
-	if ! command -v eups > /dev/null; then
-		echo "error: No eups found in the active environment ..."
-		echo "  ... trying to use a stacked eups-base environment"
-		conda deactivate
-		LSST_ENV_WITH_EUPS=false
-		if ! conda env list | grep "^eups-base " > /dev/null; then
-			echo "::: Creating eups-base environment"
-			conda create -y --name eups-base eups -c conda-forge
-		fi
-		conda activate eups-base
-		conda activate --stack "$LSST_CONDA_ENV_NAME"
 	fi
 
 	# create eups_path and subfolders
@@ -748,24 +730,13 @@ n8l::generate_loader_bash() {
 
 	if [[ -n $miniconda_path ]]; then
 		local cmd_setup_miniconda
-		if [ "$LSST_ENV_WITH_EUPS" = false ]; then
-			cmd_setup_miniconda="$(cat <<-EOF
-				export LSST_CONDA_ENV_NAME=\${LSST_CONDA_ENV_NAME:-${LSST_CONDA_ENV_NAME}}
-				# shellcheck disable=SC1091
-				source "${miniconda_path}/etc/profile.d/conda.sh" 
-				conda activate eups-base
-				conda activate --stack "\$LSST_CONDA_ENV_NAME"
-			EOF
-			)"
-		else
-			cmd_setup_miniconda="$(cat <<-EOF
-				export LSST_CONDA_ENV_NAME=\${LSST_CONDA_ENV_NAME:-${LSST_CONDA_ENV_NAME}}
-				# shellcheck disable=SC1091
-				source "${miniconda_path}/etc/profile.d/conda.sh" 
-				conda activate "\$LSST_CONDA_ENV_NAME"
-			EOF
-			)"
-		fi
+		cmd_setup_miniconda="$(cat <<-EOF
+			export LSST_CONDA_ENV_NAME=\${LSST_CONDA_ENV_NAME:-${LSST_CONDA_ENV_NAME}}
+			# shellcheck disable=SC1091
+			source "${miniconda_path}/etc/profile.d/conda.sh" 
+			conda activate "\$LSST_CONDA_ENV_NAME"
+		EOF
+		)"
 	fi
 
 	# shellcheck disable=SC2094
@@ -792,22 +763,12 @@ n8l::generate_loader_ksh() {
 	if [[ -n $miniconda_path ]]; then
 		# XXX untested
 		local cmd_setup_miniconda
-		if [ "$LSST_ENV_WITH_EUPS" = false ]; then
-			cmd_setup_miniconda="$(cat <<-EOF
-				export LSST_CONDA_ENV_NAME=\${LSST_CONDA_ENV_NAME:-${LSST_CONDA_ENV_NAME}}
-				# shellcheck disable=SC1091
-				source "${miniconda_path}/bin/activate" eups-base
-				source "${miniconda_path}/bin/activate" --stack "\$LSST_CONDA_ENV_NAME"
-			EOF
-			)"
-		else
-			cmd_setup_miniconda="$(cat <<-EOF
-				export LSST_CONDA_ENV_NAME=\${LSST_CONDA_ENV_NAME:-${LSST_CONDA_ENV_NAME}}
-				# shellcheck disable=SC1091
-				source "${miniconda_path}/bin/activate" "\$LSST_CONDA_ENV_NAME"
-			EOF
-			)"
-		fi
+		cmd_setup_miniconda="$(cat <<-EOF
+			export LSST_CONDA_ENV_NAME=\${LSST_CONDA_ENV_NAME:-${LSST_CONDA_ENV_NAME}}
+			# shellcheck disable=SC1091
+			source "${miniconda_path}/bin/activate" "\$LSST_CONDA_ENV_NAME"
+		EOF
+		)"
 	fi
 
 	# shellcheck disable=SC2094
@@ -834,20 +795,11 @@ n8l::generate_loader_zsh() {
 	if [[ -n $miniconda_path ]]; then
 		# XXX untested
 		local cmd_setup_miniconda
-		if [ "$LSST_ENV_WITH_EUPS" = false ]; then
-			cmd_setup_miniconda="$(cat <<-EOF
-				export LSST_CONDA_ENV_NAME=\${LSST_CONDA_ENV_NAME:-${LSST_CONDA_ENV_NAME}}
-				source "${miniconda_path}/bin/activate" eups-base
-				source "${miniconda_path}/bin/activate" --stack "\$LSST_CONDA_ENV_NAME"
-			EOF
-			)"
-		else
-			cmd_setup_miniconda="$(cat <<-EOF
-				export LSST_CONDA_ENV_NAME=\${LSST_CONDA_ENV_NAME:-${LSST_CONDA_ENV_NAME}}
-				source "${miniconda_path}/bin/activate" "\$LSST_CONDA_ENV_NAME"
-			EOF
-			)"
-		fi
+		cmd_setup_miniconda="$(cat <<-EOF
+			export LSST_CONDA_ENV_NAME=\${LSST_CONDA_ENV_NAME:-${LSST_CONDA_ENV_NAME}}
+			source "${miniconda_path}/bin/activate" "\$LSST_CONDA_ENV_NAME"
+		EOF
+		)"
 	fi
 
 	# shellcheck disable=SC2094
@@ -992,8 +944,8 @@ n8l::main() {
 		"$LSST_SPLENV_REF" \
 		"$LSST_CONDA_CHANNELS"
 
-	# Install EUPS
-	n8l::install_eups
+	# Prepare EUPS
+	n8l::prepare_eups
 
 	# Use conda base environment's python
 	# shellcheck disable=SC2153
