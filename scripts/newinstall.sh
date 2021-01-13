@@ -668,7 +668,11 @@ n8l::prepare_eups() {
 
 	# if there is an old eups installation, built from GitHub, renamed to "legacy"
 	if [[ -e "$(n8l::eups_dir)/Release_Notes" ]]; then
-		mv "$(n8l::eups_base_dir)" "${LSST_HOME}/eups-legacy"
+		if [ ! -d "${LSSTSW_HOME}/eups-legacy" ]; then
+			mv "$(n8l::eups_base_dir)" "${LSST_HOME}/eups-legacy"
+		else
+			echo "Found eups-legacy, remove it before moving old eups to legacy"
+		fi
 	fi
 
 	# create eups_path and subfolders
@@ -748,7 +752,7 @@ n8l::generate_loader_bash() {
 		${cmd_setup_miniconda}
 		LSST_HOME="\$( cd "\$( dirname "\${BASH_SOURCE[0]}" )" && pwd )"
 
-		export EUPS_PATH=$eups_path
+		export EUPS_PATH="$eups_path"
 		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$eups_pkgroot}
 	EOF
 }
@@ -781,7 +785,7 @@ n8l::generate_loader_ksh() {
 		LSST_HOME="\$( cd "\$( dirname "\${.sh.file}" )" && pwd )"
 
 		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$eups_pkgroot}
-		export EUPS_PATH=$eups_path
+		export EUPS_PATH="$eups_path"
 	EOF
 }
 
@@ -811,7 +815,7 @@ n8l::generate_loader_zsh() {
 		${cmd_setup_miniconda}
 		LSST_HOME=\`dirname "\$0:A"\`
 
-		export EUPS_PATH=$eups_path
+		export EUPS_PATH="$eups_path"
 		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$eups_pkgroot}
 	EOF
 }
