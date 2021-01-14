@@ -1,0 +1,69 @@
+name: Acceptance tests
+
+on:
+  - pull_request
+
+jobs:
+  macos-matrix:
+    strategy:
+      matrix:
+        shell: [bash, zsh]
+        option: [-bt, -b]
+        exclude:
+          - shell: zsh
+            option: -b
+          - shell: bash
+            option: -bt
+    name: macOS installation test
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: install test
+        env:
+          DEVELOPER_DIR: /Applications/Xcode_11.7.app/Contents/Developer
+        run: |
+          mkdir stack
+          cd stack
+          bash ../scripts/newinstall.sh ${{ matrix.option }}
+          ${{ matrix.shell }} -c \
+            "source loadLSST.${{ matrix.shell }} && \
+             eups distrib install -t w_latest base"
+
+  centos-matrix:
+    strategy:
+      matrix:
+        shell: [bash, csh]
+        option: [-bt, -b]
+    name: Linux installation test
+    runs-on: ubuntu-latest
+    container: centos:7
+    steps:
+      - uses: actions/checkout@v2
+      - name: install test
+        run: |
+          mkdir stack
+          cd stack
+          bash ../scripts/newinstall.sh ${{ matrix.option }}
+          if [[ "${{ matrix.shell }}" == "csh" ]]; then
+            yum install -y tcsh
+            shellcmd=tcsh
+          else
+            shellcmd=bash
+          fi
+          $shellcmd -c \
+            "source loadLSST.${{ matrix.shell }} && \
+             eups distrib install -t w_latest base"
+
+  accept-interactive:
+    name: Interactive tarball bash
+    runs-on: ubuntu-latest
+    container: centos:7
+    steps:
+      - uses: actions/checkout@v2
+      - name: installation test
+        run: |
+          mkdir stack
+          cd stack
+          echo "yes" | bash ../scripts/newinstall.sh -t
+          bash -c "source loadLSST.bash && \
+                   eups distrib install -t w_latest base"
