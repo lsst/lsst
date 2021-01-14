@@ -32,7 +32,6 @@ jobs:
   centos-matrix:
     strategy:
       matrix:
-        shell: [bash, csh]
         option: [-bt, -b]
     name: Linux installation test
     runs-on: ubuntu-latest
@@ -44,14 +43,8 @@ jobs:
           mkdir stack
           cd stack
           bash ../scripts/newinstall.sh ${{ matrix.option }}
-          if [[ "${{ matrix.shell }}" == "csh" ]]; then
-            yum install -y tcsh
-            shellcmd=tcsh
-          else
-            shellcmd=bash
-          fi
-          $shellcmd -c \
-            "source loadLSST.${{ matrix.shell }} && \
+          bash -c \
+            "source loadLSST.bash && \
              eups distrib install -t w_latest base"
 
   accept-interactive:
