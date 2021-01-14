@@ -497,7 +497,6 @@ n8l::miniconda::lsst_env() {
 		args+=("-c conda-forge")
 		args+=("rubin-env=${ref}")
 
-		echo "conda ${args[@]}"
 		$cmd conda "${args[@]}"
 		echo "Cleaning conda environment..."
 		conda clean -y -a > /dev/null
@@ -668,7 +667,7 @@ n8l::prepare_eups() {
 
 	# if there is an old eups installation, built from GitHub, renamed to "legacy"
 	if [[ -e "$(n8l::eups_dir)/Release_Notes" ]]; then
-		if [ ! -d "${LSSTSW_HOME}/eups-legacy" ]; then
+		if [ ! -d "${LSST_HOME}/eups-legacy" ]; then
 			mv "$(n8l::eups_base_dir)" "${LSST_HOME}/eups-legacy"
 		else
 			echo "Found eups-legacy, remove it before moving old eups to legacy"
@@ -730,7 +729,8 @@ n8l::generate_loader_bash() {
 	local eups_pkgroot=${2?eups_pkgroot is required}
 	local miniconda_path=$3
 
-	local eups_path="$(n8l::eups_path)"
+	local eups_path
+	eups_path="$(n8l::eups_path)"
 
 	if [[ -n $miniconda_path ]]; then
 		local cmd_setup_miniconda
@@ -762,7 +762,8 @@ n8l::generate_loader_ksh() {
 	local eups_pkgroot=${2?eups_pkgroot is required}
 	local miniconda_path=$3
 
-	local eups_path="$(n8l::eups_path)"
+	local eups_path
+	eups_path="$(n8l::eups_path)"
 
 	if [[ -n $miniconda_path ]]; then
 		# XXX untested
@@ -794,7 +795,8 @@ n8l::generate_loader_zsh() {
 	local eups_pkgroot=${2?eups_pkgroot is required}
 	local miniconda_path=$3
 
-	local eups_path="$(n8l::eups_path)"
+	local eups_path
+	eups_path="$(n8l::eups_path)"
 
 	if [[ -n $miniconda_path ]]; then
 		# XXX untested
@@ -953,7 +955,7 @@ n8l::main() {
 
 	# Use conda base environment's python
 	# shellcheck disable=SC2153
-	EUPS_PYTHON=${MINICONDA_PATH}/bin/python
+	export EUPS_PYTHON=${MINICONDA_PATH}/bin/python
 
 	if [[ $PRESERVE_EUPS_PKGROOT_FLAG == true ]]; then
 		EUPS_PKGROOT=${EUPS_PKGROOT:-$(
