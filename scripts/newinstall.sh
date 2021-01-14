@@ -1025,7 +1025,7 @@ n8l::main() {
 
 	# Refuse to run from a non-empty directory
 	if [[ $CONT_FLAG == false ]]; then
-		if [[ ! -z $(ls) && ! $(ls) == newinstall.sh ]]; then
+		if [[ -n $(ls) && ! $(ls) == newinstall.sh ]]; then
 			n8l::fail "$({ cat <<-EOF
 				Please run this script from an empty directory. The LSST stack will be
 				installed into it.
