@@ -828,43 +828,6 @@ n8l::generate_loader_bash() {
 	EOF
 }
 
-n8l::generate_loader_csh() {
-	local file_name=${1?file_name is required}
-	local eups_pkgroot=${2?eups_pkgroot is required}
-	local miniconda_path=$3
-
-	if [[ -n $miniconda_path ]]; then
-		local cmd_setup_miniconda
-		cmd_setup_miniconda="$(cat <<-EOF
-				if ( ! \$?LSST_CONDA_ENV_NAME ) then
-					set LSST_CONDA_ENV_NAME="${LSST_CONDA_ENV_NAME}"
-				endif
-				source "${miniconda_path}/etc/profile.d/conda.csh"
-				conda activate "\$LSST_CONDA_ENV_NAME"
-			EOF
-		)"
-	fi
-
-	# shellcheck disable=SC2094
-	cat > "$file_name" <<-EOF
-		# This script is intended to be used with (t)csh to load the minimal LSST
-		# environment
-		# Usage: source $(basename "$file_name")
-
-		${cmd_setup_miniconda}
-		set LSST_HOME = \`dirname \$0\`
-		set LSST_HOME = \`cd \${LSST_HOME} && pwd\`
-
-		# Bootstrap EUPS
-		set EUPS_DIR = "\${LSST_HOME}/eups/$(n8l::eups_slug)"
-		source "\${EUPS_DIR}/bin/setups.csh"
-
-		if ( ! \${?EUPS_PKGROOT} ) then
-		  setenv EUPS_PKGROOT "$eups_pkgroot"
-		endif
-	EOF
-}
-
 n8l::generate_loader_ksh() {
 	local file_name=${1?file_name is required}
 	local eups_pkgroot=${2?eups_pkgroot is required}
@@ -935,7 +898,7 @@ n8l::create_load_scripts() {
 	local eups_pkgroot=${2?eups_pkgroot is required}
 	local miniconda_path=$3
 
-	for sfx in bash ksh csh zsh; do
+	for sfx in bash ksh zsh; do
 		echo -n "Creating startup scripts (${sfx}) ... "
 		# shellcheck disable=SC2086
 		n8l::generate_loader_$sfx \
@@ -953,7 +916,6 @@ n8l::print_greeting() {
 		one of:
 
 			source "${LSST_HOME}/loadLSST.bash"  # for bash
-			source "${LSST_HOME}/loadLSST.csh"   # for csh
 			source "${LSST_HOME}/loadLSST.ksh"   # for ksh
 			source "${LSST_HOME}/loadLSST.zsh"   # for zsh
 
