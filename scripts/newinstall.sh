@@ -25,10 +25,10 @@ LSST_EUPS_PKGROOT_BASE_URL=${LSST_EUPS_PKGROOT_BASE_URL:-https://eups.lsst.codes
 LSST_EUPS_USE_TARBALLS=${LSST_EUPS_USE_TARBALLS:-false}
 LSST_EUPS_USE_EUPSPKG=${LSST_EUPS_USE_EUPSPKG:-true}
 
-LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-py37_4.8.2}
+LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-py38_4.9.2}
 # this git ref controls which set of conda packages are used to initialize the
 # the default conda env defined in scipipe_conda_env git package (RFC-553).
-LSST_SPLENV_REF=${LSST_SPLENV_REF:-${LSST_LSSTSW_REF:-cb4e2dc}}
+LSST_SPLENV_REF=${LSST_SPLENV_REF:-${LSST_LSSTSW_REF:-0.1.5}}
 LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
 LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-"conda-forge"}
 LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-lsst-scipipe-${LSST_SPLENV_REF}}
@@ -480,40 +480,12 @@ n8l::miniconda::lsst_env() {
 	local miniconda_path=${2?miniconda path is required}
 	local conda_channels=${3}
 
-	case $(uname -s) in
-		Linux*)
-			conda_packages="conda-linux-64.lock"
-			;;
-		Darwin*)
-			conda_packages="conda-osx-64.lock"
-			;;
-		*)
-			n8l::fail "Cannot configure miniconda env: unsupported platform $(uname -s)"
-			;;
-	esac
-
-	local baseurl="https://raw.githubusercontent.com/lsst/scipipe_conda_env/${ref}/etc/"
-	local tmpfile
-
 	(
 		set -Eeo pipefail
 
-		tmpfile=$(mktemp -t "${conda_packages//X/_}.XXXXXXXX")
-		# remove unneccesary tmpfile created by mktemp, the (unique) tmpfile name provided by mktemp 
-		# is used to create a different tmpfile with extension .yml
-		rm -rf "${tmpfile}"
-		tmpfile="${tmpfile}.yml"
-		# attempt to be a good citizen and not leave tmp files laying around
-		# after either a normal exit or an error condition
-		# shellcheck disable=SC2064
-		trap "{ rm -rf $tmpfile; }" EXIT
-		$cmd "$CURL" "$CURL_OPTS" \
-			-L \
-			"${baseurl}/${conda_packages}" \
-			--output "$tmpfile"
-
 		args=()
 		args+=('create')
+		args+=('-y')
 		args+=('--name' "$LSST_CONDA_ENV_NAME")
 
 		# disable the conda install progress bar when not attached to a tty. Eg.,
@@ -522,7 +494,8 @@ n8l::miniconda::lsst_env() {
 			args+=("--quiet")
 		fi
 
-		args+=("--file" "$tmpfile")
+		args+=("-c conda-forge")
+		args+=("rubin-env=${ref}")
 
 		$cmd conda "${args[@]}"
 		echo "Cleaning conda environment..."
@@ -670,15 +643,14 @@ n8l::miniconda::bootstrap() {
 	eval "$__miniconda_path_result=$miniconda_path"
 }
 
-#
-# $EUPS_PYTHON is the Python used to install/run EUPS.  It can be any Python >=
-# v2.6
+# 
+# Renamed from install_eups to prepare_eups
+# Since Jan 2021 eups is provided with rubin-env
+# This function is used to rename all eups installation to legacy
+#  and to set-up the proper eups_path
 #
 # XXX this function should be broken up to enable better unit testing.
-n8l::install_eups() {
-	# We have already verified conda is installed - no need to check
-	echo "Using python at ${EUPS_PYTHON} to install EUPS"
-	conda activate "$LSST_CONDA_ENV_NAME"
+n8l::prepare_eups() {
 
 	# if there is an existing, unversioned install, renamed it to "legacy"
 	if [[ -e "$(n8l::eups_base_dir)/Release_Notes" ]]; then
@@ -693,63 +665,21 @@ n8l::install_eups() {
 		mv "$eups_tmp_dir" "$eups_legacy_dir"
 	fi
 
-	echo -n "Installing EUPS ($(n8l::eups_slug))... "
-
-	# remove previous install
-	if [[ -e $(n8l::eups_dir) ]]; then
-		chmod -R +w "$(n8l::eups_dir)"
-		rm -rf "$(n8l::eups_dir)"
-	fi
-
-	local eups_build_dir="$LSST_HOME/_build"
-
-	# make is absent from many minimal linux images
-	n8l::require_cmds make awk sed
-
-	if [[ $LSST_USE_CONDA_SYSTEM != true ]]; then
-		n8l::require_cmds "${CC:-cc}"
-	fi
-
-	if ! ( set -Eeo pipefail
-		mkdir "$eups_build_dir"
-		cd "$eups_build_dir"
-
-		if [[ -z $LSST_EUPS_GITREV ]]; then
-			# Download tarball from github
-			$cmd "$CURL" "$CURL_OPTS" -L "$LSST_EUPS_TARURL" | tar xzvf -
-			$cmd cd "eups-${LSST_EUPS_VERSION}"
+	# if there is an old eups installation, built from GitHub, renamed to "legacy"
+	if [[ -e "$(n8l::eups_dir)/Release_Notes" ]]; then
+		if [ ! -d "${LSST_HOME}/eups-legacy" ]; then
+			mv "$(n8l::eups_base_dir)" "${LSST_HOME}/eups-legacy"
 		else
-		  n8l::require_cmds git
-			# Clone from git repository
-			$cmd git clone "$EUPS_GITREPO" eups
-			$cmd cd eups
-			$cmd git checkout "$LSST_EUPS_GITREV"
+			echo "Found eups-legacy, remove it before moving old eups to legacy"
 		fi
-
-		$cmd ./configure \
-			--prefix="$(n8l::eups_dir)" \
-			--with-eups="$(n8l::eups_path)" \
-			--with-python="$EUPS_PYTHON"
-		$cmd make install
-	) > eupsbuild.log 2>&1 ; then
-		n8l::fail "$(cat <<-EOF
-			FAILED.
-			"See log in eupsbuild.log"
-			EOF
-		)"
 	fi
 
-	# symlinks should be relative to support relocation of the newinstall root
-
-	# update $EUPS_DIR current symlink
-	n8l::ln_rel "$(n8l::eups_dir)" current
+	# create eups_path and subfolders
+	mkdir -p "$(n8l::eups_path)"/{site,ups_db}
 
 	# update EUPS_PATH current symlink
 	n8l::ln_rel "$(n8l::eups_path)" current
 
-	conda deactivate
-
-	echo " done."
 }
 
 n8l::problem_vars() {
@@ -799,12 +729,16 @@ n8l::generate_loader_bash() {
 	local eups_pkgroot=${2?eups_pkgroot is required}
 	local miniconda_path=$3
 
+	local eups_path
+	eups_path="$(n8l::eups_path)"
+
 	if [[ -n $miniconda_path ]]; then
 		local cmd_setup_miniconda
 		cmd_setup_miniconda="$(cat <<-EOF
 			export LSST_CONDA_ENV_NAME=\${LSST_CONDA_ENV_NAME:-${LSST_CONDA_ENV_NAME}}
 			# shellcheck disable=SC1091
-			source "${miniconda_path}/bin/activate" "\$LSST_CONDA_ENV_NAME"
+			source "${miniconda_path}/etc/profile.d/conda.sh" 
+			conda activate "\$LSST_CONDA_ENV_NAME"
 		EOF
 		)"
 	fi
@@ -818,12 +752,7 @@ n8l::generate_loader_bash() {
 		${cmd_setup_miniconda}
 		LSST_HOME="\$( cd "\$( dirname "\${BASH_SOURCE[0]}" )" && pwd )"
 
-		# Bootstrap EUPS
-		EUPS_DIR="\${LSST_HOME}/eups/$(n8l::eups_slug)"
-		source "\${EUPS_DIR}/bin/setups.sh"
-		export -f setup
-		export -f unsetup
-
+		export EUPS_PATH="$eups_path"
 		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$eups_pkgroot}
 	EOF
 }
@@ -832,6 +761,9 @@ n8l::generate_loader_ksh() {
 	local file_name=${1?file_name is required}
 	local eups_pkgroot=${2?eups_pkgroot is required}
 	local miniconda_path=$3
+
+	local eups_path
+	eups_path="$(n8l::eups_path)"
 
 	if [[ -n $miniconda_path ]]; then
 		# XXX untested
@@ -853,11 +785,8 @@ n8l::generate_loader_ksh() {
 		${cmd_setup_miniconda}
 		LSST_HOME="\$( cd "\$( dirname "\${.sh.file}" )" && pwd )"
 
-		# Bootstrap EUPS
-		EUPS_DIR="\${LSST_HOME}/eups/$(n8l::eups_slug)"
-		source "\${EUPS_DIR}/bin/setups.sh"
-
 		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$eups_pkgroot}
+		export EUPS_PATH="$eups_path"
 	EOF
 }
 
@@ -865,6 +794,9 @@ n8l::generate_loader_zsh() {
 	local file_name=${1?file_name is required}
 	local eups_pkgroot=${2?eups_pkgroot is required}
 	local miniconda_path=$3
+
+	local eups_path
+	eups_path="$(n8l::eups_path)"
 
 	if [[ -n $miniconda_path ]]; then
 		# XXX untested
@@ -885,10 +817,7 @@ n8l::generate_loader_zsh() {
 		${cmd_setup_miniconda}
 		LSST_HOME=\`dirname "\$0:A"\`
 
-		# Bootstrap EUPS
-		EUPS_DIR="\${LSST_HOME}/eups/$(n8l::eups_slug)"
-		source "\${EUPS_DIR}/bin/setups.zsh"
-
+		export EUPS_PATH="$eups_path"
 		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$eups_pkgroot}
 	EOF
 }
@@ -1021,9 +950,12 @@ n8l::main() {
 		"$LSST_SPLENV_REF" \
 		"$LSST_CONDA_CHANNELS"
 
+	# Prepare EUPS
+	n8l::prepare_eups
+
 	# Use conda base environment's python
 	# shellcheck disable=SC2153
-	EUPS_PYTHON=${MINICONDA_PATH}/bin/python
+	export EUPS_PYTHON=${MINICONDA_PATH}/bin/python
 
 	if [[ $PRESERVE_EUPS_PKGROOT_FLAG == true ]]; then
 		EUPS_PKGROOT=${EUPS_PKGROOT:-$(
@@ -1040,10 +972,8 @@ n8l::main() {
 				$LSST_USE_CONDA_SYSTEM
 		)
 	fi
-	n8l::print_error "Configured EUPS_PKGROOT: ${EUPS_PKGROOT}"
 
-	# Install EUPS
-	n8l::install_eups
+	n8l::print_error "Configured EUPS_PKGROOT: ${EUPS_PKGROOT}"
 
 	# Create the environment loader scripts
 	# shellcheck disable=SC2153
