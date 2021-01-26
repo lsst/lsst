@@ -755,6 +755,7 @@ n8l::generate_loader_bash() {
 		LSST_HOME="\$( cd "\$( dirname "\${BASH_SOURCE[0]}" )" && pwd )"
 
 		export EUPS_PATH="$eups_path"
+		export RUBIN_EUPS_PATH="\${EUPS_PATH}"
 		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$eups_pkgroot}
 	EOF
 }
@@ -789,6 +790,7 @@ n8l::generate_loader_ksh() {
 
 		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$eups_pkgroot}
 		export EUPS_PATH="$eups_path"
+		export RUBIN_EUPS_PATH="\${EUPS_PATH}"
 	EOF
 }
 
@@ -820,6 +822,7 @@ n8l::generate_loader_zsh() {
 		LSST_HOME=\`dirname "\$0:A"\`
 
 		export EUPS_PATH="$eups_path"
+		export RUBIN_EUPS_PATH="\${EUPS_PATH}"
 		export EUPS_PKGROOT=\${EUPS_PKGROOT:-$eups_pkgroot}
 	EOF
 }
