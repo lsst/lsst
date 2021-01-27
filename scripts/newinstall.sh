@@ -467,7 +467,9 @@ n8l::miniconda::config_channels() {
 	$cmd conda config --env --remove-key channels 2>/dev/null || true
 
 	for c in $channels; do
-		$cmd conda config --env --add channels "$c"
+		if [[ "$c" != defaults ]]; then
+			$cmd conda config --env --add channels "$c"
+		fi
 	done
 
 	$cmd conda config --env --set channel_priority strict
