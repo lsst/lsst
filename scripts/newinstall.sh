@@ -11,16 +11,6 @@
 
 set -Eeo pipefail
 
-#
-# Note to developers: change these when the EUPS version we use changes
-#
-
-LSST_EUPS_VERSION=${LSST_EUPS_VERSION:-2.1.5}
-
-LSST_EUPS_GITREV=${LSST_EUPS_GITREV:-}
-LSST_EUPS_GITREPO=${LSST_EUPS_GITREPO:-https://github.com/RobertLuptonTheGood/eups.git}
-LSST_EUPS_TARURL=${LSST_EUPS_TARURL:-https://github.com/RobertLuptonTheGood/eups/archive/${LSST_EUPS_VERSION}.tar.gz}
-
 LSST_EUPS_PKGROOT_BASE_URL=${LSST_EUPS_PKGROOT_BASE_URL:-https://eups.lsst.codes/stack}
 LSST_EUPS_USE_TARBALLS=${LSST_EUPS_USE_TARBALLS:-false}
 LSST_EUPS_USE_EUPSPKG=${LSST_EUPS_USE_EUPSPKG:-true}
@@ -46,6 +36,14 @@ LSST_HOME="$PWD"
 
 # the canonical source of this script
 NEWINSTALL_URL="https://raw.githubusercontent.com/lsst/lsst/master/scripts/newinstall.sh"
+
+#
+# These EUPS variables are purely for legacy purposes.
+#
+LSST_EUPS_VERSION=${LSST_EUPS_VERSION:-2.1.5}
+LSST_EUPS_GITREV=${LSST_EUPS_GITREV:-}
+LSST_EUPS_GITREPO=${LSST_EUPS_GITREPO:-https://github.com/RobertLuptonTheGood/eups.git}
+LSST_EUPS_TARURL=${LSST_EUPS_TARURL:-https://github.com/RobertLuptonTheGood/eups/archive/${LSST_EUPS_VERSION}.tar.gz}
 
 #
 # removing leading/trailing whitespace from a string
