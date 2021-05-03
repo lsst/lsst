@@ -627,7 +627,7 @@ n8l::miniconda::bootstrap() {
 	echo "Using conda at ${miniconda_path}"
 
 	# Activate the base conda environment before continuing
-	# shellcheck disable=SC1090
+	# shellcheck disable=SC1090,SC1091
 	source "$miniconda_path/bin/activate"
 
 	if [[ -e ${miniconda_path}/envs/${LSST_CONDA_ENV_NAME} ]]; then
