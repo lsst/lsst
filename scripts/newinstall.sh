@@ -854,10 +854,12 @@ n8l::print_greeting() {
 			source "${LSST_HOME}/loadLSST.zsh"   # for zsh
 
 		Individual LSST packages may now be installed with the usual \`eups distrib
-		install\` command.  For example, to install the science pipeline elements
-		of the LSST stack, use:
+		install\` command.  For example, to install the latest weekly release of the
+		LSST Science Pipelines full distribution, use:
 
-			eups distrib install lsst_apps
+			eups distrib install -t w_latest lsst_distrib
+
+		An official release tag such as "v21_0_0" can also be used.
 
 		Next, read the documentation at:
 
@@ -869,8 +871,6 @@ n8l::print_greeting() {
 
 	                                       Thanks!
 	                                                -- The LSST Software Teams
-	                                                       http://dm.lsst.org/
-
 	EOF
 }
 
