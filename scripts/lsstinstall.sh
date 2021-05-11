@@ -255,4 +255,27 @@ for ext in ash zsh; do
     $dryrun ln loadLSST.bash "loadLSST.$ext"
 done
 
+cat <<EOF
+
+Bootstrap complete. To continue installing (and to use) the LSST stack type
+one of:
+    source "${cwd}/loadLSST.bash"  # for bash
+    source "${cwd}/loadLSST.ksh"   # for ksh
+    source "${cwd}/loadLSST.zsh"   # for zsh
+or
+    source "${cwd}/envconfig"      # for lsstsw clones
+
+Individual LSST packages may now be installed with the usual \`eups distrib
+install\` command.  For example, to install the latest weekly release of the
+LSST Science Pipelines full distribution, use:
+
+    eups distrib install -t w_latest lsst_distrib
+
+An official release tag such as "v21_0_0" can also be used.
+
+Next, read the documentation at
+    https://pipelines.lsst.io
+and feel free to ask any questions via the LSST Community forum:
+    https://community.lsst.org/c/support
+EOF
 # vim: tabstop=4 shiftwidth=4 expandtab
