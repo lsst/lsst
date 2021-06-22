@@ -474,6 +474,29 @@ n8l::miniconda::config_channels() {
 	$cmd conda config --env --show
 }
 
+n8l::get_tagged_env() {
+  eups_root=https://eups.lsst.codes/stack
+  env_version=$($CURL "${CURL_OPTS[@]}" -L "$eups_root/src/tags/$1.list" \
+    | grep '^#CONDA_ENV=' | cut -d= -f2) \
+    || fail "Unable to determine conda env"
+  platform="$(uname -s)"
+  case "$platform" in
+    Linux)
+      eups_platform="redhat/el7/conda-system/miniconda3-${LSST_MINICONDA_VERSION}-$env_version"
+      ;;
+    Darwin)
+      eups_platform="osx/10.9/conda-system/miniconda3-${LSST_MINICONDA_VERSION}-$env_version"
+      ;;
+    *)
+      fail "Unknown platform: $platform"
+      ;;
+  esac
+
+  $CURL "${CURL_OPTS[@]}" -O "$eups_root/$eups_platform/env/$1.env" \
+    || fail "Unable to download environment spec for tag $1"
+  echo "$env_version"
+}
+
 # Install packages on which the stack is known to depend
 n8l::miniconda::lsst_env() {
 	local ref=${1?lsstsw git ref is required}
@@ -497,12 +520,18 @@ n8l::miniconda::lsst_env() {
 		for c in $conda_channels; do
 			args+=("-c $c")
 		done
-		args+=("rubin-env=${ref}")
+		if [[ "$ref" == [dsvw]* ]]; then
+			args+=("--file" "${ref}.env")
+		else
+			args+=("rubin-env=${ref}")
+		fi
 
 		$cmd conda "${args[@]}"
 		echo "Cleaning conda environment..."
 		conda clean -y -a > /dev/null
 		echo "done"
+
+		rm -f "${ref}.env"
 	)
 
 	# Switch to installed conda environment
@@ -635,6 +664,9 @@ n8l::miniconda::bootstrap() {
 	fi
 
 	if [[ -n $splenv_ref ]]; then
+		if [[ "$splenv_ref" == [dsvw]* ]]; then
+			LSST_SPLENV_REF=$(n8l::get_tagged_env "$splenv_ref")
+		fi
 		n8l::miniconda::lsst_env "$splenv_ref" "$miniconda_path" "$conda_channels"
 	fi
 
