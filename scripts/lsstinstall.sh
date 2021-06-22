@@ -70,18 +70,21 @@ while getopts ntST:X:v:e:P:m:E:bch opt; do
             use_source=false
             ;;
         T)
-            ( [ -n "$eups_tag" ] || [ -n "$rubinenv_version" ] ) && \
+            if [ -n "$eups_tag" ] || [ "$rubinenv_version" != "latest" ]; then
                 print_error "Only one of -T -X -v allowed" && usage
+            fi
             eups_tag="$OPTARG"
             ;;
         X)
-            ( [ -n "$eups_tag" ] || [ -n "$rubinenv_version" ] ) && \
+            if [ -n "$eups_tag" ] || [ "$rubinenv_version" != "latest" ]; then
                 print_error "Only one of -T -X -v allowed" && usage
+            fi
             eups_tag="$OPTARG"; exact=true
             ;;
         v)
-            ( [ -n "$eups_tag" ] || [ -n "$rubinenv_version" ] ) && \
+            if [ -n "$eups_tag" ] || [ "$rubinenv_version" != "latest" ]; then
                 print_error "Only one of -T -X -v allowed" && usage
+            fi
             rubinenv_version="$OPTARG"
             ;;
         e)
@@ -180,7 +183,7 @@ if [ -n "$eups_tag" ]; then
     # First conda-system hash is 46b24e8 w_2020_20; before uses devtools
     rubinenv_version=$(run_curl "$src_root/tags/${eups_tag}.list" \
         | grep '^#CONDA_ENV=' | cut -d= -f2) \
-	|| fail "Unable to determine conda env"
+        || fail "Unable to determine conda env"
     env_hash=$(expr "$rubinenv_version" : 'https:.*@\(.*\)')
     [ -n "$env_hash" ] && rubinenv_version=$env_hash
 fi
@@ -205,19 +208,19 @@ binary_root="$eups_root/${eups_platform}"
 # Install rubin-env environment if necessary
 
 rubinenv_name=${rubinenv_name:-lsst-scipipe-$rubinenv_version}
-[ "$exact" = true -a -n "$env_hash" ] && rubinenv_name="${rubinenv_name}-exact"
+[ "$exact" = true ] && [ -n "$env_hash" ] && rubinenv_name="${rubinenv_name}-exact"
 
 
 if conda info --envs --json | grep "\"$rubinenv_name\"" > /dev/null 2>&1; then
     echo "Using existing environment $rubinenv_name"
-elif [ "$exact" = true -o -n "$env_hash" ]; then
+elif [ "$exact" = true ] || [ -n "$env_hash" ]; then
     if [ -n "$env_hash" ]; then
         if [ "$platform" = Linux ]; then
             env_platform=linux-64
         else
             env_platform=osx-64
         fi
-	env_base="https://raw.githubusercontent.com/lsst/scipipe_conda_env"
+        env_base="https://raw.githubusercontent.com/lsst/scipipe_conda_env"
         url="${env_base}/${env_hash}/etc/conda-${env_platform}.lock"
     else
         url="$binary_root/env/${eups_tag}.env"
