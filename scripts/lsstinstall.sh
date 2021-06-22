@@ -70,12 +70,18 @@ while getopts ntST:X:v:e:P:m:E:bch opt; do
             use_source=false
             ;;
         T)
+            ( [ -n "$eups_tag" ] || [ -n "$rubinenv_version" ] ) && \
+                print_error "Only one of -T -X -v allowed" && usage
             eups_tag="$OPTARG"
             ;;
         X)
+            ( [ -n "$eups_tag" ] || [ -n "$rubinenv_version" ] ) && \
+                print_error "Only one of -T -X -v allowed" && usage
             eups_tag="$OPTARG"; exact=true
             ;;
         v)
+            ( [ -n "$eups_tag" ] || [ -n "$rubinenv_version" ] ) && \
+                print_error "Only one of -T -X -v allowed" && usage
             rubinenv_version="$OPTARG"
             ;;
         e)
@@ -170,12 +176,13 @@ command -v mamba >/dev/null && mamba=mamba && export MAMBA_NO_BANNER=1
 
 src_root="$eups_root/src"
 if [ -n "$eups_tag" ]; then
+    # TODO Works for w_2020_15 or later
+    # First conda-system hash is 46b24e8 w_2020_20; before uses devtools
     rubinenv_version=$(run_curl "$src_root/tags/${eups_tag}.list" \
-        | grep '^#CONDA_ENV=' | cut -d= -f2 || echo "latest")
-    # if https://github.com/lsst/scipipe_conda_env.git@hash
-    # separate into URL and hash
-    # platform = linux-64 or osx-64
-    # https://raw.githubusercontent.com/lsst/scipipe_conda_env/$hash/etc/conda-${platform}.lock
+        | grep '^#CONDA_ENV=' | cut -d= -f2) \
+	|| fail "Unable to determine conda env"
+    env_hash=$(expr "$rubinenv_version" : 'https:.*@\(.*\)')
+    [ -n "$env_hash" ] && rubinenv_version=$env_hash
 fi
 if [ -z "$dryrun" ] && [ "$rubinenv_version" = latest ]; then
     rubinenv_version=$(conda search --json rubin-env \
@@ -184,23 +191,38 @@ fi
 
 # Determine EUPS binary root
 
+miniconda_version="miniconda3-py38_4.9.2"
+# TODO if [ -n "$env_hash" ]; then binary_root is trickier
+# 4.7.12 through w_2020_24, py37_4.8.2 after
+# miniconda root may change in the future, but there is no real need for it
 if [ "$platform" = Linux ]; then
-    eups_platform="redhat/el7/conda-system/miniconda3-py38_4.9.2-$rubinenv_version"
+    eups_platform="redhat/el7/conda-system/${miniconda_version}-$rubinenv_version"
 else
-    eups_platform="osx/10.9/conda-system/miniconda3-py38_4.9.2-$rubinenv_version"
+    eups_platform="osx/10.9/conda-system/${miniconda_version}-$rubinenv_version"
 fi
 binary_root="$eups_root/${eups_platform}"
 
 # Install rubin-env environment if necessary
 
 rubinenv_name=${rubinenv_name:-lsst-scipipe-$rubinenv_version}
+[ "$exact" = true -a -n "$env_hash" ] && rubinenv_name="${rubinenv_name}-exact"
+
+
 if conda info --envs --json | grep "\"$rubinenv_name\"" > /dev/null 2>&1; then
     echo "Using existing environment $rubinenv_name"
-# elif rubinenv_version is a hash, load that
-elif [ "$exact" = true ]; then
-    rubinenv_name="${rubinenv_name}-exact"
-    url="$binary_root/env/${eups_tag}.env"
-    $dryrun run_curl -O "$url" \
+elif [ "$exact" = true -o -n "$env_hash" ]; then
+    if [ -n "$env_hash" ]; then
+        if [ "$platform" = Linux ]; then
+            env_platform=linux-64
+        else
+            env_platform=osx-64
+        fi
+	env_base="https://raw.githubusercontent.com/lsst/scipipe_conda_env"
+        url="${env_base}/${env_hash}/etc/conda-${env_platform}.lock"
+    else
+        url="$binary_root/env/${eups_tag}.env"
+    fi
+    $dryrun run_curl -o "${eups_tag}.env" "$url" \
         || fail "Unable to download environment spec for tag $eups_tag"
     $dryrun $mamba create -y -n "$rubinenv_name" --file "${eups_tag}.env"
     $dryrun rm "${eups_tag}.env"
