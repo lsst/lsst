@@ -194,16 +194,28 @@ fi
 
 # Determine EUPS binary root
 
-miniconda_version="miniconda3-py38_4.9.2"
-# TODO if [ -n "$env_hash" ]; then binary_root is trickier
-# 4.7.12 through w_2020_24, py37_4.8.2 after
-# miniconda root may change in the future, but there is no real need for it
-if [ "$platform" = Linux ]; then
-    eups_platform="redhat/el7/conda-system/${miniconda_version}-$rubinenv_version"
+get_binary_root () {
+    if [ "$platform" = Linux ]; then
+        eups_platform="redhat/el7/conda-system/${1}-$rubinenv_version"
+    else
+        eups_platform="osx/10.9/conda-system/${1}-$rubinenv_version"
+    fi
+    echo "$eups_root/${eups_platform}"
+}
+
+if [ -n "$env_hash" ]; then
+    binary_root=$(get_binary_root miniconda3-py37-4.7.12)
+    if run_curl "$binary_root" > /dev/null 2>&1; then
+	next_root=$(get_binary_root miniconda3-py37_4.8.2)
+	if run_curl "$next_root" > /dev/null 2>&1; then
+            binary_root="$binary_root|$next_root"
+	fi
+    else
+	binary_root=$(get_binary_root miniconda3-py37_4.8.2)
+    fi
 else
-    eups_platform="osx/10.9/conda-system/${miniconda_version}-$rubinenv_version"
+    binary_root=$(get_binary_root miniconda3-py38_4.9.2)
 fi
-binary_root="$eups_root/${eups_platform}"
 
 # Install rubin-env environment if necessary
 
@@ -229,6 +241,10 @@ elif [ "$exact" = true ] || [ -n "$env_hash" ]; then
         || fail "Unable to download environment spec for tag $eups_tag"
     $dryrun $mamba create -y -n "$rubinenv_name" --file "${eups_tag}.env"
     $dryrun rm "${eups_tag}.env"
+    if [ -n "$env_hash" ]; then
+        # scipipe_conda_env did not have eups
+        $dryrun $mamba install -y -n "$rubinenv_name" --no-update-deps eups
+    fi
 else
     $dryrun $mamba create -y -n "$rubinenv_name" "rubin-env=$rubinenv_version"
 fi
