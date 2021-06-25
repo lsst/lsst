@@ -518,7 +518,7 @@ n8l::miniconda::lsst_env() {
 		fi
 
 		for c in $conda_channels; do
-			args+=("-c $c")
+			args+=("-c" "$c")
 		done
 		if [[ "$ref" == [dsvw]* ]]; then
 			args+=("--file" "${ref}.env")
@@ -527,11 +527,23 @@ n8l::miniconda::lsst_env() {
 		fi
 
 		$cmd conda "${args[@]}"
+
+		# Update rubin-env to latest build of specified version
+		if [[ "$ref" == [dsvw]* ]]; then
+			args=("install" "-y")
+			args+=("--no-update-deps" "--strict-channel-priority")
+			args+=("-n" "$LSST_CONDA_ENV_NAME")
+			for c in $conda_channels; do
+				args+=("-c" "$c")
+			done
+			args+=("rubin-env==$LSST_SPLENV_REF")
+			$cmd conda "${args[@]}"
+			rm -f "${ref}.env"
+		fi
+
 		echo "Cleaning conda environment..."
 		conda clean -y -a > /dev/null
 		echo "done"
-
-		rm -f "${ref}.env"
 	)
 
 	# Switch to installed conda environment
