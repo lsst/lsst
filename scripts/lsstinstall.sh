@@ -251,7 +251,7 @@ fi
 
 # Create eups stack and set EUPS_PKGROOT
 
-EUPS_PATH="$cwd/stack/$rubinenv_name"
+EUPS_PATH="$cwd/stack/lsst-scipipe-$rubinenv_version"
 $dryrun mkdir -p "$EUPS_PATH/site" "$EUPS_PATH/ups_db"
 
 if [ "$use_source" = true ]; then
