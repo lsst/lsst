@@ -510,6 +510,7 @@ n8l::miniconda::lsst_env() {
 		args+=('create')
 		args+=('-y')
 		args+=('--name' "$LSST_CONDA_ENV_NAME")
+		args+=('--strict-channel-priority')
 
 		# disable the conda install progress bar when not attached to a tty. Eg.,
 		# when running under CI
