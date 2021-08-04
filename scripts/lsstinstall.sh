@@ -171,6 +171,9 @@ if [ -z "$dryrun" ]; then
     __conda_setup=$("$conda_path/bin/conda" "shell.$(basename "$SHELL")" \
         hook 2>/dev/null) || fail "Unknown shell"
     eval "$__conda_setup" || fail "Unable to start conda"
+    # shellcheck source=/dev/null
+    [ -f "$conda_path/etc/profile.d/mamba.sh" ] && . "$conda_path/etc/profile.d/mamba.sh"
+fi
 fi
 mamba=conda
 command -v mamba >/dev/null && mamba=mamba && export MAMBA_NO_BANNER=1
@@ -271,7 +274,7 @@ fi
 # Create load scripts
 
 if [ -z "$dryrun" ]; then
-    cat > loadLSST.bash <<EOF
+    cat > loadLSST.sh <<EOF
 __conda_setup="\$($conda_path/bin/conda shell.\$(basename "\$SHELL") hook 2>/dev/null)" \\
     || { echo "Unknown shell"; exit 1; }
 eval "\$__conda_setup" || { echo "Unable to start conda"; exit 1; }
@@ -282,29 +285,28 @@ export RUBIN_EUPS_PATH="\$EUPS_PATH"
 export EUPS_PKGROOT="$EUPS_PKGROOT"
 EOF
     cat > envconfig <<EOF
-source loadLSST.\$(basename "\$SHELL") # passes arguments
+source $(pwd)/loadLSST.\$(basename "\$SHELL") # passes arguments
 [ -e "$EUPS_PATH/site/manifest.remap" ] \
     || ln -s etc/manifest.remap "$EUPS_PATH/site/manifest.remap"
 setup -r "${cwd}/lsst_build"
 EOF
 else
     echo "EUPS_PKGROOT=$EUPS_PKGROOT"
-    echo "cat > loadLSST.bash"
+    echo "cat > loadLSST.sh"
     echo "cat > envconfig"
 fi
-for ext in ash zsh; do
-    $dryrun ln loadLSST.bash "loadLSST.$ext"
+for ext in ash bash fish zsh; do
+    # For now, all of these are identical
+    $dryrun ln loadLSST.sh "loadLSST.$ext"
 done
 
 cat <<EOF
 
 Bootstrap complete. To continue installing (and to use) the LSST stack type
 one of:
-    source "${cwd}/loadLSST.bash"  # for bash
-    source "${cwd}/loadLSST.ksh"   # for ksh
-    source "${cwd}/loadLSST.zsh"   # for zsh
+    source "${cwd}/loadLSST.sh"  # for bash, ash, fish, zsh
 or
-    source "${cwd}/envconfig"      # for lsstsw clones
+    source "${cwd}/envconfig"    # for lsstsw clones
 
 Individual LSST packages may now be installed with the usual \`eups distrib
 install\` command.  For example, to install the latest weekly release of the
