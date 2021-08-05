@@ -672,10 +672,11 @@ n8l::miniconda::bootstrap() {
 	# shellcheck disable=SC1090,SC1091
 	source "$miniconda_path/bin/activate"
 
-	if [[ -e "${miniconda_path}/envs/${LSST_CONDA_ENV_NAME}" ]] \
-		|| [[ "$LSST_CONDA_ENV_NAME" == "base" ]]; then
-		echo "An environment named \"${LSST_CONDA_ENV_NAME}\" already exists; using it"
-	elif [[ -n $splenv_ref ]]; then
+	if [[ -e ${miniconda_path}/envs/${LSST_CONDA_ENV_NAME} ]]; then
+		echo "An environment named ${LSST_CONDA_ENV_NAME} already exists"
+	fi
+
+	if [[ -n $splenv_ref ]]; then
 		if [[ "$splenv_ref" == [dsvw]* ]]; then
 			LSST_SPLENV_REF=$(n8l::get_tagged_env "$splenv_ref")
 		fi
