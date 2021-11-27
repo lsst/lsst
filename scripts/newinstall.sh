@@ -35,7 +35,7 @@ LSST_USE_CONDA_SYSTEM=${LSST_USE_CONDA_SYSTEM:-true}
 LSST_HOME="$PWD"
 
 # the canonical source of this script
-NEWINSTALL_URL="https://raw.githubusercontent.com/lsst/lsst/master/scripts/newinstall.sh"
+NEWINSTALL_URL="https://raw.githubusercontent.com/lsst/lsst/main/scripts/newinstall.sh"
 
 #
 # These EUPS variables are purely for legacy purposes.

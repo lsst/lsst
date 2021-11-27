@@ -8,7 +8,7 @@ describe 'n8l::up2date_check' do
   let(:stubbed_env) { create_stubbed_env }
   subject(:func) { 'n8l::up2date_check' }
 
-  context 'script matches master' do
+  context 'script matches main' do
     it 'prints nothing' do
       stubbed_env.stub_command('diff').returns_exitstatus(0)
 
@@ -22,9 +22,9 @@ describe 'n8l::up2date_check' do
       expect(err).to eq('')
       expect(status.exitstatus).to be 0
     end
-  end # script matches master
+  end # script matches main
 
-  context 'script out of sync with master' do
+  context 'script out of sync with main' do
     it 'prints a non-fatal warning' do
       stubbed_env.stub_command('diff').returns_exitstatus(1)
 
@@ -38,9 +38,9 @@ describe 'n8l::up2date_check' do
       expect(err).to match(/This script differs from the official version/)
       expect(status.exitstatus).to be 0
     end
-  end # script out of sync with master
+  end # script out of sync with main
 
-  context 'unknown error comparing source against master' do
+  context 'unknown error comparing source against main' do
     it 'prints a non-fatal warning' do
       stubbed_env.stub_command('diff').returns_exitstatus(2)
 
@@ -54,5 +54,5 @@ describe 'n8l::up2date_check' do
       expect(err).to match(/There is an error in comparing/)
       expect(status.exitstatus).to be 0
     end
-  end # unknown error comparing source against master
+  end # unknown error comparing source against main
 end
