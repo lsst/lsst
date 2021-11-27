@@ -737,7 +737,7 @@ n8l::problem_vars() {
 	)
 	local found=()
 
-	for v in ${problems[*]}; do
+	for v in "${problems[@]}"; do
 		if [[ -n ${!v+1} ]]; then
 			found+=("$v")
 		fi
@@ -757,7 +757,7 @@ n8l::problem_vars_check() {
 			EOF
 		} | n8l::fmt)"
 
-		for v in ${problems[*]}; do
+		for v in "${problems[@]}"; do
 			n8l::print_error "${v}=\"${!v}\""
 		done
 
