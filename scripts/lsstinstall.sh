@@ -174,7 +174,7 @@ if [ -z "$dryrun" ]; then
     # shellcheck source=/dev/null
     [ -f "$conda_path/etc/profile.d/mamba.sh" ] && . "$conda_path/etc/profile.d/mamba.sh"
 fi
-fi
+
 mamba=conda
 command -v mamba >/dev/null && mamba=mamba && export MAMBA_NO_BANNER=1
 
@@ -249,7 +249,8 @@ elif [ "$exact" = true ] || [ -n "$env_hash" ]; then
         $dryrun $mamba install -y -n "$rubinenv_name" --no-update-deps eups
     fi
 else
-    $dryrun $mamba create -y -n "$rubinenv_name" "rubin-env=$rubinenv_version"
+    $dryrun $mamba create -y -n "$rubinenv_name" \
+      --strict-channel-priority "rubin-env=$rubinenv_version"
 fi
 
 # Create eups stack and set EUPS_PKGROOT
