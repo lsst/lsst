@@ -144,7 +144,7 @@ run_curl () {
 
 # Activate conda, installing if necessary
 
-if [ -z "$(command -v conda)" ]; then
+if [ -n "$(command -v conda)" ]; then
     conda_path=$CONDA_PREFIX
 fi
 conda_path="${conda_path:-$cwd/conda}"
