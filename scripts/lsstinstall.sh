@@ -280,10 +280,11 @@ else
       --strict-channel-priority "rubin-env=$rubinenv_version"
 fi
 
-# Create eups stack and set EUPS_PKGROOT
+# Activate environment to set EUPS_PATH
 
-EUPS_PATH="$cwd/stack/lsst-scipipe-$rubinenv_version"
-$dryrun mkdir -p "$EUPS_PATH/site" "$EUPS_PATH/ups_db"
+$dryrun conda activate "$rubinenv_name"
+
+# Set EUPS_PKGROOT
 
 if [ "$use_source" = true ]; then
     if [ "$use_tarball" = true ]; then
@@ -297,6 +298,12 @@ else
     else
         EUPS_PKGROOT=""
     fi
+fi
+if [ -n "$dryrun" ]; then
+    echo "writing EUPS_PKGROOT to \$EUPS_PATH/pkgroot"
+else
+    [ -f "$EUPS_PATH/pkgroot" ] && echo "$EUPS_PATH/pkgroot exists; overwriting"
+    echo "$EUPS_PKGROOT" > "$EUPS_PATH/pkgroot"
 fi
 
 # Create load scripts
@@ -313,16 +320,7 @@ __conda_setup="\$($conda_path/bin/conda shell.\$(basename "\$SHELL") hook 2>/dev
     || { echo "Unknown shell"; exit 1; }
 eval "\$__conda_setup" || { echo "Unable to start conda"; exit 1; }
 export LSST_CONDA_ENV_NAME=\${1:-\${LSST_CONDA_ENV_NAME:-$rubinenv_name}}
-conda activate "\$LSST_CONDA_ENV_NAME"
-export EUPS_PATH="$EUPS_PATH"
-export RUBIN_EUPS_PATH="\$EUPS_PATH"
-export EUPS_PKGROOT="$EUPS_PKGROOT"
-EOF
-    cat > envconfig <<EOF
-source $(pwd)/loadLSST.\$(basename "\$SHELL") # passes arguments
-[ -e "$EUPS_PATH/site/manifest.remap" ] \
-    || ln -s etc/manifest.remap "$EUPS_PATH/site/manifest.remap"
-setup -r "${cwd}/lsst_build"
+conda activate "\$LSST_CONDA_ENV_NAME" && export EUPS_PKGROOT=\$(cat \$EUPS_PATH/pkgroot)
 EOF
 fi
 # For now, all of these are identical; csh is unsupported
