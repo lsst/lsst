@@ -163,14 +163,21 @@ else
         || fail "Unable to get Mambaforge script for $platform $arch from $url"
     $dryrun bash "Mambaforge-$platform-${arch}.sh" -b -p "$conda_path" \
         || fail "Unable to install Mambaforge"
-    $dryrun rm "Mambaforge-$platform-${arch}.sh"
+    $dryrun rm -f "Mambaforge-$platform-${arch}.sh"
 fi
-if [ -z "$dryrun" ]; then
-    __conda_setup=$("$conda_path/bin/conda" "shell.$(basename "$SHELL")" \
-        hook 2>/dev/null) || fail "Unknown shell"
-    eval "$__conda_setup" || fail "Unable to start conda"
-    # shellcheck source=/dev/null
-    [ -f "$conda_path/etc/profile.d/mamba.sh" ] && . "$conda_path/etc/profile.d/mamba.sh"
+if [ -n "$dryrun" ]; then
+    echo "setup conda/mamba shell functions"
+else
+    if ! type conda 2> /dev/null | grep "function" > /dev/null 2>&1; then
+        __conda_setup=$("$conda_path/bin/conda" "shell.$(basename "$SHELL")" \
+            hook 2>/dev/null) || fail "Unknown shell"
+        eval "$__conda_setup" || fail "Unable to start conda"
+    fi
+    if ! type mamba 2> /dev/null | grep "function" > /dev/null 2>&1 \
+        && [ -f "$conda_path/etc/profile.d/mamba.sh" ]; then
+        # shellcheck source=/dev/null
+        . "$conda_path/etc/profile.d/mamba.sh"
+    fi
 fi
 
 mamba=conda
@@ -252,7 +259,7 @@ elif [ "$exact" = true ] || [ -n "$env_hash" ]; then
     $dryrun run_curl -o "${eups_tag}.env" "$url" \
         || fail "Unable to download environment spec for tag $eups_tag"
     $dryrun $mamba create -y -n "$rubinenv_name" --file "${eups_tag}.env"
-    $dryrun rm "${eups_tag}.env"
+    $dryrun rm -f "${eups_tag}.env"
     if [ -n "$env_hash" ]; then
         # scipipe_conda_env did not have eups
         $dryrun $mamba install -y -n "$rubinenv_name" --no-update-deps eups
