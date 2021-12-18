@@ -319,6 +319,7 @@ else
 __conda_setup="\$($conda_path/bin/conda shell.\$(basename "\$SHELL") hook 2>/dev/null)" \\
     || { echo "Unknown shell"; exit 1; }
 eval "\$__conda_setup" || { echo "Unable to start conda"; exit 1; }
+[ -f "$conda_path/etc/profile.d/mamba.sh" ] && . "$conda_path/etc/profile.d/mamba.sh"
 export LSST_CONDA_ENV_NAME=\${1:-\${LSST_CONDA_ENV_NAME:-$rubinenv_name}}
 conda activate "\$LSST_CONDA_ENV_NAME" && export EUPS_PKGROOT=\$(cat \$EUPS_PATH/pkgroot)
 EOF
