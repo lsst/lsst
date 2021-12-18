@@ -147,14 +147,15 @@ run_curl () {
 # Activate conda, installing if necessary
 
 if [ -n "$(command -v conda)" ]; then
-    conda_path=$CONDA_PREFIX
+    conda_path=$(expr "$CONDA_EXE" : '\(.*\)/bin/conda')
+else
+    conda_path="${conda_path:-$cwd/conda}"
 fi
-conda_path="${conda_path:-$cwd/conda}"
 if [ -x "$conda_path/bin/conda" ]; then
     echo "Using existing conda at $conda_path"
 else
-    [ -e "$conda_path" ] && \
-        fail "$conda_path exists but does not appear to contain conda"
+    [ -e "$conda_path" ] \
+        && fail "$conda_path exists but does not appear to contain conda"
     echo "Installing Mambaforge conda at $conda_path"
     url="https://github.com/conda-forge/miniforge/releases/latest/download"
     url="$url/Mambaforge-$platform-${arch}.sh"
