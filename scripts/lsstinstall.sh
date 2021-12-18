@@ -7,10 +7,10 @@
 
 # Default values
 dryrun=
-miniforge_version=latest
 rubinenv_version=latest
+update=false
 eups_root=https://eups.lsst.codes/stack
-use_tarball=false
+use_tarball=true
 use_source=true
 
 print_error () {
@@ -26,45 +26,47 @@ fail () {
 
 usage () {
     cat <<EOF
-usage: lsstinstall.sh [-n] [-t] [-S]
+usage: lsstinstall.sh [-n]
        [-T EUPS_TAG | -X EUPS_TAG | -v RUBINENV_VERSION]
-       [-e ENV_NAME] [-P CONDA_PATH] [-m MINIFORGE_VERSION] [-E EUPS_URL] [-h]
+       [-e ENV_NAME] [-u] [-P CONDA_PATH] [-E EUPS_URL]
+       [-B] [-S] [-h]
     Installs the Rubin software conda environment.
     Enables the eups distrib install command for Science Pipelines packages.
 
     -n  -- No-op.  Echo commands instead of running.
-    -t  -- Use pre-compiled EUPS "tarball" packages, if available.
-    -S  -- DO NOT use EUPS source packages.
     -T EUPS_TAG
-        -- Select the rubin-env version used to build the given EUPS_TAG
+        -- Select the rubin-env version used to build the given EUPS_TAG.
     -X EUPS_TAG
-        -- Select the exact environment used to build the given EUPS_TAG
+        -- Select the exact environment used to build the given EUPS_TAG.
     -v RUBINENV_VERSION
         -- Select a particular rubin-env version (default=latest).
     -e ENV_NAME
         -- Specify the environment name to use; if it exists, assume that
            it is compatible and should be used.
+    -u  -- Update rubin-env in an existing environment to the latest build.
     -P CONDA_PATH
-        -- Use an existing conda installation (default=create a new one)..
-    -m MINIFORGE_VERSION
-        -- Select a particular miniforge/mambaforge version (default=latest).
+        -- Use an existing conda installation (default=create a new one).
+           If a conda is activated, it will be used, ignoring this option.
     -E EUPS_URL
-        -- Select a different EUPS root URL
+        -- Select a different EUPS distribution server root URL
            (default=https://eups.lsst.codes/stack).
+    -B  -- DO NOT use binary "tarball" eups packages.
+    -S  -- DO NOT use source eups packages.
     -b  -- ignored for backward compatibility.
     -c  -- ignored for backward compatibility.
+    -t  -- ignored for backward compatibility.
     -h  -- Display this help message.
 EOF
     exit 1
 }
 
-while getopts ntST:X:v:e:P:m:E:bch opt; do
+while getopts nBST:X:v:e:uP:m:E:bcth opt; do
     case "$opt" in
         n)
             dryrun="echo"
             ;;
-        t)
-            use_tarball=true
+        B)
+            use_tarball=false
             ;;
         S)
             use_source=false
@@ -90,16 +92,16 @@ while getopts ntST:X:v:e:P:m:E:bch opt; do
         e)
             rubinenv_name="$OPTARG"
             ;;
+        u)
+            update="true"
+            ;;
         P)
             conda_path="$OPTARG"
-            ;;
-        m)
-            miniforge_version="$OPTARG"
             ;;
         E)
             eups_root="$OPTARG"
             ;;
-        b | c)
+        b | c | t)
             ;;
         h)
             usage
@@ -154,12 +156,7 @@ else
     [ -e "$conda_path" ] && \
         fail "$conda_path exists but does not appear to contain conda"
     echo "Installing Mambaforge conda at $conda_path"
-    url="https://github.com/conda-forge/miniforge/releases"
-    if [ "$miniforge_version" = latest ]; then
-        url="$url/latest/download"
-    else
-        url="$url/download/$miniforge_version"
-    fi
+    url="https://github.com/conda-forge/miniforge/releases/latest/download"
     url="$url/Mambaforge-$platform-${arch}.sh"
     $dryrun run_curl -O "$url" \
         || fail "Unable to get Mambaforge script for $platform $arch from $url"
@@ -225,9 +222,20 @@ fi
 rubinenv_name=${rubinenv_name:-lsst-scipipe-$rubinenv_version}
 [ "$exact" = true ] && [ -n "$env_hash" ] && rubinenv_name="${rubinenv_name}-exact"
 
-
-if conda info --envs --json | grep "\"$rubinenv_name\"" > /dev/null 2>&1; then
+use_existing=false
+if [ -z "$dryrun" ] && conda info --envs --json | grep "\"$rubinenv_name\"" > /dev/null 2>&1; then
+    use_existing=true
+fi
+if [ -n "$dryrun" ] && [ -d "$conda_path/envs/$rubinenv_name" ]; then
+    use_existing=true
+fi
+if [ "$use_existing" = true ]; then
     echo "Using existing environment $rubinenv_name"
+    if [ "$update" = true ] && [ "$exact" != true ] && [ -z "$env_hash" ]; then
+        echo "Updating rubin-env=$rubinenv_version"
+        $dryrun $mamba update -y -n "$rubinenv_name" \
+            --strict-channel-priority "rubin-env=$rubinenv_version"
+    fi
 elif [ "$exact" = true ] || [ -n "$env_hash" ]; then
     if [ -n "$env_hash" ]; then
         if [ "$platform" = Linux ]; then
