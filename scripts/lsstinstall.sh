@@ -187,17 +187,24 @@ command -v mamba >/dev/null && mamba=mamba && export MAMBA_NO_BANNER=1
 
 src_root="$eups_root/src"
 if [ -n "$eups_tag" ]; then
-    # TODO Works for w_2020_15 or later
-    # First conda-system hash is 46b24e8 w_2020_20; before uses devtools
-    rubinenv_version=$(run_curl "$src_root/tags/${eups_tag}.list" \
-        | grep '^#CONDA_ENV=' | cut -d= -f2) \
-        || fail "Unable to determine conda env"
-    env_hash=$(expr "$rubinenv_version" : 'https:.*@\(.*\)')
-    [ -n "$env_hash" ] && rubinenv_version=$env_hash
-fi
-if [ -z "$dryrun" ] && [ "$rubinenv_version" = latest ]; then
-    rubinenv_version=$(conda search --json rubin-env \
-        | grep '"version":' | tail -1 | cut -d\" -f4)
+    if [ -n "$dryrun" ]; then
+        echo "get rubin-env version from distribution server for $eups_tag"
+    else
+        # TODO Works for w_2020_15 or later
+        # First conda-system hash is 46b24e8 w_2020_20; before uses devtools
+        rubinenv_version=$(run_curl "$src_root/tags/${eups_tag}.list" \
+            | grep '^#CONDA_ENV=' | cut -d= -f2) \
+            || fail "Unable to determine conda env"
+        env_hash=$(expr "$rubinenv_version" : 'https:.*@\(.*\)')
+        [ -n "$env_hash" ] && rubinenv_version=$env_hash
+    fi
+elif [ "$rubinenv_version" = latest ]; then
+    if [ -n "$dryrun" ]; then
+        echo "conda search for latest rubin-env version"
+    else
+        rubinenv_version=$(conda search --json rubin-env \
+            | grep '"version":' | tail -1 | cut -d\" -f4)
+    fi
 fi
 
 # Determine EUPS binary root
@@ -212,14 +219,18 @@ get_binary_root () {
 }
 
 if [ -n "$env_hash" ]; then
-    binary_root=$(get_binary_root miniconda3-py37-4.7.12)
-    if run_curl "$binary_root" > /dev/null 2>&1; then
-	next_root=$(get_binary_root miniconda3-py37_4.8.2)
-	if run_curl "$next_root" > /dev/null 2>&1; then
-            binary_root="$binary_root|$next_root"
-	fi
+    if [ -n "$dryrun" ]; then
+        echo "search distribution server for binary root"
     else
-	binary_root=$(get_binary_root miniconda3-py37_4.8.2)
+        binary_root=$(get_binary_root miniconda3-py37-4.7.12)
+        if run_curl "$binary_root" > /dev/null 2>&1; then
+            next_root=$(get_binary_root miniconda3-py37_4.8.2)
+            if run_curl "$next_root" > /dev/null 2>&1; then
+                binary_root="$binary_root|$next_root"
+            fi
+        else
+            binary_root=$(get_binary_root miniconda3-py37_4.8.2)
+        fi
     fi
 else
     binary_root=$(get_binary_root miniconda3-py38_4.9.2)
@@ -290,7 +301,13 @@ fi
 
 # Create load scripts
 
-if [ -z "$dryrun" ]; then
+if [ -f loadLSST.sh ]; then
+    echo "loadLSST.sh exists; not overwriting"
+elif [ -n "$dryrun" ]; then
+    echo "EUPS_PKGROOT=$EUPS_PKGROOT"
+    echo "cat > loadLSST.sh"
+    echo "cat > envconfig"
+else
     cat > loadLSST.sh <<EOF
 __conda_setup="\$($conda_path/bin/conda shell.\$(basename "\$SHELL") hook 2>/dev/null)" \\
     || { echo "Unknown shell"; exit 1; }
@@ -307,14 +324,12 @@ source $(pwd)/loadLSST.\$(basename "\$SHELL") # passes arguments
     || ln -s etc/manifest.remap "$EUPS_PATH/site/manifest.remap"
 setup -r "${cwd}/lsst_build"
 EOF
-else
-    echo "EUPS_PKGROOT=$EUPS_PKGROOT"
-    echo "cat > loadLSST.sh"
-    echo "cat > envconfig"
 fi
+# For now, all of these are identical; csh is unsupported
 for ext in ash bash fish zsh; do
-    # For now, all of these are identical
-    $dryrun ln loadLSST.sh "loadLSST.$ext"
+    if [ ! -f "loadLSST.$ext" ]; then
+        $dryrun ln loadLSST.sh "loadLSST.$ext"
+    fi
 done
 
 cat <<EOF
