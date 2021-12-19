@@ -149,7 +149,7 @@ run_curl () {
 
 # Activate conda, installing if necessary
 
-if [ -n "$(command -v conda)" ]; then
+if [ -n "$(command -v conda)" ] && [ -n "$CONDA_EXE" ]; then
     conda_path=$(expr "$CONDA_EXE" : '\(.*\)/bin/conda')
 else
     conda_path="${conda_path:-$cwd/conda}"
