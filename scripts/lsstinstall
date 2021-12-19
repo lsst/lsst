@@ -169,7 +169,7 @@ else
     $dryrun rm -f "Mambaforge-$platform-${arch}.sh"
 fi
 if [ -n "$dryrun" ]; then
-    echo "setup conda/mamba shell functions"
+    $dryrun setup conda/mamba shell functions
 else
     if ! type conda 2> /dev/null | grep "function" > /dev/null 2>&1; then
         __conda_setup=$("$conda_path/bin/conda" "shell.$(basename "$SHELL")" \
@@ -293,7 +293,7 @@ else
     fi
 fi
 if [ -n "$dryrun" ]; then
-    echo "writing EUPS_PKGROOT to \$EUPS_PATH/pkgroot"
+    $dryrun echo "$EUPS_PKGROOT" \> "\$EUPS_PATH/pkgroot"
 else
     [ -f "$EUPS_PATH/pkgroot" ] && echo "$EUPS_PATH/pkgroot exists; overwriting"
     echo "$EUPS_PKGROOT" > "$EUPS_PATH/pkgroot"
@@ -304,9 +304,7 @@ fi
 if [ -f loadLSST.sh ]; then
     echo "loadLSST.sh exists; not overwriting"
 elif [ -n "$dryrun" ]; then
-    echo "EUPS_PKGROOT=$EUPS_PKGROOT"
-    echo "cat > loadLSST.sh"
-    echo "cat > envconfig"
+    $dryrun cat \> loadLSST.sh
 else
     cat > loadLSST.sh <<EOF
 __conda_setup="\$($conda_path/bin/conda shell.\$(basename "\$SHELL") hook 2>/dev/null)" \\
