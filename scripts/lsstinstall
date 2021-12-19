@@ -3,7 +3,7 @@
 # Manage a stack installation or an lsstsw clone
 # Installs conda if an existing one is not used
 # Creates lsst-scipipe-{version} environment if it doesn't exist
-# Creates an eups "stack" directory for the environment if it doesn't exist
+# Records appropriate EUPS_PKGROOT in the environment's eups stack
 
 # Default values
 dryrun=
@@ -138,9 +138,13 @@ esac
 
 run_curl () {
     _c=curl
+    # Silent, show errors
     _opt="-sS"
+    # Use /usr/bin/curl if available for consistency
     [ -x /usr/bin/curl ] && _c=/usr/bin/curl
+    # If running interactively, output progress
     [ -t 1 ] && _opt="-#"
+    # Fail on error, follow redirects, and retry on transient errors
     $_c -fL --retry 3 $_opt "$@"
 }
 
