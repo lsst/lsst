@@ -132,7 +132,6 @@ case "$arch" in
         ;;
     *)
         fail "Unknown architecture: $arch"
-        exit 1
         ;;
 esac
 
