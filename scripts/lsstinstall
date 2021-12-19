@@ -202,13 +202,11 @@ if [ -n "$eups_tag" ]; then
         [ -n "$env_hash" ] && rubinenv_version=$env_hash
     fi
 elif [ "$rubinenv_version" = latest ]; then
-    if [ -n "$dryrun" ]; then
-        echo "conda search for latest rubin-env version"
-    else
-        rubinenv_version=$(conda search --json rubin-env \
-            | grep '"version":' | tail -1 | cut -d\" -f4)
-    fi
+    rubinenv_version=$(run_curl \
+        "https://api.anaconda.org/package/conda-forge/rubin-env" \
+        | grep \"latest_version\" | cut -d\" -f4)
 fi
+echo "Selected rubin-env=$rubinenv_version"
 
 # Determine EUPS binary root
 
