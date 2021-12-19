@@ -63,7 +63,7 @@ EOF
 while getopts nBST:X:v:e:uP:m:E:bcth opt; do
     case "$opt" in
         n)
-            dryrun="echo"
+            dryrun="echo \$ "
             ;;
         B)
             use_tarball=false
@@ -190,17 +190,13 @@ command -v mamba >/dev/null && mamba=mamba && export MAMBA_NO_BANNER=1
 
 src_root="$eups_root/src"
 if [ -n "$eups_tag" ]; then
-    if [ -n "$dryrun" ]; then
-        echo "get rubin-env version from distribution server for $eups_tag"
-    else
-        # TODO Works for w_2020_15 or later
-        # First conda-system hash is 46b24e8 w_2020_20; before uses devtools
-        rubinenv_version=$(run_curl "$src_root/tags/${eups_tag}.list" \
-            | grep '^#CONDA_ENV=' | cut -d= -f2) \
-            || fail "Unable to determine conda env"
-        env_hash=$(expr "$rubinenv_version" : 'https:.*@\(.*\)')
-        [ -n "$env_hash" ] && rubinenv_version=$env_hash
-    fi
+    # TODO Works for w_2020_15 or later
+    # First conda-system hash is 46b24e8 w_2020_20; before uses devtools
+    rubinenv_version=$(run_curl "$src_root/tags/${eups_tag}.list" \
+        | grep '^#CONDA_ENV=' | cut -d= -f2)
+    [ -z "$rubinenv_version" ] && fail "Unable to determine conda env"
+    env_hash=$(expr "$rubinenv_version" : 'https:.*@\(.*\)')
+    [ -n "$env_hash" ] && rubinenv_version=$env_hash
 elif [ "$rubinenv_version" = latest ]; then
     rubinenv_version=$(run_curl \
         "https://api.anaconda.org/package/conda-forge/rubin-env" \
@@ -220,18 +216,14 @@ get_binary_root () {
 }
 
 if [ -n "$env_hash" ]; then
-    if [ -n "$dryrun" ]; then
-        echo "search distribution server for binary root"
-    else
-        binary_root=$(get_binary_root miniconda3-py37-4.7.12)
-        if run_curl "$binary_root" > /dev/null 2>&1; then
-            next_root=$(get_binary_root miniconda3-py37_4.8.2)
-            if run_curl "$next_root" > /dev/null 2>&1; then
-                binary_root="$binary_root|$next_root"
-            fi
-        else
-            binary_root=$(get_binary_root miniconda3-py37_4.8.2)
+    binary_root=$(get_binary_root miniconda3-py37-4.7.12)
+    if run_curl "$binary_root" > /dev/null 2>&1; then
+        next_root=$(get_binary_root miniconda3-py37_4.8.2)
+        if run_curl "$next_root" > /dev/null 2>&1; then
+            binary_root="$binary_root|$next_root"
         fi
+    else
+        binary_root=$(get_binary_root miniconda3-py37_4.8.2)
     fi
 else
     binary_root=$(get_binary_root miniconda3-py38_4.9.2)
