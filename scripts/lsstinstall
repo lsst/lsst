@@ -234,7 +234,7 @@ fi
 # Install rubin-env environment if necessary
 
 rubinenv_name=${rubinenv_name:-lsst-scipipe-$rubinenv_version}
-[ "$exact" = true ] && [ -n "$env_hash" ] && rubinenv_name="${rubinenv_name}-exact"
+[ "$exact" = true ] && [ -z "$env_hash" ] && rubinenv_name="${rubinenv_name}-exact"
 
 use_existing=false
 if [ -z "$dryrun" ] && conda info --envs --json | grep "\"$rubinenv_name\"" > /dev/null 2>&1; then
