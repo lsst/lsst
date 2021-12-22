@@ -200,6 +200,9 @@ elif [ "$rubinenv_version" = latest ]; then
     rubinenv_version=$(run_curl \
         "https://api.anaconda.org/package/conda-forge/rubin-env" \
         | grep \"latest_version\" | cut -d\" -f4)
+elif expr "$rubinenv_version" : '[0-9a-f]*$' > /dev/null; then
+    env_hash="$rubinenv_version"
+    eups_tag="$rubinenv_version"
 fi
 echo "Selected rubin-env=$rubinenv_version"
 
