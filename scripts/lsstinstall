@@ -107,7 +107,6 @@ while getopts nBST:X:v:e:uP:m:E:bcth opt; do
             usage
             ;;
         *)
-            print_error "Unknown option: $opt"
             usage
             ;;
     esac
