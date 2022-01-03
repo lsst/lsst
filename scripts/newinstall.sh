@@ -904,7 +904,7 @@ n8l::print_greeting() {
 
 			eups distrib install -t w_latest lsst_distrib
 
-		An official release tag such as "v21_0_0" can also be used.
+		An official release tag such as "v23_0_0" can also be used.
 
 		Next, read the documentation at:
 
