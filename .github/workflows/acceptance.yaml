@@ -29,6 +29,28 @@ jobs:
             "source loadLSST.${{ matrix.shell }} && \
              eups distrib install -t w_latest base"
 
+  macos-lsstinstall-matrix:
+    strategy:
+      matrix:
+        shell: [bash, zsh]
+        option: ["", "-B"]
+    name: macOS lsstinstall test
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: dryrun unit tests
+        run:  bash test-lsstinstall.bash
+      - name: install test
+        env:
+          DEVELOPER_DIR: /Applications/Xcode_11.7.app/Contents/Developer
+        run: |
+          mkdir stack
+          cd stack
+          ${{ matrix.shell }} -c \
+            "../scripts/lsstinstall -T w_latest ${{ matrix.option }} && \
+             source loadLSST.${{ matrix.shell }} && \
+             eups distrib install -t w_latest base"
+
   centos-matrix:
     strategy:
       matrix:
@@ -46,6 +68,30 @@ jobs:
           bash -c \
             "source loadLSST.bash && \
              eups distrib install -t w_latest base"
+
+  centos-lsstinstall:
+    strategy:
+      matrix:
+        container: ["centos:7", "rockylinux:8.5"]
+    name: Linux lsstinstall test
+    runs-on: ubuntu-latest
+    container: ${{ matrix.container }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: install prereqs
+        run: |
+          if [[ ${{ matrix.container }} == "rockylinux:8.5" ]]; then
+              dnf install -y diffutils
+          fi
+      - name: dryrun unit tests
+        run:  bash test-lsstinstall.bash
+      - name: install test
+        run: |
+          mkdir stack
+          cd stack
+          ../scripts/lsstinstall -T w_latest
+          source ./loadLSST.bash
+          eups distrib install -t w_latest base
 
   accept-interactive:
     name: Interactive tarball bash
