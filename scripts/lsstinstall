@@ -26,7 +26,7 @@ fail () {
 
 usage () {
     cat <<EOF
-usage: lsstinstall.sh [-n]
+usage: lsstinstall [-n]
        [-T EUPS_TAG | -X EUPS_TAG | -v RUBINENV_VERSION]
        [-e ENV_NAME] [-u] [-P CONDA_PATH] [-E EUPS_URL]
        [-B] [-S] [-h]
@@ -171,6 +171,16 @@ if [ -n "$dryrun" ]; then
     $dryrun setup conda/mamba shell functions
 else
     if ! type conda 2> /dev/null | grep "function" > /dev/null 2>&1; then
+        if [ -z "$SHELL" ]; then
+            if [ -n "$BASH_VERSION" ]; then
+                SHELL=bash
+            elif [ -n "$ZSH_NAME" ]; then
+                SHELL=zsh
+            else
+                # fall back to lowest common denominator shell
+                SHELL=dash
+            fi
+        fi
         __conda_setup=$("$conda_path/bin/conda" "shell.$(basename "$SHELL")" \
             hook 2>/dev/null) || fail "Unknown shell"
         eval "$__conda_setup" || fail "Unable to start conda"
@@ -309,6 +319,16 @@ elif [ -n "$dryrun" ]; then
     $dryrun cat \> loadLSST.sh
 else
     cat > loadLSST.sh <<EOF
+if [ -z "\$SHELL" ]; then
+    if [ -n "\$BASH_VERSION" ]; then
+        SHELL=bash
+    elif [ -n "\$ZSH_NAME" ]; then
+        SHELL=zsh
+    else
+        # fall back to lowest common denominator shell
+        SHELL=dash
+    fi
+fi
 __conda_setup="\$($conda_path/bin/conda shell.\$(basename "\$SHELL") hook 2>/dev/null)" \\
     || { echo "Unknown shell"; exit 1; }
 eval "\$__conda_setup" || { echo "Unable to start conda"; exit 1; }
