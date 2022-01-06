@@ -93,7 +93,7 @@ jobs:
           mkdir stack
           cd stack
           ../scripts/lsstinstall -T w_latest
-          source ./loadLSST.bash
+          . ./loadLSST.bash
           eups distrib install -t w_latest base
 
   accept-interactive:
