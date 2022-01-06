@@ -26,7 +26,7 @@ fail () {
 
 usage () {
     cat <<EOF
-usage: lsstinstall.sh [-n]
+usage: lsstinstall [-n]
        [-T EUPS_TAG | -X EUPS_TAG | -v RUBINENV_VERSION]
        [-e ENV_NAME] [-u] [-P CONDA_PATH] [-E EUPS_URL]
        [-B] [-S] [-h]
