@@ -319,6 +319,16 @@ elif [ -n "$dryrun" ]; then
     $dryrun cat \> loadLSST.sh
 else
     cat > loadLSST.sh <<EOF
+if [ -z "\$SHELL" ]; then
+    if [ -n "\$BASH_VERSION" ]; then
+        SHELL=bash
+    elif [ -n "\$ZSH_NAME" ]; then
+        SHELL=zsh
+    else
+        # fall back to lowest common denominator shell
+        SHELL=dash
+    fi
+fi
 __conda_setup="\$($conda_path/bin/conda shell.\$(basename "\$SHELL") hook 2>/dev/null)" \\
     || { echo "Unknown shell"; exit 1; }
 eval "\$__conda_setup" || { echo "Unable to start conda"; exit 1; }
