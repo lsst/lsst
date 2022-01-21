@@ -64,13 +64,13 @@ diff <( ./scripts/lsstinstall -n ) <( ./scripts/lsstinstall -nc -b -t )
 
 # Check explicit and implicit conda path and environment update handling.
 testdir=./testconda$$
-./scripts/lsstinstall -n -P "$testdir" | grepf '\$ bash Mambaforge-.*-x86_64\.sh -b -p '"$testdir"
+./scripts/lsstinstall -n -p "$testdir" | grepf '\$ bash Mambaforge-.*-x86_64\.sh -b -p '"$testdir"
 ( 
     mkdir -p "$testdir"/bin
-    xfail ./scripts/lsstinstall -n -P "$testdir"
+    xfail ./scripts/lsstinstall -n -p "$testdir"
     touch "$testdir"/bin/conda "$testdir"/bin/mamba
     chmod 700 "$testdir"/bin/conda "$testdir"/bin/mamba
-    ./scripts/lsstinstall -n -P "$testdir" | grepf 'Using existing conda at '"$testdir"
+    ./scripts/lsstinstall -n -p "$testdir" | grepf 'Using existing conda at '"$testdir"
     export PATH=$PATH:"$testdir"/bin
     export CONDA_EXE="$testdir"/bin/conda
     ./scripts/lsstinstall -n | grepf 'Using existing conda at '"$testdir"
@@ -82,6 +82,16 @@ testdir=./testconda$$
     rm -rf "$testdir"
 )
 
+# Check forced conda installation.
+./scripts/lsstinstall -n -P -p "$testdir" | grepf '\$ bash Mambaforge-.*-x86_64\.sh -b -p '"$testdir"
+CONDA_EXE="$testdir/bin/conda" ./scripts/lsstinstall -n -P -p "$testdir" | grepf '\$ bash Mambaforge-.*-x86_64\.sh -b -p '"$testdir"
+CONDA_EXE="somewhere/bin/conda" ./scripts/lsstinstall -n -P -p "$testdir" | grepf '\$ bash Mambaforge-.*-x86_64\.sh -b -p '"$testdir"
+(
+    mkdir -p "$testdir"/bin
+    xfail ./scripts/lsstinstall -n -P -p "$testdir"
+    rm -rf "$testdir"
+)
+
 # Test for argument parsing failures
 xfail ./scripts/lsstinstall -n -v cb4e2dc -T w_2021_11
 xfail ./scripts/lsstinstall -n -v cb4e2dc -X w_2021_11
@@ -90,7 +100,7 @@ xfail ./scripts/lsstinstall -n -T
 xfail ./scripts/lsstinstall -n -X
 xfail ./scripts/lsstinstall -n -v
 xfail ./scripts/lsstinstall -n -e
-xfail ./scripts/lsstinstall -n -P
+xfail ./scripts/lsstinstall -n -p
 xfail ./scripts/lsstinstall -n -E
 xfail ./scripts/lsstinstall -n -Z
 echo "ok"
