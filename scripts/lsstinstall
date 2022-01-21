@@ -28,7 +28,7 @@ usage () {
     cat <<EOF
 usage: lsstinstall [-n]
        [-T EUPS_TAG | -X EUPS_TAG | -v RUBINENV_VERSION]
-       [-e ENV_NAME] [-u] [-P CONDA_PATH] [-E EUPS_URL]
+       [-e ENV_NAME] [-u] [-p CONDA_PATH] [-P] [-E EUPS_URL]
        [-B] [-S] [-h]
     Installs the Rubin software conda environment.
     Enables the eups distrib install command for Science Pipelines packages.
@@ -44,9 +44,12 @@ usage: lsstinstall [-n]
         -- Specify the environment name to use; if it exists, assume that
            it is compatible and should be used.
     -u  -- Update rubin-env in an existing environment to the latest build.
-    -P CONDA_PATH
-        -- Use an existing conda installation (default=create a new one).
+    -p CONDA_PATH
+        -- Specify the path to the conda installation.
+           If a conda installation already exists there, it will be used.
+           If it does not exist, it will be created.
            If a conda is activated, it will be used, ignoring this option.
+    -P  -- DO NOT use an existing activated conda; always install a new one.
     -E EUPS_URL
         -- Select a different EUPS distribution server root URL
            (default=https://eups.lsst.codes/stack).
@@ -60,7 +63,7 @@ EOF
     exit 1
 }
 
-while getopts nBST:X:v:e:uP:m:E:bcth opt; do
+while getopts nBST:X:v:e:up:Pm:E:bcth opt; do
     case "$opt" in
         n)
             dryrun="echo \$ "
@@ -95,8 +98,12 @@ while getopts nBST:X:v:e:uP:m:E:bcth opt; do
         u)
             update="true"
             ;;
-        P)
+        p)
             conda_path="$OPTARG"
+            ;;
+        P)
+            # Force conda installation by removing knowledge of current conda
+            unset CONDA_EXE
             ;;
         E)
             eups_root="$OPTARG"
