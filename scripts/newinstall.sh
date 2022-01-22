@@ -506,6 +506,9 @@ n8l::miniconda::lsst_env() {
 	(
 		set -Eeo pipefail
 
+		# install mamba to speed up environment creation
+		$cmd conda install -c conda-forge -y mamba
+
 		args=()
 		args+=('create')
 		args+=('-y')
@@ -527,7 +530,7 @@ n8l::miniconda::lsst_env() {
 			args+=("rubin-env=${ref}")
 		fi
 
-		$cmd conda "${args[@]}"
+		$cmd mamba "${args[@]}"
 
 		# Update rubin-env to latest build of specified version
 		if [[ "$ref" == [dsvw]* ]]; then
