@@ -60,7 +60,7 @@ diff <( ./scripts/lsstinstall -n ) <( ./scripts/lsstinstall -nc -b -t )
 ./scripts/lsstinstall -n -e foo-lsst | grepf '\$ conda activate foo-lsst'
 
 # Check explicit EUPS root.
-./scripts/lsstinstall -n -E https://foo.lsst.test | grepf "\$ echo https://foo\.lsst\.test/.*/conda-system/miniconda3-py38_4\.9\.2-0\.7\.0|https://foo\.lsst\.test/src > \$EUPS_PATH/pkgroot"
+./scripts/lsstinstall -n -E https://foo.lsst.test | grepf "\$ echo https://foo\.lsst\.test/.*/conda-system/miniconda3-py38_4\.9\.2-[0-9.]*|https://foo\.lsst\.test/src > \$EUPS_PATH/pkgroot"
 
 # Check explicit and implicit conda path and environment update handling.
 testdir=./testconda$$
