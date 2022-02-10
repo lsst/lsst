@@ -63,7 +63,7 @@ EOF
     exit 1
 }
 
-while getopts nBST:X:v:e:up:Pm:E:bcth opt; do
+while getopts nBST:X:v:e:up:PE:bcth opt; do
     case "$opt" in
         n)
             dryrun="echo \$ "
