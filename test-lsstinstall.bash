@@ -92,6 +92,16 @@ CONDA_EXE="somewhere/bin/conda" ./scripts/lsstinstall -n -P -p "$testdir" | grep
     rm -rf "$testdir"
 )
 
+# Check new environment handling
+(
+    origdir=$(pwd)
+    mkdir -p "$testdir"
+    cd "$testdir"
+    touch ./loadLSST.sh
+    "${origdir}/scripts/lsstinstall" -n -v 3.0.0 | grepf "LSST_CONDA_ENV_NAME=lsst-scipipe-3.0.0 source "
+    rm -rf "$testdir"
+)
+
 # Test for argument parsing failures
 xfail ./scripts/lsstinstall -n -v cb4e2dc -T w_2021_11
 xfail ./scripts/lsstinstall -n -v cb4e2dc -X w_2021_11
