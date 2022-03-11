@@ -319,9 +319,10 @@ else
 fi
 
 # Create load scripts
-
+source_cmd=source
 if [ -f loadLSST.sh ]; then
     echo "loadLSST.sh exists; not overwriting"
+    source_cmd="LSST_CONDA_ENV_NAME=${rubinenv_name} source"
 elif [ -n "$dryrun" ]; then
     $dryrun cat \> loadLSST.sh
 else
@@ -355,9 +356,9 @@ cat <<EOF
 
 Bootstrap complete. To continue installing (and to use) the LSST stack type
 one of:
-    source "${cwd}/loadLSST.sh"  # for bash, ash, fish, zsh
+    ${source_cmd} "${cwd}/loadLSST.sh"  # for bash, ash, fish, zsh
 or
-    source "${cwd}/envconfig"    # for lsstsw clones
+    ${source_cmd} "${cwd}/envconfig"    # for lsstsw clones
 
 Individual LSST packages may now be installed with the usual \`eups distrib
 install\` command.  For example, to install the latest weekly release of the
