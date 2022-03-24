@@ -12,6 +12,7 @@ update=false
 eups_root=https://eups.lsst.codes/stack
 use_tarball=true
 use_source=true
+# channels is in _reverse_ priority order
 channels=
 
 print_error () {
@@ -110,7 +111,7 @@ while getopts nBST:X:v:e:up:PC:E:bcth opt; do
             unset CONDA_EXE
             ;;
         C)
-            channels="$channels -c $OPTARG"
+            channels="$OPTARG $channels"
             ;;
         E)
             eups_root="$OPTARG"
@@ -125,7 +126,7 @@ while getopts nBST:X:v:e:up:PC:E:bcth opt; do
             ;;
     esac
 done
-channels="$channels -c conda-forge"
+channels="conda-forge $channels"
 
 # Configure
 
@@ -209,6 +210,14 @@ fi
 
 mamba=conda
 command -v mamba >/dev/null && mamba=mamba && export MAMBA_NO_BANNER=1
+run_mamba () {
+    subcmd=$1; shift
+    set -- --strict-channel-priority "$@"
+    for c in $channels; do
+        set -- -c "$c" "$@"
+    done
+    $dryrun $mamba "$subcmd" "$@"
+}
 
 # Determine rubin-env version
 
@@ -272,8 +281,7 @@ if [ "$use_existing" = true ]; then
     echo "Using existing environment $rubinenv_name"
     if [ "$update" = true ] && [ "$exact" != true ] && [ -z "$env_hash" ]; then
         echo "Updating rubin-env=$rubinenv_version"
-        $dryrun $mamba update -y -n "$rubinenv_name" $channels \
-            --strict-channel-priority "rubin-env=$rubinenv_version"
+        run_mamba update -y -n "$rubinenv_name" "rubin-env=$rubinenv_version"
     fi
 elif [ "$exact" = true ] || [ -n "$env_hash" ]; then
     if [ -n "$env_hash" ]; then
@@ -289,15 +297,14 @@ elif [ "$exact" = true ] || [ -n "$env_hash" ]; then
     fi
     $dryrun run_curl -o "${eups_tag}.env" "$url" \
         || fail "Unable to download environment spec for tag $eups_tag"
-    $dryrun $mamba create -y -n "$rubinenv_name" --file "${eups_tag}.env"
+    run_mamba create -y -n "$rubinenv_name" --file "${eups_tag}.env"
     $dryrun rm -f "${eups_tag}.env"
     if [ -n "$env_hash" ]; then
         # scipipe_conda_env did not have eups
-        $dryrun $mamba install -y -n "$rubinenv_name" --no-update-deps eups
+        run_mamba install -y -n "$rubinenv_name" --no-update-deps eups
     fi
 else
-    $dryrun $mamba create -y -n "$rubinenv_name" $channels \
-      --strict-channel-priority "rubin-env=$rubinenv_version"
+    run_mamba create -y -n "$rubinenv_name" "rubin-env=$rubinenv_version"
 fi
 
 # Activate environment to set EUPS_PATH

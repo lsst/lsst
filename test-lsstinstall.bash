@@ -52,9 +52,9 @@ diff <( ./scripts/lsstinstall -n ) <( ./scripts/lsstinstall -nc -b -t )
 ./scripts/lsstinstall -n -X w_2021_01 | grepf '\$ run_curl -o w_2021_01\.env https://raw\.githubusercontent\.com/lsst/scipipe_conda_env/cb4e2dc/etc/conda-.*\.lock'
 # Hash environments are always exact.
 ./scripts/lsstinstall -n -X w_2021_01 | grepf '\$ conda activate lsst-scipipe-cb4e2dc$'
-./scripts/lsstinstall -n -v 0.4.2 | grepf '\$ [cm][oa][nm][db]a create -y -n lsst-scipipe-0\.4\.2 -c conda-forge --strict-channel-priority rubin-env=0\.4\.2'
+./scripts/lsstinstall -n -v 0.4.2 | grepf '\$ [cm][oa][nm][db]a create -c conda-forge --strict-channel-priority -y -n lsst-scipipe-0\.4\.2 rubin-env=0\.4\.2'
 ./scripts/lsstinstall -n -v cb4e2dc | grepf '\$ run_curl -o cb4e2dc\.env https://raw\.githubusercontent\.com/lsst/scipipe_conda_env/cb4e2dc/etc/conda-.*\.lock'
-./scripts/lsstinstall -n -v cb4e2dc | grepf '\$ [cm][oa][nm][db]a create -y -n lsst-scipipe-cb4e2dc --file cb4e2dc\.env'
+./scripts/lsstinstall -n -v cb4e2dc | grepf '\$ [cm][oa][nm][db]a create -c conda-forge --strict-channel-priority -y -n lsst-scipipe-cb4e2dc --file cb4e2dc\.env'
 
 # Check environment name handling.
 ./scripts/lsstinstall -n -e foo-lsst | grepf '\$ conda activate foo-lsst'
