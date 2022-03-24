@@ -12,6 +12,7 @@ update=false
 eups_root=https://eups.lsst.codes/stack
 use_tarball=true
 use_source=true
+channels=
 
 print_error () {
     >&2 echo "$@"
@@ -28,7 +29,7 @@ usage () {
     cat <<EOF
 usage: lsstinstall [-n]
        [-T EUPS_TAG | -X EUPS_TAG | -v RUBINENV_VERSION]
-       [-e ENV_NAME] [-u] [-p CONDA_PATH] [-P] [-E EUPS_URL]
+       [-e ENV_NAME] [-u] [-p CONDA_PATH] [-P] [-C CHANNEL] [-E EUPS_URL]
        [-B] [-S] [-h]
     Installs the Rubin software conda environment.
     Enables the eups distrib install command for Science Pipelines packages.
@@ -50,6 +51,9 @@ usage: lsstinstall [-n]
            If it does not exist, it will be created.
            If a conda is activated, it will be used, ignoring this option.
     -P  -- DO NOT use an existing activated conda; always install a new one.
+    -C CHANNEL
+        -- Use the given conda channel before the conda-forge channel.
+           May be repeated; first has highest priority.
     -E EUPS_URL
         -- Select a different EUPS distribution server root URL
            (default=https://eups.lsst.codes/stack).
@@ -63,7 +67,7 @@ EOF
     exit 1
 }
 
-while getopts nBST:X:v:e:up:PE:bcth opt; do
+while getopts nBST:X:v:e:up:PC:E:bcth opt; do
     case "$opt" in
         n)
             dryrun="echo \$ "
@@ -105,6 +109,9 @@ while getopts nBST:X:v:e:up:PE:bcth opt; do
             # Force conda installation by removing knowledge of current conda
             unset CONDA_EXE
             ;;
+        C)
+            channels="$channels -c $OPTARG"
+            ;;
         E)
             eups_root="$OPTARG"
             ;;
@@ -118,6 +125,7 @@ while getopts nBST:X:v:e:up:PE:bcth opt; do
             ;;
     esac
 done
+channels="$channels -c conda-forge"
 
 # Configure
 
@@ -264,7 +272,7 @@ if [ "$use_existing" = true ]; then
     echo "Using existing environment $rubinenv_name"
     if [ "$update" = true ] && [ "$exact" != true ] && [ -z "$env_hash" ]; then
         echo "Updating rubin-env=$rubinenv_version"
-        $dryrun $mamba update -y -n "$rubinenv_name" \
+        $dryrun $mamba update -y -n "$rubinenv_name" $channels \
             --strict-channel-priority "rubin-env=$rubinenv_version"
     fi
 elif [ "$exact" = true ] || [ -n "$env_hash" ]; then
@@ -288,7 +296,7 @@ elif [ "$exact" = true ] || [ -n "$env_hash" ]; then
         $dryrun $mamba install -y -n "$rubinenv_name" --no-update-deps eups
     fi
 else
-    $dryrun $mamba create -y -n "$rubinenv_name" \
+    $dryrun $mamba create -y -n "$rubinenv_name" $channels \
       --strict-channel-priority "rubin-env=$rubinenv_version"
 fi
 
