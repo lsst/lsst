@@ -4,7 +4,7 @@ $ bash Mambaforge-Darwin-x86_64.sh -b -p PWD/conda
 $ rm -f Mambaforge-Darwin-x86_64.sh
 $ setup conda/mamba shell functions
 Selected rubin-env=latest
-$ conda create -y -n lsst-scipipe-latest --strict-channel-priority rubin-env=latest
+$ conda create -c conda-forge --strict-channel-priority -y -n lsst-scipipe-latest rubin-env=latest
 $ conda activate lsst-scipipe-latest
 $ echo https://eups.lsst.codes/stack/osx/10.9/conda-system/miniconda3-py38_4.9.2-latest|https://eups.lsst.codes/stack/src > $EUPS_PATH/pkgroot
 $ cat > loadLSST.sh
