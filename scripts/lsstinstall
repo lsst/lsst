@@ -303,19 +303,23 @@ elif [ "$exact" = true ] || [ -n "$env_hash" ]; then
     fi
     $dryrun run_curl -o "${eups_tag}.env" "$url" \
         || fail "Unable to download environment spec for tag $eups_tag"
-    run_mamba create -y -n "$rubinenv_name" --file "${eups_tag}.env"
+    run_mamba create -y -n "$rubinenv_name" --file "${eups_tag}.env" \
+        || fail "Unable to create conda environment ${rubinenv_name}"
     $dryrun rm -f "${eups_tag}.env"
     if [ -n "$env_hash" ]; then
         # scipipe_conda_env did not have eups
-        run_mamba install -y -n "$rubinenv_name" --no-update-deps eups
+        run_mamba install -y -n "$rubinenv_name" --no-update-deps eups \
+            || fail "Unable to install eups into environment ${rubinenv_name}"
     fi
 else
-    run_mamba create -y -n "$rubinenv_name" "rubin-env=$rubinenv_version"
+    run_mamba create -y -n "$rubinenv_name" "rubin-env=$rubinenv_version" \
+        || fail "Unable to create conda environment ${rubinenv_name}"
 fi
 
 # Activate environment to set EUPS_PATH
 
-$dryrun conda activate "$rubinenv_name"
+$dryrun conda activate "$rubinenv_name" \
+    || fail "Unable to activate environment ${rubinenv_name}"
 
 # Set EUPS_PKGROOT
 
@@ -336,7 +340,7 @@ if [ -n "$dryrun" ]; then
     $dryrun echo "$EUPS_PKGROOT" \> "\$EUPS_PATH/pkgroot"
 else
     [ -f "$EUPS_PATH/pkgroot" ] && echo "$EUPS_PATH/pkgroot exists; overwriting"
-    echo "$EUPS_PKGROOT" > "$EUPS_PATH/pkgroot"
+    echo "$EUPS_PKGROOT" > "$EUPS_PATH/pkgroot" || fail "Unable to write pkgroot file"
 fi
 
 # Create load scripts
