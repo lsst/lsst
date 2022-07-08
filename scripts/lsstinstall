@@ -243,20 +243,24 @@ echo "Selected rubin-env=$rubinenv_version"
 # Determine EUPS binary root
 
 get_binary_root () {
-    if [ "$platform" = Linux ]; then
-        eups_platform="redhat/el7/conda-system/${1}-$rubinenv_version"
+    if [ "$arch" = x86_64 ]; then
+        if [ "$platform" = Linux ]; then
+            eups_platform="redhat/el7/conda-system/${1}-$rubinenv_version"
+        else
+            eups_platform="osx/10.9/conda-system/${1}-$rubinenv_version"
+        fi
+        echo "$eups_root/${eups_platform}"
     else
-        eups_platform="osx/10.9/conda-system/${1}-$rubinenv_version"
+        echo ""
     fi
-    echo "$eups_root/${eups_platform}"
 }
 
 if [ -n "$env_hash" ]; then
     binary_root=$(get_binary_root miniconda3-py37-4.7.12)
-    if run_curl "$binary_root" > /dev/null 2>&1; then
+    if [ -n "$binary_root" ] && run_curl "$binary_root" > /dev/null 2>&1; then
         next_root=$(get_binary_root miniconda3-py37_4.8.2)
         if run_curl "$next_root" > /dev/null 2>&1; then
-            binary_root="$binary_root|$next_root"
+            binary_root="$next_root|$binary_root"
         fi
     else
         binary_root=$(get_binary_root miniconda3-py37_4.8.2)
@@ -292,8 +296,10 @@ elif [ "$exact" = true ] || [ -n "$env_hash" ]; then
         fi
         env_base="https://raw.githubusercontent.com/lsst/scipipe_conda_env"
         url="${env_base}/${env_hash}/etc/conda-${env_platform}.lock"
-    else
+    elif [ -n "$binary_root" ]; then
         url="$binary_root/env/${eups_tag}.env"
+    else
+        fail "No exact environment for source-only platform/architecture"
     fi
     $dryrun run_curl -o "${eups_tag}.env" "$url" \
         || fail "Unable to download environment spec for tag $eups_tag"
@@ -314,7 +320,7 @@ $dryrun conda activate "$rubinenv_name"
 # Set EUPS_PKGROOT
 
 if [ "$use_source" = true ]; then
-    if [ "$use_tarball" = true ]; then
+    if [ "$use_tarball" = true ] && [ -n "$binary_root" ]; then
         EUPS_PKGROOT="$binary_root|$src_root"
     else
         EUPS_PKGROOT="$src_root"
