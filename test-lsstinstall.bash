@@ -77,6 +77,8 @@ testdir=./testconda$$
     ./scripts/lsstinstall -n | grepf '\$ mamba create '
 
     mkdir -p "$testdir"/envs/foo-lsst
+    ./scripts/lsstinstall -n -e foo-lsst | grepf 'Using existing environment foo-lsst'
+    ./scripts/lsstinstall -n -e foo-lsst | xfail grep 'Updating rubin-env=' 
     ./scripts/lsstinstall -n -u -e foo-lsst | grepf 'Updating rubin-env='
 
     rm -rf "$testdir"
