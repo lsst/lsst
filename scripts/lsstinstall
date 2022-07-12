@@ -274,14 +274,7 @@ fi
 rubinenv_name=${rubinenv_name:-lsst-scipipe-$rubinenv_version}
 [ "$exact" = true ] && [ -z "$env_hash" ] && rubinenv_name="${rubinenv_name}-exact"
 
-use_existing=false
-if [ -z "$dryrun" ] && conda info --envs --json | grep "\"$rubinenv_name\"" > /dev/null 2>&1; then
-    use_existing=true
-fi
-if [ -n "$dryrun" ] && [ -d "$conda_path/envs/$rubinenv_name" ]; then
-    use_existing=true
-fi
-if [ "$use_existing" = true ]; then
+if [ -d "$conda_path/envs/$rubinenv_name" ]; then
     echo "Using existing environment $rubinenv_name"
     if [ "$update" = true ] && [ "$exact" != true ] && [ -z "$env_hash" ]; then
         echo "Updating rubin-env=$rubinenv_version"
