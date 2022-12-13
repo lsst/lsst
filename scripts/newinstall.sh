@@ -623,7 +623,6 @@ n8l::conda_check() {
 					EOF
 				} | n8l::fmt
 				n8l::fail
-				break;
 				;;
 			* ) echo "Please answer yes or no.";;
 		esac
@@ -1013,16 +1012,16 @@ n8l::main() {
 	if [[ $PRESERVE_EUPS_PKGROOT_FLAG == true ]]; then
 		EUPS_PKGROOT=${EUPS_PKGROOT:-$(
 			n8l::default_eups_pkgroot \
-				$LSST_EUPS_USE_EUPSPKG \
-				$LSST_EUPS_USE_TARBALLS \
-				$LSST_USE_CONDA_SYSTEM
+				"$LSST_EUPS_USE_EUPSPKG" \
+				"$LSST_EUPS_USE_TARBALLS" \
+				"$LSST_USE_CONDA_SYSTEM"
 		)}
 	else
 		EUPS_PKGROOT=$(
 			n8l::default_eups_pkgroot \
-				$LSST_EUPS_USE_EUPSPKG \
-				$LSST_EUPS_USE_TARBALLS \
-				$LSST_USE_CONDA_SYSTEM
+				"$LSST_EUPS_USE_EUPSPKG" \
+				"$LSST_EUPS_USE_TARBALLS" \
+				"$LSST_USE_CONDA_SYSTEM"
 		)
 	fi
 
