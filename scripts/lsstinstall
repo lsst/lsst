@@ -30,8 +30,11 @@ usage () {
     cat <<EOF
 usage: lsstinstall [-n]
        [-T EUPS_TAG | -X EUPS_TAG | -v RUBINENV_VERSION]
-       [-e ENV_NAME] [-u] [-p CONDA_PATH] [-P] [-C CHANNEL] [-E EUPS_URL]
-       [-B] [-S] [-h]
+       [-e ENV_NAME] [-u] [-d]
+       [-p CONDA_PATH] [-P] [-C CHANNEL]
+       [-E EUPS_URL]
+       [-B] [-S]
+       [-h]
     Installs the Rubin software conda environment.
     Enables the eups distrib install command for Science Pipelines packages.
 
@@ -46,6 +49,7 @@ usage: lsstinstall [-n]
         -- Specify the environment name to use; if it exists, assume that
            it is compatible and should be used.
     -u  -- Update rubin-env in an existing environment to the latest build.
+    -d  -- Add a compatible rubin-env-developer to rubin-env (5.0.0 and later).
     -p CONDA_PATH
         -- Specify the path to the conda installation.
            If a conda installation already exists there, it will be used.
@@ -68,7 +72,7 @@ EOF
     exit 1
 }
 
-while getopts nBST:X:v:e:up:PC:E:bcth opt; do
+while getopts nBST:X:v:e:udp:PC:E:bcth opt; do
     case "$opt" in
         n)
             dryrun="echo \$ "
@@ -102,6 +106,9 @@ while getopts nBST:X:v:e:up:PC:E:bcth opt; do
             ;;
         u)
             update="true"
+            ;;
+        d)
+            add_developer="true"
             ;;
         p)
             conda_path="$OPTARG"
@@ -307,6 +314,11 @@ elif [ "$exact" = true ] || [ -n "$env_hash" ]; then
 else
     run_mamba create -y -n "$rubinenv_name" "rubin-env=$rubinenv_version" \
         || fail "Unable to create conda environment ${rubinenv_name}"
+fi
+if [ "$add_developer" = true ]; then
+    # Note: doesn't actually fail if rubin-env-developer can't be installed,
+    # but instead gives a message that an appropriate rubin-env can't be found.
+    run_mamba install -y -n "$rubinenv_name" --no-update-deps rubin-env-developer
 fi
 
 # Activate environment to set EUPS_PATH
