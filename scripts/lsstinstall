@@ -390,7 +390,7 @@ one of:
 or
     ${source_cmd} "${cwd}/envconfig"    # for lsstsw clones
 
-Individual LSST packages may now be installed with the usual \`eups distrib
+Individual LSST packages may then be installed with the usual \`eups distrib
 install\` command.  For example, to install the latest weekly release of the
 LSST Science Pipelines full distribution, use:
 
