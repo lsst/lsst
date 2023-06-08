@@ -48,7 +48,7 @@ describe 'n8l::miniconda::install' do
         )
 
         expect(status.exitstatus).to be 0
-        expect(out).to match(/Deploying Miniconda3-foo-Linux-x86_64.sh/)
+        expect(out).to match(/Deploying Miniconda3-latest-Linux-x86_64.sh/)
         expect(err).to eq('')
 
         expect(curl).to be_called_with_arguments.times(1)
@@ -61,7 +61,7 @@ describe 'n8l::miniconda::install' do
         )
         expect(bash).to be_called_with_arguments.times(1)
         expect(bash).to be_called_with_arguments(
-          %r{Miniconda3-foo-Linux-x86_64.sh},
+          %r{Miniconda3-latest-Linux-x86_64.sh},
           '-b',
           '-p',
           instance_of(String)
@@ -80,7 +80,7 @@ describe 'n8l::miniconda::install' do
         )
 
         expect(status.exitstatus).to be 0
-        expect(out).to match(/Deploying Miniconda3-foo-Linux-x86_64.sh/)
+        expect(out).to match(/Deploying Miniconda3-latest-Linux-x86_64.sh/)
         expect(err).to eq('')
 
         expect(curl).to be_called_with_arguments.times(1)
@@ -92,7 +92,7 @@ describe 'n8l::miniconda::install' do
           instance_of(String)
         )
         expect(bash).to be_called_with_arguments(
-          %r{Miniconda3-foo-Linux-x86_64.sh},
+          %r{Miniconda3-latest-Linux-x86_64.sh},
           '-b',
           '-p',
           instance_of(String)
@@ -107,7 +107,7 @@ describe 'n8l::miniconda::install' do
       'Darwin': 'MacOSX-x86_64',
     }.each do |k, v|
       it k do
-        installer = "Miniconda3-foo-#{v}.sh"
+        installer = "Miniconda3-latest-#{v}.sh"
 
         stubbed_env.stub_command('uname').outputs(k)
         stubbed_env.stub_command('mktemp')

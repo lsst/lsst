@@ -415,7 +415,7 @@ n8l::config_curl() {
 }
 
 n8l::miniconda::install() {
-	local mini_ver=${1?miniconda version is required}
+	local mini_ver="latest"
 	local prefix=${2?prefix is required}
 	local miniconda_base_url=${3:-https://repo.continuum.io/miniconda}
 
