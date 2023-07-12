@@ -18,9 +18,9 @@ LSST_EUPS_USE_EUPSPKG=${LSST_EUPS_USE_EUPSPKG:-true}
 LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-py38_4.9.2}
 # this git ref controls which set of conda packages are used to initialize the
 # the default conda env defined in scipipe_conda_env git package (RFC-553).
-LSST_SPLENV_REF=${LSST_SPLENV_REF:-${LSST_LSSTSW_REF:-5.0.0}}
-LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://repo.continuum.io/miniconda}
-LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-"conda-forge"}
+LSST_SPLENV_REF=${LSST_SPLENV_REF:-${LSST_LSSTSW_REF:-5.0.1}}
+LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://github.com/conda-forge/miniforge/releases/latest/download}
+LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-"nodefaults conda-forge"}
 LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-lsst-scipipe-${LSST_SPLENV_REF}}
 LSST_USE_CONDA_SYSTEM=${LSST_USE_CONDA_SYSTEM:-true}
 
@@ -415,9 +415,8 @@ n8l::config_curl() {
 }
 
 n8l::miniconda::install() {
-	local mini_ver=${1?miniconda version is required}
 	local prefix=${2?prefix is required}
-	local miniconda_base_url=${3:-https://repo.continuum.io/miniconda}
+	local miniconda_base_url=${3:-https://github.com/conda-forge/miniforge/releases/latest/download}
 
 	case $(uname -s) in
 		Linux*)
@@ -431,7 +430,7 @@ n8l::miniconda::install() {
 			;;
 	esac
 
-	miniconda_file_name="Miniconda3-${mini_ver}-${ana_platform}.sh"
+	miniconda_file_name="Mambaforge-${ana_platform}.sh"
 	echo "::: Deploying ${miniconda_file_name}"
 
 	(
@@ -505,9 +504,6 @@ n8l::miniconda::lsst_env() {
 
 	(
 		set -Eeo pipefail
-
-		# install mamba to speed up environment creation
-		$cmd conda install -c conda-forge -y mamba
 
 		args=()
 		args+=('create')
