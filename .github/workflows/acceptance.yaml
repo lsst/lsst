@@ -27,7 +27,7 @@ jobs:
           bash ../scripts/newinstall.sh ${{ matrix.option }}
           ${{ matrix.shell }} -c \
             "source loadLSST.${{ matrix.shell }} && \
-             eups distrib install -t w_latest base"
+             eups distrib install -t v25_0_0 base"
 
   macos-lsstinstall-matrix:
     strategy:
@@ -47,9 +47,9 @@ jobs:
           mkdir stack
           cd stack
           ${{ matrix.shell }} -c \
-            "../scripts/lsstinstall -T w_latest ${{ matrix.option }} && \
+            "../scripts/lsstinstall -T v25_0_0 ${{ matrix.option }} && \
              source loadLSST.${{ matrix.shell }} && \
-             eups distrib install -t w_latest base"
+             eups distrib install -t v25_0_0 base"
 
   centos-matrix:
     strategy:
@@ -67,7 +67,7 @@ jobs:
           bash ../scripts/newinstall.sh ${{ matrix.option }}
           bash -c \
             "source loadLSST.bash && \
-             eups distrib install -t w_latest base"
+             eups distrib install -t v25_0_0 base"
 
   centos-lsstinstall:
     strategy:
@@ -92,9 +92,9 @@ jobs:
         run: |
           mkdir stack
           cd stack
-          ../scripts/lsstinstall -T w_latest
+          ../scripts/lsstinstall -T v25_0_0
           . ./loadLSST.bash
-          eups distrib install -t w_latest base
+          eups distrib install -t v25_0_0 base
 
   accept-interactive:
     name: Interactive tarball bash
@@ -108,4 +108,4 @@ jobs:
           cd stack
           echo "yes" | bash ../scripts/newinstall.sh -t
           bash -c "source loadLSST.bash && \
-                   eups distrib install -t w_latest base"
+                   eups distrib install -t v25_0_0 base"
