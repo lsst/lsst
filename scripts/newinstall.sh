@@ -378,6 +378,9 @@ n8l::default_eups_pkgroot() {
 	platform=${LSST_PLATFORM:-$platform}
 	if [[ $use_conda_system == true ]]; then
 		LSST_COMPILER=conda-system
+		if [[ $osfamily == redhat ]]; then
+			platform="el7"
+		fi
 	fi
 	target_cc=${LSST_COMPILER:-$target_cc}
 
