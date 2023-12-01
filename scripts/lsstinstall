@@ -376,7 +376,7 @@ conda activate "\$LSST_CONDA_ENV_NAME" && export EUPS_PKGROOT=\$(cat \$EUPS_PATH
 EOF
 fi
 # For now, all of these are identical; csh is unsupported
-for ext in ash bash fish zsh; do
+for ext in ash bash zsh; do
     if [ ! -f "loadLSST.$ext" ]; then
         $dryrun ln loadLSST.sh "loadLSST.$ext"
     fi
@@ -386,7 +386,7 @@ cat <<EOF
 
 Bootstrap complete. To continue installing (and to use) the LSST stack type
 one of:
-    ${source_cmd} "${cwd}/loadLSST.sh"  # for bash, ash, fish, zsh
+    ${source_cmd} "${cwd}/loadLSST.sh"  # for bash, ash, zsh
 or
     ${source_cmd} "${cwd}/envconfig"    # for lsstsw clones
 
