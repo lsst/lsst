@@ -63,7 +63,7 @@ jobs:
         option: [-bt, -b]
     name: Linux installation test
     runs-on: ubuntu-latest
-    container: centos:7
+    container: almalinux:9
     steps:
       - uses: actions/checkout@v4
       - name: install test
@@ -78,7 +78,7 @@ jobs:
   centos-lsstinstall:
     strategy:
       matrix:
-        container: ["centos:7", "almalinux:9", "ubuntu:latest"]
+        container: ["almalinux:9", "ubuntu:latest"]
     name: Linux lsstinstall test
     runs-on: ubuntu-latest
     container: ${{ matrix.container }}
@@ -105,7 +105,7 @@ jobs:
   accept-interactive:
     name: Interactive tarball bash
     runs-on: ubuntu-latest
-    container: centos:7
+    container: almalinux:9
     steps:
       - uses: actions/checkout@v4
       - name: installation test
