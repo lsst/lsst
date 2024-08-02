@@ -20,6 +20,12 @@ xfail () {
 set -e
 
 # Test default case.
+platform=$(uname -m)
+if [[ "$platform" != "x86_64" ]] && [[ "$platform" != "arm64" ]] ; then
+    echo "Not testing unknown platform $platform"
+    exit 0
+fi
+
 ./scripts/lsstinstall -n \
     | sed -e 's/rubin-env=[0-9.]*/rubin-env=latest/' \
           -e 's/lsst-scipipe-[0-9.]*/lsst-scipipe-latest/' \
@@ -28,14 +34,15 @@ set -e
           -e 's/\$ mamba/$ conda/g' \
           -e 's/Linux/Darwin/g' \
           -e s:"$PWD":PWD:g \
-    | diff - nominal.out
+    | diff - "nominal-$platform".out
 
 # Ensure backward compatibility options are ignored.
 diff <( ./scripts/lsstinstall -n ) <( ./scripts/lsstinstall -nc -b -t )
 
 # Check EUPS_PKGROOT-affecting options.
 ./scripts/lsstinstall -n -B | grepf "\$ echo https://eups\.lsst\.codes/stack/src > \$EUPS_PATH/pkgroot"
-./scripts/lsstinstall -n -S | grepf "\$ echo https://eups\.lsst\.codes/stack/.* > \$EUPS_PATH/pkgroot"
+# No binaries for non-x86_64 platforms at present
+[[ "$platform" == x86_64 ]] && ./scripts/lsstinstall -n -S | grepf "\$ echo https://eups\.lsst\.codes/stack/.* > \$EUPS_PATH/pkgroot"
 
 # Check environment version handling.
 ./scripts/lsstinstall -n -T w_2021_50 | grepf 'Selected rubin-env=0\.7\.0'
@@ -47,24 +54,28 @@ diff <( ./scripts/lsstinstall -n ) <( ./scripts/lsstinstall -nc -b -t )
 ./scripts/lsstinstall -n -T w_2021_01 | grepf 'Selected rubin-env=cb4e2dc'
 ./scripts/lsstinstall -n -T w_2020_30 | grepf 'Selected rubin-env=1a1d771'
 ./scripts/lsstinstall -n -T w_2020_20 | grepf 'Selected rubin-env=46b24e8'
-./scripts/lsstinstall -n -X w_2021_50 | grepf '\$ run_curl -o w_2021_50\.env https://eups\.lsst\.codes/stack/.*/conda-system/miniconda3-py38_4\.9\.2-0\.7\.0/env/w_2021_50\.env'
-./scripts/lsstinstall -n -X w_2021_50 | grepf '\$ conda activate lsst-scipipe-0\.7\.0-exact'
-./scripts/lsstinstall -n -X w_2021_01 | grepf '\$ run_curl -o w_2021_01\.env https://raw\.githubusercontent\.com/lsst/scipipe_conda_env/cb4e2dc/etc/conda-.*\.lock'
-# Hash environments are always exact.
-./scripts/lsstinstall -n -X w_2021_01 | grepf '\$ conda activate lsst-scipipe-cb4e2dc$'
 ./scripts/lsstinstall -n -v 0.4.2 | grepf '\$ [cm][oa][nm][db]a create -c conda-forge --strict-channel-priority -y -n lsst-scipipe-0\.4\.2 rubin-env=0\.4\.2'
-./scripts/lsstinstall -n -v cb4e2dc | grepf '\$ run_curl -o cb4e2dc\.env https://raw\.githubusercontent\.com/lsst/scipipe_conda_env/cb4e2dc/etc/conda-.*\.lock'
-./scripts/lsstinstall -n -v cb4e2dc | grepf '\$ [cm][oa][nm][db]a create -c conda-forge --strict-channel-priority -y -n lsst-scipipe-cb4e2dc --file cb4e2dc\.env'
+
+# Exact environments only exist for x86_64 at present
+if [[ "$platform" == x86_64 ]]; then
+    ./scripts/lsstinstall -n -X w_2021_50 | grepf '\$ run_curl -o w_2021_50\.env https://eups\.lsst\.codes/stack/.*/conda-system/miniconda3-py38_4\.9\.2-0\.7\.0/env/w_2021_50\.env'
+    ./scripts/lsstinstall -n -X w_2021_50 | grepf '\$ conda activate lsst-scipipe-0\.7\.0-exact'
+    ./scripts/lsstinstall -n -X w_2021_01 | grepf '\$ run_curl -o w_2021_01\.env https://raw\.githubusercontent\.com/lsst/scipipe_conda_env/cb4e2dc/etc/conda-.*\.lock'
+    ./scripts/lsstinstall -n -X w_2021_01 | grepf '\$ conda activate lsst-scipipe-cb4e2dc$'
+    # Hash environments are always exact.
+    ./scripts/lsstinstall -n -v cb4e2dc | grepf '\$ run_curl -o cb4e2dc\.env https://raw\.githubusercontent\.com/lsst/scipipe_conda_env/cb4e2dc/etc/conda-.*\.lock'
+    ./scripts/lsstinstall -n -v cb4e2dc | grepf '\$ [cm][oa][nm][db]a create -c conda-forge --strict-channel-priority -y -n lsst-scipipe-cb4e2dc --file cb4e2dc\.env'
+fi
 
 # Check environment name handling.
 ./scripts/lsstinstall -n -e foo-lsst | grepf '\$ conda activate foo-lsst'
 
 # Check explicit EUPS root.
-./scripts/lsstinstall -n -E https://foo.lsst.test | grepf "\$ echo https://foo\.lsst\.test/.*/conda-system/miniconda3-py38_4\.9\.2-[0-9.]*|https://foo\.lsst\.test/src > \$EUPS_PATH/pkgroot"
+[[ "$platform" == x86_64 ]] && ./scripts/lsstinstall -n -E https://foo.lsst.test | grepf "\$ echo https://foo\.lsst\.test/.*/conda-system/miniconda3-py38_4\.9\.2-[0-9.]*|https://foo\.lsst\.test/src > \$EUPS_PATH/pkgroot"
 
 # Check explicit and implicit conda path and environment update handling.
 testdir=./testconda$$
-./scripts/lsstinstall -n -p "$testdir" | grepf '\$ bash Mambaforge-.*-x86_64\.sh -b -p '"$testdir"
+./scripts/lsstinstall -n -p "$testdir" | grepf '\$ bash Mambaforge-.*-'"$platform"'\.sh -b -p '"$testdir"
 ( 
     mkdir -p "$testdir"/bin
     xfail ./scripts/lsstinstall -n -p "$testdir"
@@ -85,9 +96,9 @@ testdir=./testconda$$
 )
 
 # Check forced conda installation.
-./scripts/lsstinstall -n -P -p "$testdir" | grepf '\$ bash Mambaforge-.*-x86_64\.sh -b -p '"$testdir"
-CONDA_EXE="$testdir/bin/conda" ./scripts/lsstinstall -n -P -p "$testdir" | grepf '\$ bash Mambaforge-.*-x86_64\.sh -b -p '"$testdir"
-CONDA_EXE="somewhere/bin/conda" ./scripts/lsstinstall -n -P -p "$testdir" | grepf '\$ bash Mambaforge-.*-x86_64\.sh -b -p '"$testdir"
+./scripts/lsstinstall -n -P -p "$testdir" | grepf '\$ bash Mambaforge-.*-'"$platform"'\.sh -b -p '"$testdir"
+CONDA_EXE="$testdir/bin/conda" ./scripts/lsstinstall -n -P -p "$testdir" | grepf '\$ bash Mambaforge-.*-'"$platform"'\.sh -b -p '"$testdir"
+CONDA_EXE="somewhere/bin/conda" ./scripts/lsstinstall -n -P -p "$testdir" | grepf '\$ bash Mambaforge-.*-'"$platform"'\.sh -b -p '"$testdir"
 (
     mkdir -p "$testdir"/bin
     xfail ./scripts/lsstinstall -n -P -p "$testdir"
