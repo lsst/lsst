@@ -1,0 +1,32 @@
+Installing Mambaforge conda at PWD/conda
+$ run_curl -O https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Darwin-arm64.sh
+$ bash Mambaforge-Darwin-arm64.sh -b -p PWD/conda
+$ rm -f Mambaforge-Darwin-arm64.sh
+$ setup conda/mamba shell functions
+Selected rubin-env=latest
+$ conda create -c conda-forge --strict-channel-priority -y -n lsst-scipipe-latest rubin-env=latest
+$ conda activate lsst-scipipe-latest
+$ echo https://eups.lsst.codes/stack/src > $EUPS_PATH/pkgroot
+$ cat > loadLSST.sh
+$ ln loadLSST.sh loadLSST.ash
+$ ln loadLSST.sh loadLSST.bash
+$ ln loadLSST.sh loadLSST.zsh
+
+Bootstrap complete. To continue installing (and to use) the LSST stack type
+one of:
+    source "PWD/loadLSST.sh"  # for bash, ash, zsh
+or
+    source "PWD/envconfig"    # for lsstsw clones
+
+Individual LSST packages may then be installed with the usual `eups distrib
+install` command.  For example, to install the latest weekly release of the
+LSST Science Pipelines full distribution, use:
+
+    eups distrib install -t w_latest lsst_distrib
+
+An official release tag such as "v21_0_0" can also be used.
+
+Next, read the documentation at
+    https://pipelines.lsst.io
+and feel free to ask any questions via the LSST Community forum:
+    https://community.lsst.org/c/support
