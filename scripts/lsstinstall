@@ -181,14 +181,14 @@ if [ -x "$conda_path/bin/conda" ]; then
 else
     [ -e "$conda_path" ] \
         && fail "$conda_path exists but does not appear to contain conda"
-    echo "Installing Mambaforge conda at $conda_path"
+    echo "Installing Miniforge3 conda at $conda_path"
     url="https://github.com/conda-forge/miniforge/releases/latest/download"
-    url="$url/Mambaforge-$platform-${arch}.sh"
+    url="$url/Miniforge3-$platform-${arch}.sh"
     $dryrun run_curl -O "$url" \
-        || fail "Unable to get Mambaforge script for $platform $arch from $url"
-    $dryrun bash "Mambaforge-$platform-${arch}.sh" -b -p "$conda_path" \
-        || fail "Unable to install Mambaforge"
-    $dryrun rm -f "Mambaforge-$platform-${arch}.sh"
+        || fail "Unable to get Miniforge3 script for $platform $arch from $url"
+    $dryrun bash "Miniforge3-$platform-${arch}.sh" -b -p "$conda_path" \
+        || fail "Unable to install Miniforge3"
+    $dryrun rm -f "Miniforge3-$platform-${arch}.sh"
 fi
 if [ -n "$dryrun" ]; then
     $dryrun setup conda/mamba shell functions
