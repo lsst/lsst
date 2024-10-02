@@ -75,8 +75,8 @@ fi
 
 # Check explicit and implicit conda path and environment update handling.
 testdir=./testconda$$
-./scripts/lsstinstall -n -p "$testdir" | grepf '\$ bash Mambaforge-.*-'"$platform"'\.sh -b -p '"$testdir"
-( 
+./scripts/lsstinstall -n -p "$testdir" | grepf '\$ bash Miniforge3-.*-'"$platform"'\.sh -b -p '"$testdir"
+(
     mkdir -p "$testdir"/bin
     xfail ./scripts/lsstinstall -n -p "$testdir"
     touch "$testdir"/bin/conda "$testdir"/bin/mamba
@@ -89,16 +89,16 @@ testdir=./testconda$$
 
     mkdir -p "$testdir"/envs/foo-lsst
     ./scripts/lsstinstall -n -e foo-lsst | grepf 'Using existing environment foo-lsst'
-    ./scripts/lsstinstall -n -e foo-lsst | xfail grep 'Updating rubin-env=' 
+    ./scripts/lsstinstall -n -e foo-lsst | xfail grep 'Updating rubin-env='
     ./scripts/lsstinstall -n -u -e foo-lsst | grepf 'Updating rubin-env='
 
     rm -rf "$testdir"
 )
 
 # Check forced conda installation.
-./scripts/lsstinstall -n -P -p "$testdir" | grepf '\$ bash Mambaforge-.*-'"$platform"'\.sh -b -p '"$testdir"
-CONDA_EXE="$testdir/bin/conda" ./scripts/lsstinstall -n -P -p "$testdir" | grepf '\$ bash Mambaforge-.*-'"$platform"'\.sh -b -p '"$testdir"
-CONDA_EXE="somewhere/bin/conda" ./scripts/lsstinstall -n -P -p "$testdir" | grepf '\$ bash Mambaforge-.*-'"$platform"'\.sh -b -p '"$testdir"
+./scripts/lsstinstall -n -P -p "$testdir" | grepf '\$ bash Miniforge3-.*-'"$platform"'\.sh -b -p '"$testdir"
+CONDA_EXE="$testdir/bin/conda" ./scripts/lsstinstall -n -P -p "$testdir" | grepf '\$ bash Miniforge3-.*-'"$platform"'\.sh -b -p '"$testdir"
+CONDA_EXE="somewhere/bin/conda" ./scripts/lsstinstall -n -P -p "$testdir" | grepf '\$ bash Miniforge3-.*-'"$platform"'\.sh -b -p '"$testdir"
 (
     mkdir -p "$testdir"/bin
     xfail ./scripts/lsstinstall -n -P -p "$testdir"

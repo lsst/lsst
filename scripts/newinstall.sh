@@ -433,7 +433,7 @@ n8l::miniconda::install() {
 			;;
 	esac
 
-	miniconda_file_name="Mambaforge-${ana_platform}.sh"
+	miniconda_file_name="Miniforge3-${ana_platform}.sh"
 	echo "::: Deploying ${miniconda_file_name}"
 
 	(
@@ -691,7 +691,7 @@ n8l::miniconda::bootstrap() {
 	eval "$__miniconda_path_result=$miniconda_path"
 }
 
-# 
+#
 # Renamed from install_eups to prepare_eups
 # Since Jan 2021 eups is provided with rubin-env
 # This function is used to rename all eups installation to legacy
@@ -785,7 +785,7 @@ n8l::generate_loader_bash() {
 		cmd_setup_miniconda="$(cat <<-EOF
 			export LSST_CONDA_ENV_NAME=\${LSST_CONDA_ENV_NAME:-${LSST_CONDA_ENV_NAME}}
 			# shellcheck disable=SC1091
-			source "${miniconda_path}/etc/profile.d/conda.sh" 
+			source "${miniconda_path}/etc/profile.d/conda.sh"
 			conda activate "\$LSST_CONDA_ENV_NAME"
 		EOF
 		)"
