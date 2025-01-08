@@ -208,7 +208,7 @@ else
             hook 2>/dev/null) || fail "Unknown shell"
         eval "$__conda_setup" || fail "Unable to start conda"
     fi
-    for profile in $conda_path/etc/profile.d/*.sh; do
+    for profile in "$conda_path/etc/profile.d"/*.sh; do
         # shellcheck source=/dev/null
         . "${profile}"
     done
