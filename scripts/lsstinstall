@@ -208,11 +208,10 @@ else
             hook 2>/dev/null) || fail "Unknown shell"
         eval "$__conda_setup" || fail "Unable to start conda"
     fi
-    if ! type mamba 2> /dev/null | grep "function" > /dev/null 2>&1 \
-        && [ -f "$conda_path/etc/profile.d/mamba.sh" ]; then
+    for profile in "$conda_path/etc/profile.d"/*.sh; do
         # shellcheck source=/dev/null
-        . "$conda_path/etc/profile.d/mamba.sh"
-    fi
+        . "${profile}"
+    done
 fi
 
 mamba=conda
@@ -370,7 +369,9 @@ fi
 __conda_setup="\$($conda_path/bin/conda shell.\$(basename "\$SHELL") hook 2>/dev/null)" \\
     || { echo "Unknown shell"; exit 1; }
 eval "\$__conda_setup" || { echo "Unable to start conda"; exit 1; }
-[ -f "$conda_path/etc/profile.d/mamba.sh" ] && . "$conda_path/etc/profile.d/mamba.sh"
+for profile in $conda_path/etc/profile.d/*.sh; do
+   . "\${profile}"
+done
 export LSST_CONDA_ENV_NAME=\${LSST_CONDA_ENV_NAME:-$rubinenv_name}
 conda activate "\$LSST_CONDA_ENV_NAME" && export EUPS_PKGROOT=\$(cat \$EUPS_PATH/pkgroot)
 EOF
