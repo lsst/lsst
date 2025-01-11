@@ -350,13 +350,13 @@ fi
 # Copy postinstall
 callback_folder="$EUPS_PATH/site"
 hook="distribInstallPostHook.py"
-if [ -f "$callback_folder/$hook" ]; then
+hook_url="https://raw.githubusercontent.com/RobertLuptonTheGood/eups/refs/heads/master/callbacks/$hook"
+if [ -n "$dryrun" ]; then
+    $dryrun run_curl $hook_url \> "\$EUPS_PATH/site/$hook"
+elif [ -f "$callback_folder/$hook" ]; then
     echo "Callback already installed"
-elif [ -n "$dryrun" ]; then
-    $dryrun cat \> $hook
 else
-    callback_url="https://raw.githubusercontent.com/RobertLuptonTheGood/eups/refs/heads/master/callbacks/$hook"
-    cd "$callback_folder" && { run_curl -O "$callback_url"; cd - || fail "Unable to download callback"; }
+    cd "$callback_folder" && { run_curl -O "$hook_url"; cd - || fail "Unable to download callback"; }
 fi
 # Create load scripts
 source_cmd=source
