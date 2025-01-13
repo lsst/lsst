@@ -356,7 +356,7 @@ if [ -n "$dryrun" ]; then
 elif [ -f "$callback_folder/$hook" ]; then
     echo "Callback already installed"
 else
-    cd "$callback_folder" && { run_curl -O "$hook_url"; cd - || fail "Unable to download callback"; }
+    run_curl -o "$callback_folder/$hook" "$hook_url"
 fi
 # Create load scripts
 source_cmd=source
