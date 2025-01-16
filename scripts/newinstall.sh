@@ -19,7 +19,7 @@ LSST_MINICONDA_VERSION=${LSST_MINICONDA_VERSION:-py38_4.9.2}
 # this git ref controls which set of conda packages are used to initialize the
 # the default conda env defined in scipipe_conda_env git package (RFC-553).
 LSST_SPLENV_REF=${LSST_SPLENV_REF:-${LSST_LSSTSW_REF:-9.0.0}}
-LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://github.com/conda-forge/miniforge/releases/latest/download}
+LSST_MINICONDA_BASE_URL=${LSST_MINICONDA_BASE_URL:-https://github.com/conda-forge/miniforge/releases/download/24.9.0-0/}
 LSST_CONDA_CHANNELS=${LSST_CONDA_CHANNELS:-"nodefaults conda-forge"}
 LSST_CONDA_ENV_NAME=${LSST_CONDA_ENV_NAME:-lsst-scipipe-${LSST_SPLENV_REF}}
 LSST_USE_CONDA_SYSTEM=${LSST_USE_CONDA_SYSTEM:-true}
@@ -423,17 +423,17 @@ n8l::miniconda::install() {
 
 	case $(uname -s) in
 		Linux*)
-			ana_platform="Linux-x86_64"
+			platform="Linux"
 			;;
 		Darwin*)
-			ana_platform="MacOSX-x86_64"
+			platform="MacOSX"
 			;;
 		*)
 			n8l::fail "Cannot install miniconda: unsupported platform $(uname -s)"
 			;;
 	esac
 
-	miniconda_file_name="Miniforge3-${ana_platform}.sh"
+	miniconda_file_name="Miniforge3-${platform}-$(uname -m).sh"
 	echo "::: Deploying ${miniconda_file_name}"
 
 	(
