@@ -251,9 +251,12 @@ echo "Selected rubin-env=$rubinenv_version"
 get_binary_root () {
     case "$arch" in
         x86_64)
-            eups_platform="$([ $os == Linux ] && echo 'redhat/el7' \
-                || echo 'osx/10.9')/conda-system/${1}-$rubinenv_version"
-        echo "$eups_root/${eups_platform}"
+            if [ "$platform" = "Linux" ]; then
+                eups_platform="redhat/el7/conda-system/${1}-$rubinenv_version"
+            else
+                eups_platform="osx/10.9/conda-system/${1}-$rubinenv_version"
+            fi
+                echo "$eups_root/${eups_platform}"
             ;;
         arm64)
             eups_platform="osx/14-arm/conda-system/${1}-$rubinenv_version"
