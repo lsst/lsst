@@ -379,7 +379,11 @@ n8l::default_eups_pkgroot() {
 	if [[ $use_conda_system == true ]]; then
 		LSST_COMPILER=conda-system
 		if [[ $osfamily == redhat ]]; then
-			platform="el7"
+			if [[ $(uname -m) == "aarch64" ]]; then
+				platform="el8-arm"
+			else
+				platform="el7"
+			fi
 		fi
 	fi
 	target_cc=${LSST_COMPILER:-$target_cc}
@@ -481,18 +485,29 @@ n8l::get_tagged_env() {
   env_version=$($CURL "${CURL_OPTS[@]}" -L "$eups_root/src/tags/$1.list" \
     | grep '^#CONDA_ENV=' | cut -d= -f2) \
     || fail "Unable to determine conda env"
+
   platform="$(uname -s)"
-  case "$platform" in
-    Linux)
+  cpu_arch="$(uname -m)"
+  echo "Platform: $platform-$cpu_arch"
+  if [[ "$platform" = "Linux" ]]; then
+    if [[ "$cpu_arch" = "x86_64" ]]; then
       eups_platform="redhat/el7/conda-system/miniconda3-${LSST_MINICONDA_VERSION}-$env_version"
-      ;;
-    Darwin)
+    elif [[ "$cpu_arch" = "aarch64" ]]; then
+      eups_platform="redhat/el8-arm/conda-system/miniconda3-${LSST_MINICONDA_VERSION}-$env_version"
+    fi
+
+  elif [[ "$platform" = "Darwin" ]]; then
+    if [[ "$cpu_arch" = "x86_64" ]]; then
       eups_platform="osx/10.9/conda-system/miniconda3-${LSST_MINICONDA_VERSION}-$env_version"
-      ;;
-    *)
-      fail "Unknown platform: $platform"
-      ;;
-  esac
+    elif [[ "$cpu_arch" = "arm64" ]]; then
+      eups_platform="osx/14-arm/conda-system/miniconda3-${LSST_MINICONDA_VERSION}-$env_version"
+    fi
+  fi
+  if [[ -z $eups_platform ]]; then
+    fail "Unable to identify OS or architecture"
+  fi
+  echo "$eups_platform"
+
 
   $CURL "${CURL_OPTS[@]}" -O "$eups_root/$eups_platform/env/$1.env" \
     || fail "Unable to download environment spec for tag $1"
