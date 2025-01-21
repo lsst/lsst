@@ -256,7 +256,7 @@ get_binary_root () {
             else
                 eups_platform="osx/10.9/conda-system/${1}-$rubinenv_version"
             fi
-                echo "$eups_root/${eups_platform}"
+            echo "$eups_root/${eups_platform}"
             ;;
         arm64)
             eups_platform="osx/14-arm/conda-system/${1}-$rubinenv_version"
