@@ -485,9 +485,10 @@ n8l::get_tagged_env() {
   env_version=$($CURL "${CURL_OPTS[@]}" -L "$eups_root/src/tags/$1.list" \
     | grep '^#CONDA_ENV=' | cut -d= -f2) \
     || fail "Unable to determine conda env"
+
   platform="$(uname -s)"
-	cpu_arch="$(uname -m)"
-	echo "Platform: $platform-$cpu_arch"
+  cpu_arch="$(uname -m)"
+  echo "Platform: $platform-$cpu_arch"
   if [[ "$platform" = "Linux" ]]; then
     if [[ "$cpu_arch" = "x86_64" ]]; then
       eups_platform="redhat/el7/conda-system/miniconda3-${LSST_MINICONDA_VERSION}-$env_version"
@@ -501,10 +502,11 @@ n8l::get_tagged_env() {
     elif [[ "$cpu_arch" = "arm64" ]]; then
       eups_platform="osx/14-arm/conda-system/miniconda3-${LSST_MINICONDA_VERSION}-$env_version"
     fi
-  else
-    fail "Unknown platform or arch: $platform $cpu_arch"
   fi
-	echo "$eups_platform"
+  if [[ -z $eups_platform ]]; then
+    fail "Unable to identify OS or architecture"
+  fi
+  echo "$eups_platform"
 
 
   $CURL "${CURL_OPTS[@]}" -O "$eups_root/$eups_platform/env/$1.env" \
