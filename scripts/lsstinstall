@@ -249,16 +249,27 @@ echo "Selected rubin-env=$rubinenv_version"
 # Determine EUPS binary root
 
 get_binary_root () {
-    if [ "$arch" = x86_64 ]; then
-        if [ "$platform" = Linux ]; then
-            eups_platform="redhat/el7/conda-system/${1}-$rubinenv_version"
-        else
-            eups_platform="osx/10.9/conda-system/${1}-$rubinenv_version"
-        fi
+    case "$arch" in
+        x86_64)
+            if [ "$platform" = "Linux" ]; then
+                eups_platform="redhat/el7/conda-system/${1}-$rubinenv_version"
+            else
+                eups_platform="osx/10.9/conda-system/${1}-$rubinenv_version"
+            fi
+            echo "$eups_root/${eups_platform}"
+            ;;
+        arm64)
+            eups_platform="osx/14-arm/conda-system/${1}-$rubinenv_version"
         echo "$eups_root/${eups_platform}"
-    else
-        echo ""
-    fi
+            ;;
+        aarch64)
+            eups_platform="redhat/el8-arm/conda-system/${1}-$rubinenv_version"
+        echo "$eups_root/${eups_platform}"
+            ;;
+        *)
+            echo ""
+            ;;
+    esac
 }
 
 if [ -n "$env_hash" ]; then
