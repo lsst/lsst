@@ -31,7 +31,6 @@ fi
           -e 's/lsst-scipipe-[0-9.]*/lsst-scipipe-latest/' \
           -e 's:stack/redhat/el7:stack/osx/10.9:' \
           -e 's/miniconda3-py38_4\.9\.2-[0-9.]*/miniconda3-py38_4.9.2-latest/' \
-          -e 's/\$ mamba/$ conda/g' \
           -e 's/Linux/Darwin/g' \
           -e s:"$PWD":PWD:g \
     | diff - "nominal-$platform".out
@@ -79,13 +78,13 @@ testdir=./testconda$$
 (
     mkdir -p "$testdir"/bin
     xfail ./scripts/lsstinstall -n -p "$testdir"
-    touch "$testdir"/bin/conda "$testdir"/bin/mamba
-    chmod 700 "$testdir"/bin/conda "$testdir"/bin/mamba
+    touch "$testdir"/bin/conda
+    chmod 700 "$testdir"/bin/conda
     ./scripts/lsstinstall -n -p "$testdir" | grepf 'Using existing conda at '"$testdir"
     export PATH=$PATH:"$testdir"/bin
     export CONDA_EXE="$testdir"/bin/conda
     ./scripts/lsstinstall -n | grepf 'Using existing conda at '"$testdir"
-    ./scripts/lsstinstall -n | grepf '\$ mamba create '
+    ./scripts/lsstinstall -n | grepf '\$ conda create '
 
     mkdir -p "$testdir"/envs/foo-lsst
     ./scripts/lsstinstall -n -e foo-lsst | grepf 'Using existing environment foo-lsst'

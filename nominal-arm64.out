@@ -2,7 +2,7 @@ Installing Miniforge3 conda at PWD/conda
 $ run_curl -O https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Darwin-arm64.sh
 $ bash Miniforge3-Darwin-arm64.sh -b -p PWD/conda
 $ rm -f Miniforge3-Darwin-arm64.sh
-$ setup conda/mamba shell functions
+$ setup conda shell functions
 Selected rubin-env=latest
 $ conda create -c conda-forge --strict-channel-priority -y -n lsst-scipipe-latest rubin-env=latest
 $ conda activate lsst-scipipe-latest
