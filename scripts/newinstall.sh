@@ -544,7 +544,7 @@ n8l::miniconda::lsst_env() {
 			args+=("rubin-env=${ref}")
 		fi
 
-		$cmd mamba "${args[@]}"
+		$cmd conda "${args[@]}"
 
 		# Update rubin-env to latest build of specified version
 		if [[ "$ref" == [dsvw]* ]]; then
