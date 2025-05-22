@@ -210,6 +210,8 @@ else
     fi
     for profile in "$conda_path/etc/profile.d"/*.sh; do
         # shellcheck source=/dev/null
+        [ "$(basename "$profile")" = "mamba.sh" ] && continue
+        # shellcheck source=/dev/null
         . "$profile"
     done
 fi
@@ -391,6 +393,7 @@ __conda_setup="\$($conda_path/bin/conda shell.\$(basename "\$SHELL") hook 2>/dev
     || { echo "Unknown shell"; exit 1; }
 eval "\$__conda_setup" || { echo "Unable to start conda"; exit 1; }
 for __profile in "$conda_path/etc/profile.d"/*.sh; do
+    [ "\$(basename "\$__profile")" = "mamba.sh" ] && continue
    . "\$__profile"
 done
 unset __profile __conda_setup
