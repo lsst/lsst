@@ -49,7 +49,7 @@ usage: lsstinstall [-n]
     -e ENV_NAME
         -- Specify the environment name to use; if it exists, assume that
            it is compatible and should be used.
-    -b  -- Install in a conda environment by directory instead of by name
+    -a  -- Install in a conda environment by directory instead of by name
     -u  -- Update rubin-env in an existing environment to the latest build.
     -d  -- Add a compatible rubin-env-developer to rubin-env (5.0.0 and later).
     -p CONDA_PATH
@@ -107,7 +107,7 @@ while getopts nBST:X:v:e:udp:PC:E:bcth opt; do
             rubinenv_name="$OPTARG"
             ;;
 
-        b)
+        a)
             env_specify_flag="-p"
             ;;
 
