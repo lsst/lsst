@@ -12,6 +12,7 @@ update=false
 eups_root=https://eups.lsst.codes/stack
 use_tarball=true
 use_source=true
+env_specify_flag=-n
 # channels is in _reverse_ priority order
 channels=
 
@@ -48,6 +49,7 @@ usage: lsstinstall [-n]
     -e ENV_NAME
         -- Specify the environment name to use; if it exists, assume that
            it is compatible and should be used.
+    -a  -- Install in a conda environment by directory instead of by name
     -u  -- Update rubin-env in an existing environment to the latest build.
     -d  -- Add a compatible rubin-env-developer to rubin-env (5.0.0 and later).
     -p CONDA_PATH
@@ -72,7 +74,7 @@ EOF
     exit 1
 }
 
-while getopts nBST:X:v:e:udp:PC:E:bcth opt; do
+while getopts nBST:X:v:e:audp:PC:E:bcth opt; do
     case "$opt" in
         n)
             dryrun="echo \$ "
@@ -104,6 +106,11 @@ while getopts nBST:X:v:e:udp:PC:E:bcth opt; do
         e)
             rubinenv_name="$OPTARG"
             ;;
+
+        a)
+            env_specify_flag="-p"
+            ;;
+
         u)
             update="true"
             ;;
@@ -296,7 +303,7 @@ if [ -d "$conda_path/envs/$rubinenv_name" ]; then
     echo "Using existing environment $rubinenv_name"
     if [ "$update" = true ] && [ "$exact" != true ] && [ -z "$env_hash" ]; then
         echo "Updating rubin-env=$rubinenv_version"
-        run_conda update -y -n "$rubinenv_name" "rubin-env=$rubinenv_version"
+        run_conda update -y ${env_specify_flag} "$rubinenv_name" "rubin-env=$rubinenv_version"
     fi
 elif [ "$exact" = true ] || [ -n "$env_hash" ]; then
     if [ -n "$env_hash" ]; then
@@ -314,22 +321,22 @@ elif [ "$exact" = true ] || [ -n "$env_hash" ]; then
     fi
     $dryrun run_curl -o "${eups_tag}.env" "$url" \
         || fail "Unable to download environment spec for tag $eups_tag"
-    run_conda create -y -n "$rubinenv_name" --file "${eups_tag}.env" \
+    run_conda create -y ${env_specify_flag} "$rubinenv_name" --file "${eups_tag}.env" \
         || fail "Unable to create conda environment ${rubinenv_name}"
     $dryrun rm -f "${eups_tag}.env"
     if [ -n "$env_hash" ]; then
         # scipipe_conda_env did not have eups
-        run_conda install -y -n "$rubinenv_name" --no-update-deps eups \
+        run_conda install -y ${env_specify_flag} "$rubinenv_name" --no-update-deps eups \
             || fail "Unable to install eups into environment ${rubinenv_name}"
     fi
 else
-    run_conda create -y -n "$rubinenv_name" "rubin-env=$rubinenv_version" \
+    run_conda create -y ${env_specify_flag} "$rubinenv_name" "rubin-env=$rubinenv_version" \
         || fail "Unable to create conda environment ${rubinenv_name}"
 fi
 if [ "$add_developer" = true ]; then
     # Note: doesn't actually fail if rubin-env-developer can't be installed,
     # but instead gives a message that an appropriate rubin-env can't be found.
-    run_conda install -y -n "$rubinenv_name" --no-update-deps rubin-env-developer
+    run_conda install -y ${env_specify_flag} "$rubinenv_name" --no-update-deps rubin-env-developer
 fi
 
 # Activate environment to set EUPS_PATH
