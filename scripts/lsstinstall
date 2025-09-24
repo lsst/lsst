@@ -9,7 +9,7 @@
 dryrun=
 rubinenv_version=latest
 update=false
-eups_root=https://eups.lsst.codes/stack
+eups_root=https://eups.lsst.cloud/stack
 use_tarball=true
 use_source=true
 # channels is in _reverse_ priority order
