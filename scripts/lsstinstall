@@ -9,7 +9,7 @@
 dryrun=
 rubinenv_version=latest
 update=false
-eups_root=https://eups.lsst.codes/stack
+eups_root=https://eups.lsst.cloud/stack
 use_tarball=true
 use_source=true
 # channels is in _reverse_ priority order
@@ -61,7 +61,7 @@ usage: lsstinstall [-n]
            May be repeated; first has highest priority.
     -E EUPS_URL
         -- Select a different EUPS distribution server root URL
-           (default=https://eups.lsst.codes/stack).
+           (default=https://eups.lsst.cloud/stack).
     -B  -- DO NOT use binary "tarball" eups packages.
     -S  -- DO NOT use source eups packages.
     -b  -- ignored for backward compatibility.
@@ -228,7 +228,7 @@ run_conda () {
 
 # Determine rubin-env version
 
-src_root="$eups_root/src"
+src_root="${eups_root}/src"
 if [ -n "$eups_tag" ]; then
     # TODO Works for w_2020_15 or later
     # First conda-system hash is 46b24e8 w_2020_20; before uses devtools
