@@ -39,9 +39,9 @@ fi
 diff <( ./scripts/lsstinstall -n ) <( ./scripts/lsstinstall -nc -b -t )
 
 # Check EUPS_PKGROOT-affecting options.
-./scripts/lsstinstall -n -B | grepf "\$ echo https://eups\.lsst\.codes/stack/src > \$EUPS_PATH/pkgroot"
+./scripts/lsstinstall -n -B | grepf "\$ echo https://eups\.lsst\.cloud/stack/src > \$EUPS_PATH/pkgroot"
 # No binaries for non-x86_64 platforms at present
-[[ "$platform" == x86_64 ]] && ./scripts/lsstinstall -n -S | grepf "\$ echo https://eups\.lsst\.codes/stack/.* > \$EUPS_PATH/pkgroot"
+[[ "$platform" == x86_64 ]] && ./scripts/lsstinstall -n -S | grepf "\$ echo https://eups\.lsst\.cloud/stack/.* > \$EUPS_PATH/pkgroot"
 
 # Check environment version handling.
 ./scripts/lsstinstall -n -T w_2021_50 | grepf 'Selected rubin-env=0\.7\.0'
@@ -57,7 +57,7 @@ diff <( ./scripts/lsstinstall -n ) <( ./scripts/lsstinstall -nc -b -t )
 
 # Exact environments only exist for x86_64 at present
 if [[ "$platform" == x86_64 ]]; then
-    ./scripts/lsstinstall -n -X w_2021_50 | grepf '\$ run_curl -o w_2021_50\.env https://eups\.lsst\.codes/stack/.*/conda-system/miniconda3-py38_4\.9\.2-0\.7\.0/env/w_2021_50\.env'
+    ./scripts/lsstinstall -n -X w_2021_50 | grepf '\$ run_curl -o w_2021_50\.env https://eups\.lsst\.cloud/stack/.*/conda-system/miniconda3-py38_4\.9\.2-0\.7\.0/env/w_2021_50\.env'
     ./scripts/lsstinstall -n -X w_2021_50 | grepf '\$ conda activate lsst-scipipe-0\.7\.0-exact'
     ./scripts/lsstinstall -n -X w_2021_01 | grepf '\$ run_curl -o w_2021_01\.env https://raw\.githubusercontent\.com/lsst/scipipe_conda_env/cb4e2dc/etc/conda-.*\.lock'
     ./scripts/lsstinstall -n -X w_2021_01 | grepf '\$ conda activate lsst-scipipe-cb4e2dc$'
