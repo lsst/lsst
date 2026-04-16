@@ -124,6 +124,8 @@ while getopts nBST:X:v:e:udp:PC:E:bcth opt; do
             eups_root="$OPTARG"
             ;;
         b | c | t)
+            print_error "$* is ignored for backward compatibility"
+            usage
             ;;
         h)
             usage
@@ -133,6 +135,14 @@ while getopts nBST:X:v:e:udp:PC:E:bcth opt; do
             ;;
     esac
 done
+
+# Checks for dangling arguments
+shift $((OPTIND - 1))
+if [ $# -gt 0 ]; then
+    print_error "Unexpected argument(s): $*"
+    usage
+fi
+
 channels="conda-forge $channels"
 
 # Configure
