@@ -64,9 +64,9 @@ usage: lsstinstall [-n]
            (default=https://eups.lsst.cloud/stack).
     -B  -- DO NOT use binary "tarball" eups packages.
     -S  -- DO NOT use source eups packages.
-    -b  -- ignored for backward compatibility.
-    -c  -- ignored for backward compatibility.
-    -t  -- ignored for backward compatibility.
+    -b  -- Due to backward compatibility, it will print help instead
+    -c  -- Due to backward compatibility, it will print help instead
+    -t  -- Due to backward compatibility, it will print help instead
     -h  -- Display this help message.
 EOF
     exit 1
@@ -124,7 +124,6 @@ while getopts nBST:X:v:e:udp:PC:E:bcth opt; do
             eups_root="$OPTARG"
             ;;
         b | c | t)
-            print_error "$* is ignored for backward compatibility"
             usage
             ;;
         h)
@@ -244,7 +243,13 @@ if [ -n "$eups_tag" ]; then
     # First conda-system hash is 46b24e8 w_2020_20; before uses devtools
     rubinenv_version=$(run_curl "$src_root/tags/${eups_tag}.list" \
         | grep '^#CONDA_ENV=' | cut -d= -f2)
-    [ -z "$rubinenv_version" ] && fail "Unable to determine conda env"
+    if [ -z "$rubinenv_version" ]; then
+        # check if tag was moved to old_tags
+        echo "Checking old tags"
+        rubinenv_version=$(run_curl "$src_root/tags/old_tags/${eups_tag}.list" \
+        | grep '^#CONDA_ENV=' | cut -d= -f2)
+        [ -z "$rubinenv_version" ] && fail "Unable to determine conda env"
+    fi
     env_hash=$(expr "$rubinenv_version" : 'https:.*@\(.*\)')
     [ -n "$env_hash" ] && rubinenv_version=$env_hash
 elif [ "$rubinenv_version" = latest ]; then
