@@ -36,7 +36,7 @@ fi
     | diff - "nominal-$platform".out
 
 # Ensure backward compatibility options are ignored.
-diff <( ./scripts/lsstinstall -n ) <( ./scripts/lsstinstall -nc -b -t )
+diff <( ./scripts/lsstinstall -nh ) <( ./scripts/lsstinstall -nc -b -t )
 
 # Check EUPS_PKGROOT-affecting options.
 ./scripts/lsstinstall -n -B | grepf "\$ echo https://eups\.lsst\.cloud/stack/src > \$EUPS_PATH/pkgroot"
