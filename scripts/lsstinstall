@@ -31,7 +31,7 @@ usage () {
     cat <<EOF
 usage: lsstinstall [-n]
        [-T EUPS_TAG | -X EUPS_TAG | -v RUBINENV_VERSION]
-       [-e ENV_NAME] [-u] [-d] [-r]
+       [-e ENV_NAME] [-u] [-d] [-R]
        [-p CONDA_PATH] [-P] [-C CHANNEL]
        [-E EUPS_URL]
        [-B] [-S]
@@ -51,7 +51,7 @@ usage: lsstinstall [-n]
            it is compatible and should be used.
     -u  -- Update rubin-env in an existing environment to the latest build.
     -d  -- Add a compatible rubin-env-developer to rubin-env (5.0.0 and later).
-    -r  -- Use rubin-env-rsp, the superset environment the Rubin Science
+    -R  -- Use rubin-env-rsp, the superset environment the Rubin Science
            Platform runs, in place of rubin-env.  With -X, installs the exact
            EUPS_TAG_rsp.env; tags predating RSP env publishing do not have one.
            The environment name gains an "-rsp" suffix.
@@ -77,7 +77,7 @@ EOF
     exit 1
 }
 
-while getopts nBSrT:X:v:e:udp:PC:E:bcth opt; do
+while getopts nBSRT:X:v:e:udp:PC:E:bcth opt; do
     case "$opt" in
         n)
             dryrun="echo \$ "
@@ -88,7 +88,7 @@ while getopts nBSrT:X:v:e:udp:PC:E:bcth opt; do
         S)
             use_source=false
             ;;
-        r)
+        R)
             use_rsp=true
             ;;
         T)
