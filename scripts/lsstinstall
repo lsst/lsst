@@ -12,6 +12,7 @@ update=false
 eups_root=https://eups.lsst.cloud/stack
 use_tarball=true
 use_source=true
+use_rsp=false
 # channels is in _reverse_ priority order
 channels=
 
@@ -30,7 +31,7 @@ usage () {
     cat <<EOF
 usage: lsstinstall [-n]
        [-T EUPS_TAG | -X EUPS_TAG | -v RUBINENV_VERSION]
-       [-e ENV_NAME] [-u] [-d]
+       [-e ENV_NAME] [-u] [-d] [-R]
        [-p CONDA_PATH] [-P] [-C CHANNEL]
        [-E EUPS_URL]
        [-B] [-S]
@@ -50,6 +51,10 @@ usage: lsstinstall [-n]
            it is compatible and should be used.
     -u  -- Update rubin-env in an existing environment to the latest build.
     -d  -- Add a compatible rubin-env-developer to rubin-env (5.0.0 and later).
+    -R  -- Use rubin-env-rsp, the superset environment the Rubin Science
+           Platform runs, in place of rubin-env.  With -X, installs the exact
+           EUPS_TAG_rsp.env; tags predating RSP env publishing do not have one.
+           The environment name gains an "-rsp" suffix.
     -p CONDA_PATH
         -- Specify the path to the conda installation.
            If a conda installation already exists there, it will be used.
@@ -72,7 +77,7 @@ EOF
     exit 1
 }
 
-while getopts nBST:X:v:e:udp:PC:E:bcth opt; do
+while getopts nBSRT:X:v:e:udp:PC:E:bcth opt; do
     case "$opt" in
         n)
             dryrun="echo \$ "
@@ -82,6 +87,9 @@ while getopts nBST:X:v:e:udp:PC:E:bcth opt; do
             ;;
         S)
             use_source=false
+            ;;
+        R)
+            use_rsp=true
             ;;
         T)
             if [ -n "$eups_tag" ] || [ "$rubinenv_version" != "latest" ]; then
@@ -262,6 +270,12 @@ elif expr "$rubinenv_version" : '[0-9a-f]*$' > /dev/null; then
 fi
 echo "Selected rubin-env=$rubinenv_version"
 
+# Hash refs resolve to a scipipe_conda_env lock file, which predates rubin-env
+# and so has no RSP counterpart to install.
+if [ "$use_rsp" = true ] && [ -n "$env_hash" ]; then
+    fail "-r is not available for pre-rubin-env environments ($rubinenv_version)"
+fi
+
 # Determine EUPS binary root
 
 get_binary_root () {
@@ -306,14 +320,21 @@ fi
 
 rubinenv_name=${rubinenv_name:-lsst-scipipe-$rubinenv_version}
 [ "$exact" = true ] && [ -z "$env_hash" ] && rubinenv_name="${rubinenv_name}-exact"
+rubinenv_pkg=rubin-env
+if [ "$use_rsp" = true ]; then
+    rubinenv_pkg=rubin-env-rsp
+    rubinenv_name="${rubinenv_name}-rsp"
+fi
 
 if [ -d "$conda_path/envs/$rubinenv_name" ]; then
     echo "Using existing environment $rubinenv_name"
     if [ "$update" = true ] && [ "$exact" != true ] && [ -z "$env_hash" ]; then
-        echo "Updating rubin-env=$rubinenv_version"
-        run_conda update -y -n "$rubinenv_name" "rubin-env=$rubinenv_version"
+        echo "Updating $rubinenv_pkg=$rubinenv_version"
+        run_conda update -y -n "$rubinenv_name" "$rubinenv_pkg=$rubinenv_version"
     fi
 elif [ "$exact" = true ] || [ -n "$env_hash" ]; then
+    env_file="${eups_tag}.env"
+    [ "$use_rsp" = true ] && env_file="${eups_tag}_rsp.env"
     if [ -n "$env_hash" ]; then
         if [ "$platform" = Linux ]; then
             env_platform=linux-64
@@ -323,22 +344,26 @@ elif [ "$exact" = true ] || [ -n "$env_hash" ]; then
         env_base="https://raw.githubusercontent.com/lsst/scipipe_conda_env"
         url="${env_base}/${env_hash}/etc/conda-${env_platform}.lock"
     elif [ -n "$binary_root" ]; then
-        url="$binary_root/env/${eups_tag}.env"
+        url="$binary_root/env/$env_file"
     else
         fail "No exact environment for source-only platform/architecture"
     fi
-    $dryrun run_curl -o "${eups_tag}.env" "$url" \
-        || fail "Unable to download environment spec for tag $eups_tag"
-    run_conda create -y -n "$rubinenv_name" --file "${eups_tag}.env" \
+    if ! $dryrun run_curl -o "$env_file" "$url"; then
+        print_error "Unable to download environment spec for tag $eups_tag from $url"
+        [ "$use_rsp" = true ] && print_error \
+            "Tags built before RSP environments were published have no $env_file"
+        exit 1
+    fi
+    run_conda create -y -n "$rubinenv_name" --file "$env_file" \
         || fail "Unable to create conda environment ${rubinenv_name}"
-    $dryrun rm -f "${eups_tag}.env"
+    $dryrun rm -f "$env_file"
     if [ -n "$env_hash" ]; then
         # scipipe_conda_env did not have eups
         run_conda install -y -n "$rubinenv_name" --no-update-deps eups \
             || fail "Unable to install eups into environment ${rubinenv_name}"
     fi
 else
-    run_conda create -y -n "$rubinenv_name" "rubin-env=$rubinenv_version" \
+    run_conda create -y -n "$rubinenv_name" "$rubinenv_pkg=$rubinenv_version" \
         || fail "Unable to create conda environment ${rubinenv_name}"
 fi
 if [ "$add_developer" = true ]; then

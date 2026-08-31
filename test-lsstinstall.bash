@@ -64,7 +64,15 @@ if [[ "$platform" == x86_64 ]]; then
     # Hash environments are always exact.
     ./scripts/lsstinstall -n -v cb4e2dc | grepf '\$ run_curl -o cb4e2dc\.env https://raw\.githubusercontent\.com/lsst/scipipe_conda_env/cb4e2dc/etc/conda-.*\.lock'
     ./scripts/lsstinstall -n -v cb4e2dc | grepf '\$ [cm][oa][nm][db]a create -c conda-forge --strict-channel-priority -y -n lsst-scipipe-cb4e2dc --file cb4e2dc\.env'
+    ./scripts/lsstinstall -n -X w_2021_50 -R | grepf '\$ run_curl -o w_2021_50_rsp\.env https://eups\.lsst\.cloud/stack/.*/conda-system/miniconda3-py38_4\.9\.2-0\.7\.0/env/w_2021_50_rsp\.env'
+    ./scripts/lsstinstall -n -X w_2021_50 -R | grepf '\$ conda activate lsst-scipipe-0\.7\.0-exact-rsp'
 fi
+
+# Check rubin-env-rsp handling.
+./scripts/lsstinstall -n -v 0.4.2 -R | grepf '\$ [cm][oa][nm][db]a create -c conda-forge --strict-channel-priority -y -n lsst-scipipe-0\.4\.2-rsp rubin-env-rsp=0\.4\.2'
+# Pre-rubin-env hash environments have no RSP counterpart.
+xfail ./scripts/lsstinstall -n -v cb4e2dc -R
+xfail ./scripts/lsstinstall -n -X w_2021_01 -R
 
 # Check environment name handling.
 ./scripts/lsstinstall -n -e foo-lsst | grepf '\$ conda activate foo-lsst'
@@ -90,6 +98,10 @@ testdir=./testconda$$
     ./scripts/lsstinstall -n -e foo-lsst | grepf 'Using existing environment foo-lsst'
     ./scripts/lsstinstall -n -e foo-lsst | xfail grep 'Updating rubin-env='
     ./scripts/lsstinstall -n -u -e foo-lsst | grepf 'Updating rubin-env='
+
+    mkdir -p "$testdir"/envs/foo-lsst-rsp
+    ./scripts/lsstinstall -n -e foo-lsst -R | grepf 'Using existing environment foo-lsst-rsp'
+    ./scripts/lsstinstall -n -u -e foo-lsst -R | grepf 'Updating rubin-env-rsp='
 
     rm -rf "$testdir"
 )
