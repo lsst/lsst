@@ -13,6 +13,7 @@ eups_root=https://eups.lsst.cloud/stack
 use_tarball=true
 use_source=true
 use_rsp=false
+python_pin=
 # channels is in _reverse_ priority order
 channels=
 
@@ -32,6 +33,7 @@ usage () {
 usage: lsstinstall [-n]
        [-T EUPS_TAG | -X EUPS_TAG | -v RUBINENV_VERSION]
        [-e ENV_NAME] [-u] [-d] [-R]
+       [-y PYTHON_VERSION]
        [-p CONDA_PATH] [-P] [-C CHANNEL]
        [-E EUPS_URL]
        [-B] [-S]
@@ -55,6 +57,14 @@ usage: lsstinstall [-n]
            Platform runs, in place of rubin-env.  With -X, installs the exact
            EUPS_TAG_rsp.env; tags predating RSP env publishing do not have one.
            The environment name gains an "-rsp" suffix.
+    -y PYTHON_VERSION
+        -- EXPERIMENTAL.  Create the environment with a specific python
+           version, eg. "3.14".  rubin-env selects the officially supported
+           python by default, so this option is not needed for normal use.
+           The environment name gains a "-py<version>" suffix, and binary
+           "tarball" eups packages are disabled because published tarballs are
+           built only for the officially supported python.  Not available with
+           -X or a hash ref, whose exact environments already pin python.
     -p CONDA_PATH
         -- Specify the path to the conda installation.
            If a conda installation already exists there, it will be used.
@@ -77,7 +87,7 @@ EOF
     exit 1
 }
 
-while getopts nBSRT:X:v:e:udp:PC:E:bcth opt; do
+while getopts nBSRT:X:v:e:udp:PC:E:y:bcth opt; do
     case "$opt" in
         n)
             dryrun="echo \$ "
@@ -130,6 +140,9 @@ while getopts nBSRT:X:v:e:udp:PC:E:bcth opt; do
             ;;
         E)
             eups_root="$OPTARG"
+            ;;
+        y)
+            python_pin="$OPTARG"
             ;;
         b | c | t)
             usage
@@ -273,7 +286,24 @@ echo "Selected rubin-env=$rubinenv_version"
 # Hash refs resolve to a scipipe_conda_env lock file, which predates rubin-env
 # and so has no RSP counterpart to install.
 if [ "$use_rsp" = true ] && [ -n "$env_hash" ]; then
-    fail "-r is not available for pre-rubin-env environments ($rubinenv_version)"
+    fail "-R is not available for pre-rubin-env environments ($rubinenv_version)"
+fi
+
+# Exact environments and pre-rubin-env lock files are installed from a fully
+# resolved package list, which already pins python, so an override there would
+# be silently ignored.
+if [ -n "$python_pin" ] && { [ "$exact" = true ] || [ -n "$env_hash" ]; }; then
+    fail "-y is not available for exact environments (-X) or pre-rubin-env refs ($rubinenv_version)"
+fi
+
+# Published binary eups packages are built only for the officially supported
+# python.  Their extension modules are ABI-untagged and link no libpython, so a
+# mismatched interpreter loads them and then fails unpredictably rather than
+# cleanly -- fall back to source packages instead.
+if [ -n "$python_pin" ]; then
+    echo "Note: -y overrides the python version rubin-env would select."
+    echo "Binary tarball eups packages are disabled; building from source."
+    use_tarball=false
 fi
 
 # Determine EUPS binary root
@@ -325,12 +355,16 @@ if [ "$use_rsp" = true ]; then
     rubinenv_pkg=rubin-env-rsp
     rubinenv_name="${rubinenv_name}-rsp"
 fi
+if [ -n "$python_pin" ]; then
+    rubinenv_name="${rubinenv_name}-py$(echo "$python_pin" | tr -d .)"
+fi
 
 if [ -d "$conda_path/envs/$rubinenv_name" ]; then
     echo "Using existing environment $rubinenv_name"
     if [ "$update" = true ] && [ "$exact" != true ] && [ -z "$env_hash" ]; then
         echo "Updating $rubinenv_pkg=$rubinenv_version"
-        run_conda update -y -n "$rubinenv_name" "$rubinenv_pkg=$rubinenv_version"
+        run_conda update -y -n "$rubinenv_name" \
+            "$rubinenv_pkg=$rubinenv_version" ${python_pin:+python=$python_pin}
     fi
 elif [ "$exact" = true ] || [ -n "$env_hash" ]; then
     env_file="${eups_tag}.env"
@@ -363,7 +397,8 @@ elif [ "$exact" = true ] || [ -n "$env_hash" ]; then
             || fail "Unable to install eups into environment ${rubinenv_name}"
     fi
 else
-    run_conda create -y -n "$rubinenv_name" "$rubinenv_pkg=$rubinenv_version" \
+    run_conda create -y -n "$rubinenv_name" \
+        "$rubinenv_pkg=$rubinenv_version" ${python_pin:+python=$python_pin} \
         || fail "Unable to create conda environment ${rubinenv_name}"
 fi
 if [ "$add_developer" = true ]; then
