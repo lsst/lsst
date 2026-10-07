@@ -68,6 +68,19 @@ if [[ "$platform" == x86_64 ]]; then
     ./scripts/lsstinstall -n -X w_2021_50 -R | grepf '\$ conda activate lsst-scipipe-0\.7\.0-exact-rsp'
 fi
 
+# Check python version override handling.
+./scripts/lsstinstall -n -v 14.0.0 -y 3.14 \
+    | grepf '\$ [cm][oa][nm][db]a create -c conda-forge --strict-channel-priority -y -n lsst-scipipe-14\.0\.0-py314 rubin-env=14\.0\.0 python=3\.14'
+./scripts/lsstinstall -n -v 14.0.0 -y 3.14 | grepf '\$ conda activate lsst-scipipe-14\.0\.0-py314$'
+./scripts/lsstinstall -n -v 14.0.0 -y 3.14 -R \
+    | grepf '\$ conda activate lsst-scipipe-14\.0\.0-rsp-py314$'
+# -y implies source-only; published tarballs are built for one python.
+./scripts/lsstinstall -n -v 14.0.0 -y 3.14 \
+    | grepf "\$ echo https://eups\.lsst\.cloud/stack/src > \$EUPS_PATH/pkgroot"
+# Exact environments already pin python, so -y is refused rather than ignored.
+xfail ./scripts/lsstinstall -n -X w_2021_50 -y 3.14
+xfail ./scripts/lsstinstall -n -v cb4e2dc -y 3.14
+
 # Check rubin-env-rsp handling.
 ./scripts/lsstinstall -n -v 0.4.2 -R | grepf '\$ [cm][oa][nm][db]a create -c conda-forge --strict-channel-priority -y -n lsst-scipipe-0\.4\.2-rsp rubin-env-rsp=0\.4\.2'
 # Pre-rubin-env hash environments have no RSP counterpart.
@@ -123,6 +136,8 @@ CONDA_EXE="somewhere/bin/conda" ./scripts/lsstinstall -n -P -p "$testdir" | grep
     cd "$testdir"
     touch ./loadLSST.sh
     "${origdir}/scripts/lsstinstall" -n -v 3.0.0 | grepf "LSST_CONDA_ENV_NAME=lsst-scipipe-3.0.0 source "
+    # $testdir is relative, so it no longer resolves from inside itself
+    cd "$origdir"
     rm -rf "$testdir"
 )
 
@@ -140,5 +155,6 @@ xfail ./scripts/lsstinstall -n -v
 xfail ./scripts/lsstinstall -n -e
 xfail ./scripts/lsstinstall -n -p
 xfail ./scripts/lsstinstall -n -E
+xfail ./scripts/lsstinstall -n -y
 xfail ./scripts/lsstinstall -n -Z
 echo "ok"
